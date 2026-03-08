@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas';
 import { Download, Share2, Loader } from 'lucide-react';
 import { TRANSLATIONS } from '../../utils/translations';
 
-const GreetingCard = ({ guestName, amount, functionName, lang = 'en', familyLead = 'Host' }) => {
+const GreetingCard = ({ guestName, amount, functionName, lang = 'en', familyLead = 'Host', phone = '' }) => {
     const t = TRANSLATIONS[lang];
     const cardRef = useRef(null);
     const [loading, setLoading] = useState(false);
@@ -38,47 +38,57 @@ const GreetingCard = ({ guestName, amount, functionName, lang = 'en', familyLead
         setLoading(false);
     };
 
-    // Share card image directly to WhatsApp using Web Share API
+    // Share card image directly to guest's WhatsApp
     const handleShareImage = async () => {
         setShareLoading(true);
+
+        // Normalise phone: strip non-digits, add 91 country code if 10 digits
+        let cleanPhone = (phone || '').replace(/\D/g, '');
+        if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+        const hasPhone = cleanPhone.length >= 12;
+
+        // Greeting text that will pre-fill in WhatsApp
+        const greetingText = lang === 'ta'
+            ? `💐 திருமண நன்றி 💐\n\nஅன்புள்ள ${guestName},\n${functionName} விழாவில் கலந்துகொண்டு ${typeof amount === 'number' ? `₹${amount.toLocaleString('en-IN')}` : amount} வழங்கியதற்கு நன்றி! 🙏\n\nஅன்புடன்,\n${familyLead} குடும்பத்தினர்`
+            : `💐 Wedding Thanks 💐\n\nDear ${guestName},\nThank you for attending our ${functionName} and for your generous gift of ${typeof amount === 'number' ? `₹${amount.toLocaleString('en-IN')}` : amount}. 🙏\n\nWith Love,\n${familyLead} Family`;
+
+        const waUrl = hasPhone
+            ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(greetingText)}`
+            : `https://wa.me/?text=${encodeURIComponent(greetingText)}`;
+
         try {
             const canvas = await captureCard();
-            if (!canvas) return;
+            if (!canvas) { setShareLoading(false); return; }
 
             canvas.toBlob(async (blob) => {
                 const file = new File([blob], `moi-greeting-${guestName}.png`, { type: 'image/png' });
 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    // Web Share API with file (works on Android Chrome & Safari iOS)
+                    // Mobile: share the actual PNG image via native share sheet
                     try {
                         await navigator.share({
                             title: lang === 'ta' ? 'திருமண நன்றி' : 'Wedding Thanks',
-                            text: lang === 'ta'
-                                ? `அன்புள்ள ${guestName}, மிக்க நன்றி! 🙏`
-                                : `Dear ${guestName}, Thank you so much! 🙏`,
+                            text: greetingText,
                             files: [file]
                         });
-                    } catch (shareErr) {
-                        // User cancelled share — just download
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = file.name;
-                        link.click();
-                        URL.revokeObjectURL(url);
+                        // After sharing, also open WhatsApp directly to the guest's number
+                        if (hasPhone) {
+                            setTimeout(() => window.open(waUrl, '_blank'), 800);
+                        }
+                    } catch (_) {
+                        // User cancelled share sheet — open WhatsApp directly
+                        window.open(waUrl, '_blank');
                     }
                 } else {
-                    // Fallback: download so user can manually share to WhatsApp
+                    // Desktop: download the image first, then open WhatsApp web with text
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
                     link.download = file.name;
                     link.click();
                     URL.revokeObjectURL(url);
-                    alert(lang === 'ta'
-                        ? 'படம் பதிவிறக்கப்பட்டது! WhatsApp-ல் பகிர இந்த படத்தை upload செய்யவும்.'
-                        : 'Image downloaded! Open WhatsApp and attach this image to share.'
-                    );
+                    // Open WhatsApp with pre-filled message to the guest's number
+                    setTimeout(() => window.open(waUrl, '_blank'), 600);
                 }
                 setShareLoading(false);
             }, 'image/png');

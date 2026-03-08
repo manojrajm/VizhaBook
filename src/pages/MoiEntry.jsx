@@ -81,7 +81,8 @@ const MoiEntry = () => {
                         amount={lastAdded.amount > 0 ? lastAdded.amount : lastAdded.description}
                         functionName={lastAdded.functionName}
                         lang={lang}
-                        familyLead="Arun"
+                        familyLead={displayFunctions.find(f => String(f.id) === String(lastAdded.functionId))?.host || lastAdded.functionName}
+                        phone={lastAdded.phone}
                     />
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', width: '100%', marginTop: '1rem' }}>
