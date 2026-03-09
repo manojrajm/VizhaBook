@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import Navbar from './components/layout/Navbar';
 import Dashboard from './pages/Dashboard';
@@ -15,7 +15,7 @@ import PendingApprovals from './pages/PendingApprovals';
 function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           {/* Standalone public guest check-in — no navbar */}
           <Route path="/checkin" element={<GuestCheckin />} />
@@ -41,7 +41,7 @@ function App() {
             </div>
           } />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </AppProvider>
   );
 }
