@@ -13,8 +13,7 @@ const QRDisplay = () => {
     const selectedFn = displayFunctions.find(f => String(f.id) === String(selectedFnId)) || displayFunctions[0];
 
     const baseUrl = window.location.origin;
-    const checkinUrl = `${baseUrl}/checkin?fnId=${selectedFn?.id || ''}&fnName=${encodeURIComponent(selectedFn?.name || '')}`;
-
+    const checkinUrl = `${baseUrl}/#/checkin?fnId=${selectedFn?.id}&fnName=${encodeURIComponent(selectedFn?.name)}`;
     return (
         <div style={{
             minHeight: '100vh',
@@ -197,6 +196,7 @@ const QRDisplay = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+            console.log(checkinUrl);
         </div>
     );
 };
