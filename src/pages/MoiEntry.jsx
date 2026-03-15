@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Gift, Wallet, Send, User, Calendar, MessageCircle, CheckCircle2, MessageSquare } from 'lucide-react';
+import { Gift, Wallet, Send, User, Calendar, MessageCircle, CheckCircle2, MessageSquare, Mic, MicOff } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
 import Card from '../components/ui/Card';
@@ -23,6 +23,83 @@ const MoiEntry = () => {
     });
     const [success, setSuccess] = useState(false);
     const [lastAdded, setLastAdded] = useState(null);
+    const [isListening, setIsListening] = useState(false);
+
+    const startListening = () => {
+        if (!('webkitSpeechRecognition' in window)) {
+            alert(lang === 'en' ? 'Speech recognition is not supported in this browser.' : 'உங்கள் பிரவுசரில் குரல் பதிவு வசதி இல்லை.');
+            return;
+        }
+
+        const recognition = new window.webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = lang === 'en' ? 'en-IN' : 'ta-IN';
+
+        recognition.onstart = () => setIsListening(true);
+        recognition.onend = () => setIsListening(false);
+        recognition.onerror = (e) => {
+            console.error('Speech recognition error', e);
+            setIsListening(false);
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript.toLowerCase();
+            parseTranscript(transcript);
+        };
+
+        recognition.start();
+    };
+
+    const parseTranscript = (text) => {
+        let newName = formData.guestName;
+        let newAmount = formData.amount;
+        let newRelation = formData.relation;
+
+        // Extract amount (look for numbers)
+        const amountMatch = text.match(/\d+/);
+        if (amountMatch) {
+            newAmount = amountMatch[0];
+            text = text.replace(newAmount, '').trim();
+        } else {
+            // Tamil/English Word Fallbacks
+            if (text.includes('thousand') || text.includes('ஆயிரம்')) newAmount = '1000';
+            else if (text.includes('five hundred') || text.includes('ஐநூறு')) newAmount = '500';
+            else if (text.includes('two thousand') || text.includes('இரண்டாயிரம்')) newAmount = '2000';
+            else if (text.includes('ten thousand') || text.includes('பத்தாயிரம்')) newAmount = '10000';
+        }
+
+        // Check for relations
+        const relMap = {
+            'uncle': 'Relative', 'mama': 'Relative', 'chithappa': 'Relative', 'periyappa': 'Relative', 'மாமா': 'Relative', 'சித்தப்பா': 'Relative', 'பெரியப்பா': 'Relative',
+            'friend': 'Friend', 'நண்பர்': 'Friend', 'nanban': 'Friend',
+            'colleague': 'Colleague', 'office': 'Colleague', 'ஆபீஸ்': 'Colleague',
+            'neighbor': 'Neighbor', 'pakkathu': 'Neighbor', 'பக்கத்து': 'Neighbor'
+        };
+        
+        for (const [key, val] of Object.entries(relMap)) {
+            if (text.includes(key)) {
+                newRelation = val;
+                text = text.replace(new RegExp(key, 'gi'), '').trim();
+                break;
+            }
+        }
+
+        // Remaining text is likely the name. Clean up currency words.
+        const cleanName = text.replace(/rupees|rubai|ரூபாய்|hundred|thousand|oru|oru rubai/gi, '').trim();
+        if (cleanName.length > 1) {
+             newName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            guestName: newName || prev.guestName,
+            amount: newAmount || prev.amount,
+            relation: newRelation,
+            giftType: newAmount ? 'Cash' : prev.giftType
+        }));
+    };
+
 
     const displayFunctions = functions.length ? functions : MOCK_FUNCTIONS;
 
@@ -131,7 +208,17 @@ const MoiEntry = () => {
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative', zIndex: 10 }}>
                             {/* NEW GUEST INPUTS INSTEAD OF DROPDOWN */}
                             <div className="form-group">
-                                <label className="form-label">{lang === 'en' ? 'Guest Name' : 'விருந்தினர் பெயர்'}</label>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <label className="form-label">{lang === 'en' ? 'Guest Name' : 'விருந்தினர் பெயர்'}</label>
+                                    <button 
+                                        type="button" 
+                                        onClick={startListening}
+                                        style={{ background: 'none', border: 'none', color: isListening ? '#EF4444' : 'var(--primary-color)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 600 }}
+                                    >
+                                        {isListening ? <MicOff size={16} className="animate-pulse" /> : <Mic size={16} />}
+                                        {isListening ? (lang === 'en' ? 'Listening...' : 'கேட்கிறது...') : (lang === 'en' ? 'Tap to Speak' : 'பேசுவதற்கு அழுத்தவும்')}
+                                    </button>
+                                </div>
                                 <input
                                     type="text"
                                     required

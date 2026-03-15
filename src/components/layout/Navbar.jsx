@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Moon, Sun, LayoutDashboard, Heart, ClipboardList, Gift, Menu, X, QrCode, BarChart2, CheckSquare, Wifi } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Heart, ClipboardList, Gift, Menu, X, QrCode, BarChart2, CheckSquare, Wifi, IndianRupee, Cloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 
 const Navbar = () => {
-    const { theme, toggleTheme, lang, toggleLang, pendingEntries, isSyncing } = useApp();
+    const { theme, toggleTheme, lang, toggleLang, pendingEntries, isSyncing, isCloudEnabled, cloudId } = useApp();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pendingCount = pendingEntries?.length || 0;
 
@@ -14,6 +14,7 @@ const Navbar = () => {
         { path: '/functions', label: lang === 'en' ? 'Functions' : 'விழாக்கள்', icon: <Heart size={20} /> },
         { path: '/entry', label: lang === 'en' ? 'Moi Entry' : 'மொய் பதிவு', icon: <Gift size={20} /> },
         { path: '/ledger', label: lang === 'en' ? 'Ledger' : 'பேரேடு', icon: <ClipboardList size={20} /> },
+        { path: '/expenses', label: lang === 'en' ? 'Expenses' : 'செலவுகள்', icon: <IndianRupee size={20} /> },
         { path: '/analytics', label: lang === 'en' ? 'Analytics' : 'புள்ளிவிவரம்', icon: <BarChart2 size={20} /> },
         {
             path: '/qr-display', label: lang === 'en' ? 'QR Check-In' : 'QR பதிவு', icon: <QrCode size={20} />,
@@ -72,6 +73,21 @@ const Navbar = () => {
                     <Wifi size={10} />
                     LIVE
                 </motion.div>
+
+                {/* CLOUD Sync Badge */}
+                {isCloudEnabled && (
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '0.3rem',
+                        padding: '0.2rem 0.55rem', borderRadius: '999px',
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        border: '1px solid rgba(59, 130, 246, 0.25)',
+                        fontSize: '0.65rem', fontWeight: 700,
+                        color: '#3B82F6', userSelect: 'none'
+                    }}>
+                        <Cloud size={10} />
+                        CLOUD
+                    </div>
+                )}
             </div>
 
             {/* Desktop Nav */}

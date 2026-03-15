@@ -12,6 +12,7 @@ import Analytics from './pages/Analytics';
 import QRDisplay from './pages/QRDisplay';
 import GuestCheckin from './pages/GuestCheckin';
 import PendingApprovals from './pages/PendingApprovals';
+import Expenses from './pages/Expenses';
 
 function Layout() {
   return (
@@ -28,6 +29,7 @@ function Layout() {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/qr-display" element={<QRDisplay />} />
             <Route path="/approvals" element={<PendingApprovals />} />
+            <Route path="/expenses" element={<Expenses />} />
           </Routes>
         </main>
       </div>

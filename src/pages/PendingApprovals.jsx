@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, Edit3, Clock, User, Gift, IndianRupee, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Edit3, Clock, User, Gift, IndianRupee, AlertCircle, QrCode } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const PendingApprovals = () => {
@@ -36,6 +36,12 @@ const PendingApprovals = () => {
         if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
         return `${Math.floor(diff / 3600)}h ago`;
     };
+
+    const sortedPending = [...pendingEntries].sort((a, b) => {
+        const dateA = a.submittedAt ? new Date(a.submittedAt) : new Date(0);
+        const dateB = b.submittedAt ? new Date(b.submittedAt) : new Date(0);
+        return dateA - dateB;
+    });
 
     return (
         <div className="animate-fade" style={{ maxWidth: '700px', margin: '0 auto' }}>
@@ -90,7 +96,7 @@ const PendingApprovals = () => {
             {/* Pending Cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <AnimatePresence>
-                    {pendingEntries.map((entry, idx) => (
+                    {sortedPending.map((entry, idx) => (
                         <motion.div
                             key={entry.id}
                             initial={{ opacity: 0, x: -30 }}
@@ -177,6 +183,15 @@ const PendingApprovals = () => {
                                                 >
                                                     <Edit3 size={12} /> Edit
                                                 </button>
+                                            </div>
+                                        )}
+
+                                        {/* Display UTR if Payment Mode is UPI */}
+                                        {entry.paymentMode === 'UPI' && entry.utr && (
+                                            <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '0.5rem', border: '1px solid rgba(139, 92, 246, 0.2)', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <QrCode size={14} color="#8B5CF6" />
+                                                <span style={{ fontSize: '0.8rem', color: '#6D28D9', fontWeight: 600 }}>UPI UTR:</span>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#4C1D95', fontFamily: 'monospace' }}>{entry.utr}</span>
                                             </div>
                                         )}
                                     </div>

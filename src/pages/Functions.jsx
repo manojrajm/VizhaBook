@@ -15,7 +15,8 @@ const Functions = () => {
         type: 'Marriage',
         date: '',
         location: '',
-        host: ''
+        host: '',
+        upiId: ''
     });
 
     const displayFunctions = functions.length ? functions : MOCK_FUNCTIONS;
@@ -23,7 +24,7 @@ const Functions = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         addFunction(formData);
-        setFormData({ name: '', type: 'Marriage', date: '', location: '', host: '' });
+        setFormData({ name: '', type: 'Marriage', date: '', location: '', host: '', upiId: '' });
         setShowForm(false);
     };
 
@@ -136,7 +137,7 @@ const Functions = () => {
                                     type="text"
                                     required
                                     placeholder={lang === 'en' ? 'e.g. Ramesh & Priya Wedding' : 'உதாரணமாக: ரமேஷ் மற்றும் பிரியா திருமணம்'}
-                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: '#fff9fa', fontSize: '1rem', fontWeight: 500 }}
+                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500 }}
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 />
@@ -145,11 +146,11 @@ const Functions = () => {
                                 <div className="form-group">
                                     <label className="form-label">{lang === 'en' ? 'Function Type' : 'விழா வகை'}</label>
                                     <select
-                                        style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: '#fff9fa', fontSize: '1rem', fontWeight: 500, cursor: 'pointer' }}
+                                        style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500, cursor: 'pointer' }}
                                         value={formData.type}
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                                     >
-                                        {functionTypes.map(type => <option key={type} value={type}>{getCategoryImage(type)} {type}</option>)}
+                                        {functionTypes.map(type => <option key={type} value={type} style={{ background: 'var(--bg-primary)' }}>{getCategoryImage(type)} {type}</option>)}
                                     </select>
                                 </div>
                                 <div className="form-group">
@@ -157,7 +158,7 @@ const Functions = () => {
                                     <input
                                         type="date"
                                         required
-                                        style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: '#fff9fa', fontSize: '1rem', fontWeight: 500 }}
+                                        style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500 }}
                                         value={formData.date}
                                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                                     />
@@ -169,7 +170,7 @@ const Functions = () => {
                                     type="text"
                                     required
                                     placeholder={lang === 'en' ? 'e.g. Chennai' : 'உதாரணமாக: சென்னை'}
-                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: '#fff9fa', fontSize: '1rem', fontWeight: 500 }}
+                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500 }}
                                     value={formData.location}
                                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                                 />
@@ -180,9 +181,19 @@ const Functions = () => {
                                     type="text"
                                     required
                                     placeholder={lang === 'en' ? 'Who is hosting?' : 'விழா நடத்துபவர் யார்?'}
-                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: '#fff9fa', fontSize: '1rem', fontWeight: 500 }}
+                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500 }}
                                     value={formData.host}
                                     onChange={(e) => setFormData({ ...formData, host: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">{lang === 'en' ? 'UPI ID for Payments (Optional)' : 'பணம் செலுத்த UPI ID (விருப்பம்)'}</label>
+                                <input
+                                    type="text"
+                                    placeholder={lang === 'en' ? 'e.g. name@upi' : 'உதாரணமாக: name@upi'}
+                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500 }}
+                                    value={formData.upiId}
+                                    onChange={(e) => setFormData({ ...formData, upiId: e.target.value })}
                                 />
                             </div>
                             <div style={{ marginTop: '1rem' }}>
@@ -203,11 +214,12 @@ const Functions = () => {
             {/* Creative Animated Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '2.5rem' }}>
                 {displayFunctions.map((func, idx) => (
-                    <Card key={func.id} className="celebration-card" style={{
+                    <Card key={func.id} className="celebration-card glass-premium float-3d" style={{
                         animation: `modalSlide 0.5s ease-out forwards`,
                         animationDelay: `${idx * 0.1}s`,
                         opacity: 0,
-                        padding: 0
+                        padding: 0,
+                        overflow: 'hidden'
                     }}>
                         {/* Breathtaking Gradient Banner */}
                         <div style={{
@@ -220,10 +232,10 @@ const Functions = () => {
                             overflow: 'hidden'
                         }}>
                             {/* Decorative background circle */}
-                            <div style={{ position: 'absolute', width: '300px', height: '300px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%', right: '-50px', top: '-100px' }}></div>
+                            <div className="glow-pulse" style={{ position: 'absolute', width: '300px', height: '300px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%', right: '-50px', top: '-100px' }}></div>
                             <div style={{ position: 'absolute', width: '150px', height: '150px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', left: '-20px', bottom: '-50px' }}></div>
 
-                            <span style={{ fontSize: '4.5rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))', transform: 'translateY(10px)' }}>{getCategoryImage(func.type)}</span>
+                            <span style={{ fontSize: '4.5rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))', transform: 'translateY(10px)' }}>{getCategoryImage(func.type)}</span>
 
                             <button
                                 onClick={() => removeFunction(func.id)}
@@ -241,10 +253,10 @@ const Functions = () => {
                             position: 'absolute',
                             top: '110px',
                             left: '2rem',
-                            background: 'white',
+                            background: 'var(--bg-secondary)',
                             padding: '0.5rem 1rem',
                             borderRadius: '1rem',
-                            boxShadow: 'var(--shadow-md)',
+                            boxShadow: 'var(--shadow-lg)',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
@@ -261,7 +273,7 @@ const Functions = () => {
 
                         {/* Rich Content Area */}
                         <div style={{ padding: '3rem 2rem 2rem 2rem' }}>
-                            <div style={{ display: 'inline-block', padding: '0.25rem 0.75rem', background: '#ffe4e6', color: '#e11d48', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+                            <div style={{ display: 'inline-block', padding: '0.25rem 0.75rem', background: 'rgba(225, 29, 72, 0.1)', color: '#e11d48', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                                 {func.type}
                             </div>
 
@@ -271,16 +283,16 @@ const Functions = () => {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                    <div style={{ width: '2rem', height: '2rem', borderRadius: '8px', background: '#fff0f3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)' }}>
+                                    <div style={{ width: '2rem', height: '2rem', borderRadius: '8px', background: 'var(--bg-nested)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)', border: '1px solid var(--border-color)' }}>
                                         <MapPin size={16} style={{ strokeWidth: 2.5 }} />
                                     </div>
                                     {func.location}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                    <div style={{ width: '2rem', height: '2rem', borderRadius: '8px', background: '#fff0f3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)' }}>
+                                    <div style={{ width: '2rem', height: '2rem', borderRadius: '8px', background: 'var(--bg-nested)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)', border: '1px solid var(--border-color)' }}>
                                         <User size={16} style={{ strokeWidth: 2.5 }} />
                                     </div>
-                                    Hosted by <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{func.host}</span>
+                                    <span>Hosted by <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{func.host}</span></span>
                                 </div>
                             </div>
                         </div>

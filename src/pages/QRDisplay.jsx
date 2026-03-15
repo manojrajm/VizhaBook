@@ -14,7 +14,9 @@ const QRDisplay = () => {
 
     const baseUrl = window.location.origin;
     const checkinUrl = `${baseUrl}/#/checkin?fnId=${selectedFn?.id}&fnName=${encodeURIComponent(selectedFn?.name)}`;
+     console.log(checkinUrl);
     return (
+        
         <div style={{
             minHeight: '100vh',
             background: 'var(--bg-primary)',
@@ -130,6 +132,7 @@ const QRDisplay = () => {
                             excavate: true
                         }}
                     />
+                    
                 </div>
 
                 <div style={{ textAlign: 'center', zIndex: 10 }}>
@@ -196,7 +199,7 @@ const QRDisplay = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-            console.log(checkinUrl);
+           
         </div>
     );
 };

@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { db, auth } from '../firebase';
+import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 
 const AppContext = createContext();
 
@@ -23,12 +25,23 @@ export const AppProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : [];
     });
 
+    const [expenses, setExpenses] = useState(() => {
+        const saved = localStorage.getItem('moi_expenses');
+        return saved ? JSON.parse(saved) : [];
+    });
+
     const [theme, setTheme] = useState(localStorage.getItem('moi_theme') || 'light');
     const [lang, setLang] = useState(localStorage.getItem('moi_lang') || 'en');
     const [isSyncing, setIsSyncing] = useState(false);
+    const [cloudId, setCloudId] = useState(localStorage.getItem('moi_cloud_id') || '');
+    const [isCloudEnabled, setIsCloudEnabled] = useState(localStorage.getItem('moi_cloud_enabled') === 'true');
+    const [hostSettings, setHostSettings] = useState(() => {
+        const saved = localStorage.getItem('moi_host_settings');
+        return saved ? JSON.parse(saved) : { upiId: 'vizhabook@okhdfcbank', hostName: 'Vizha Book' };
+    });
 
     const channelRef = useRef(null);
-    const isBroadcasting = useRef(false);
+    const lastReceived = useRef({});
 
     // -------- BroadcastChannel Setup --------
     useEffect(() => {
@@ -36,7 +49,7 @@ export const AppProvider = ({ children }) => {
 
         channelRef.current.onmessage = (event) => {
             const { type, payload } = event.data;
-            isBroadcasting.current = true;
+            lastReceived.current[type] = JSON.stringify(payload);
             setIsSyncing(true);
             setTimeout(() => setIsSyncing(false), 1500);
 
@@ -45,9 +58,10 @@ export const AppProvider = ({ children }) => {
                 case 'SYNC_GUESTS': setGuests(payload); break;
                 case 'SYNC_ENTRIES': setEntries(payload); break;
                 case 'SYNC_PENDING': setPendingEntries(payload); break;
+                case 'SYNC_EXPENSES': setExpenses(payload); break;
+                case 'SYNC_HOST_SETTINGS': setHostSettings(payload); break;
                 default: break;
             }
-            isBroadcasting.current = false;
         };
 
         return () => channelRef.current?.close();
@@ -59,24 +73,46 @@ export const AppProvider = ({ children }) => {
 
     // -------- LocalStorage Sync + Broadcast --------
     useEffect(() => {
-        localStorage.setItem('moi_functions', JSON.stringify(functions));
-        if (!isBroadcasting.current) broadcast('SYNC_FUNCTIONS', functions);
+        const payload = JSON.stringify(functions);
+        localStorage.setItem('moi_functions', payload);
+        if (lastReceived.current['SYNC_FUNCTIONS'] !== payload) broadcast('SYNC_FUNCTIONS', functions);
+        lastReceived.current['SYNC_FUNCTIONS'] = payload;
     }, [functions]);
 
     useEffect(() => {
-        localStorage.setItem('moi_guests', JSON.stringify(guests));
-        if (!isBroadcasting.current) broadcast('SYNC_GUESTS', guests);
+        const payload = JSON.stringify(guests);
+        localStorage.setItem('moi_guests', payload);
+        if (lastReceived.current['SYNC_GUESTS'] !== payload) broadcast('SYNC_GUESTS', guests);
+        lastReceived.current['SYNC_GUESTS'] = payload;
     }, [guests]);
 
     useEffect(() => {
-        localStorage.setItem('moi_entries', JSON.stringify(entries));
-        if (!isBroadcasting.current) broadcast('SYNC_ENTRIES', entries);
+        const payload = JSON.stringify(entries);
+        localStorage.setItem('moi_entries', payload);
+        if (lastReceived.current['SYNC_ENTRIES'] !== payload) broadcast('SYNC_ENTRIES', entries);
+        lastReceived.current['SYNC_ENTRIES'] = payload;
     }, [entries]);
 
     useEffect(() => {
-        localStorage.setItem('moi_pending', JSON.stringify(pendingEntries));
-        if (!isBroadcasting.current) broadcast('SYNC_PENDING', pendingEntries);
+        const payload = JSON.stringify(pendingEntries);
+        localStorage.setItem('moi_pending', payload);
+        if (lastReceived.current['SYNC_PENDING'] !== payload) broadcast('SYNC_PENDING', pendingEntries);
+        lastReceived.current['SYNC_PENDING'] = payload;
     }, [pendingEntries]);
+
+    useEffect(() => {
+        const payload = JSON.stringify(expenses);
+        localStorage.setItem('moi_expenses', payload);
+        if (lastReceived.current['SYNC_EXPENSES'] !== payload) broadcast('SYNC_EXPENSES', expenses);
+        lastReceived.current['SYNC_EXPENSES'] = payload;
+    }, [expenses]);
+    
+    useEffect(() => {
+        const payload = JSON.stringify(hostSettings);
+        localStorage.setItem('moi_host_settings', payload);
+        if (lastReceived.current['SYNC_HOST_SETTINGS'] !== payload) broadcast('SYNC_HOST_SETTINGS', hostSettings);
+        lastReceived.current['SYNC_HOST_SETTINGS'] = payload;
+    }, [hostSettings]);
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -86,6 +122,62 @@ export const AppProvider = ({ children }) => {
     useEffect(() => {
         localStorage.setItem('moi_lang', lang);
     }, [lang]);
+
+    useEffect(() => {
+        localStorage.setItem('moi_cloud_id', cloudId);
+    }, [cloudId]);
+
+    useEffect(() => {
+        localStorage.setItem('moi_cloud_enabled', isCloudEnabled);
+    }, [isCloudEnabled]);
+
+    useEffect(() => {
+        localStorage.setItem('moi_host_settings', JSON.stringify(hostSettings));
+    }, [hostSettings]);
+
+    // -------- Cloud Sync Logic --------
+    const isFirstRun = useRef(true);
+
+    // Pull from Cloud on mount if enabled
+    useEffect(() => {
+        if (!isCloudEnabled || !cloudId) return;
+
+        const syncDoc = doc(db, 'sync_sessions', cloudId);
+        
+        // Use onSnapshot for real-time pull from other devices
+        const unsub = onSnapshot(syncDoc, (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                // Avoid infinite loops by checking source
+                if (isBroadcasting.current) return;
+                
+                setIsSyncing(true);
+                if (data.functions) setFunctions(data.functions);
+                if (data.guests) setGuests(data.guests);
+                if (data.entries) setEntries(data.entries);
+                if (data.expenses) setExpenses(data.expenses);
+                setTimeout(() => setIsSyncing(false), 1000);
+            }
+        });
+
+        return () => unsub();
+    }, [cloudId, isCloudEnabled]);
+
+    // Push to Cloud on local changes
+    useEffect(() => {
+        if (!isCloudEnabled || !cloudId) return;
+        if (isBroadcasting.current) return; // Don't push what we just pulled
+
+        const timer = setTimeout(async () => {
+            const syncDoc = doc(db, 'sync_sessions', cloudId);
+            await setDoc(syncDoc, {
+                functions, guests, entries, expenses,
+                lastSynced: new Date().toISOString()
+            }, { merge: true });
+        }, 2000); // Debounce push
+
+        return () => clearTimeout(timer);
+    }, [functions, guests, entries, expenses, cloudId, isCloudEnabled]);
 
     // -------- CRUD Operations --------
     const addFunction = (func) => {
@@ -100,6 +192,10 @@ export const AppProvider = ({ children }) => {
 
     const addEntry = (entry) => {
         setEntries(prev => [...prev, { ...entry, id: Date.now() }]);
+    };
+
+    const addExpense = (expense) => {
+        setExpenses(prev => [...prev, { ...expense, id: Date.now() }]);
     };
 
     // Pending entries for QR Check-In verification flow
@@ -131,13 +227,16 @@ export const AppProvider = ({ children }) => {
 
     return (
         <AppContext.Provider value={{
-            functions, guests, entries, pendingEntries,
-            addFunction, addGuest, addEntry,
+            functions, guests, entries, pendingEntries, expenses,
+            addFunction, addGuest, addEntry, addExpense,
             addPendingEntry, approvePendingEntry, rejectPendingEntry,
-            removeFunction, removeGuest, removeEntry,
+            removeFunction, removeGuest, removeEntry, removeExpense: (id) => setExpenses(prev => prev.filter(e => e.id !== id)),
             theme, toggleTheme,
             lang, toggleLang,
-            isSyncing
+            isSyncing,
+            cloudId, setCloudId,
+            isCloudEnabled, setIsCloudEnabled,
+            hostSettings, setHostSettings
         }}>
             {children}
         </AppContext.Provider>

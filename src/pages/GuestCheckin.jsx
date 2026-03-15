@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, User, Phone, Heart, IndianRupee, CheckCircle2, ChevronDown } from 'lucide-react';
+import { Gift, User, Phone, Heart, IndianRupee, CheckCircle2, ChevronDown, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { useApp } from '../context/AppContext';
 
 const GuestCheckin = () => {
+    const { hostSettings, addPendingEntry, functions } = useApp();
     const params = new URLSearchParams(window.location.search);
     const fnId = params.get('fnId');
     const fnName = decodeURIComponent(params.get('fnName') || 'Your Function');
@@ -12,7 +15,9 @@ const GuestCheckin = () => {
         phone: '',
         relation: 'Relative',
         giftType: 'Cash',
+        paymentMode: 'Cash', // Cash or UPI
         amount: '',
+        utr: '',
         description: ''
     });
     const [submitted, setSubmitted] = useState(false);
@@ -24,6 +29,8 @@ const GuestCheckin = () => {
         if (!formData.guestName.trim()) e.guestName = 'பெயர் தேவை / Name required';
         if (formData.giftType === 'Cash' && (!formData.amount || isNaN(formData.amount) || Number(formData.amount) <= 0))
             e.amount = 'சரியான தொகை / Valid amount required';
+        if (formData.giftType === 'Cash' && formData.paymentMode === 'UPI' && !formData.utr.trim())
+            e.utr = 'UTR எண் தேவை / UTR number required';
         if (formData.giftType !== 'Cash' && !formData.description.trim())
             e.description = 'விளக்கம் தேவை / Description required';
         return e;
@@ -35,25 +42,14 @@ const GuestCheckin = () => {
         if (Object.keys(errs).length > 0) { setErrors(errs); return; }
         setSubmitting(true);
 
-        // Write to localStorage pending queue & broadcast to host tab
-        const pending = JSON.parse(localStorage.getItem('moi_pending') || '[]');
-        const newPending = {
+        addPendingEntry({
             ...formData,
-            id: Date.now(),
             functionId: fnId,
             functionName: fnName,
-            amount: formData.giftType === 'Cash' ? parseFloat(formData.amount) : 0,
-            submittedAt: new Date().toISOString()
-        };
-        pending.push(newPending);
-        localStorage.setItem('moi_pending', JSON.stringify(pending));
-
-        // Broadcast to host's tab
-        try {
-            const ch = new BroadcastChannel('vizha-sync');
-            ch.postMessage({ type: 'SYNC_PENDING', payload: pending });
-            ch.close();
-        } catch (_) { }
+            paymentMode: formData.giftType === 'Cash' ? formData.paymentMode : null,
+            utr: formData.paymentMode === 'UPI' ? formData.utr : null,
+            amount: formData.giftType === 'Cash' ? parseFloat(formData.amount) : 0
+        });
 
         setTimeout(() => { setSubmitting(false); setSubmitted(true); }, 800);
     };
@@ -144,9 +140,10 @@ const GuestCheckin = () => {
                     backdropFilter: 'blur(25px)',
                     border: '1px solid rgba(255,255,255,0.12)',
                     borderRadius: '2rem',
-                    padding: '2.5rem 2rem',
+                    padding: '2.5rem 1.5rem', // Slightly smaller padding for mobile
                     width: '100%',
-                    maxWidth: '420px'
+                    maxWidth: '420px',
+                    margin: 'auto'
                 }}
             >
                 {/* Header */}
@@ -248,6 +245,100 @@ const GuestCheckin = () => {
                                 onChange={e => { setFormData({ ...formData, amount: e.target.value }); setErrors({ ...errors, amount: '' }); }}
                             />
                             {errors.amount && <p style={{ color: '#FCA5A5', fontSize: '0.8rem', marginTop: '0.25rem' }}>{errors.amount}</p>}
+
+                            {/* Payment Mode (Cash / UPI) */}
+                            <div style={{ marginTop: '1.25rem' }}>
+                                <label style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
+                                    💳 செலுத்தும் முறை / Payment Mode
+                                </label>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                    {['Cash', 'UPI'].map(mode => (
+                                        <button
+                                            key={mode}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, paymentMode: mode })}
+                                            style={{
+                                                padding: '0.75rem',
+                                                borderRadius: '0.75rem',
+                                                border: formData.paymentMode === mode ? 'none' : '1px solid rgba(255,255,255,0.2)',
+                                                background: formData.paymentMode === mode ? (mode === 'UPI' ? '#8B5CF6' : '#10B981') : 'rgba(255,255,255,0.08)',
+                                                color: 'white',
+                                                fontWeight: 700,
+                                                fontSize: '0.8rem',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '0.4rem',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            {mode === 'UPI' ? <QrCode size={16} /> : <IndianRupee size={16} />}
+                                            {mode === 'Cash' ? 'பணம் / Cash' : 'UPI (GPay/PhonePe)'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* UPI Verification Section */}
+                            <AnimatePresence>
+                                {formData.paymentMode === 'UPI' && formData.amount > 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        style={{ marginTop: '1.25rem', overflow: 'hidden' }}
+                                    >
+                                        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '1.5rem', textAlign: 'center', marginBottom: '1rem', border: '2px solid #E5E7EB' }}>
+                                            <p style={{ color: '#4B5563', fontSize: '0.85rem', fontWeight: 800, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Scan to Pay with GPay</p>
+                                            <div style={{ display: 'inline-block', padding: '1rem', background: 'white', border: '1px solid #E5E7EB', borderRadius: '1rem', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+                                                <QRCodeSVG 
+                                                    value={`upi://pay?pa=${(functions || []).find(f => f.id == fnId)?.upiId || hostSettings.upiId}&pn=${encodeURIComponent(fnName)}&am=${formData.amount}&cu=INR`} 
+                                                    size={180} 
+                                                    level="H"
+                                                    imageSettings={{
+                                                        src: "https://www.gstatic.com/images/branding/product/1x/gpay_64dp.png",
+                                                        x: undefined,
+                                                        y: undefined,
+                                                        height: 30,
+                                                        width: 30,
+                                                        excavate: true,
+                                                    }}
+                                                />
+                                            </div>
+                                            <div style={{ marginTop: '1.5rem' }}>
+                                                <a 
+                                                    href={`upi://pay?pa=${(functions || []).find(f => f.id == fnId)?.upiId || hostSettings.upiId}&pn=${encodeURIComponent(fnName)}&am=${formData.amount}&cu=INR`}
+                                                    style={{
+                                                        display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
+                                                        background: '#1a73e8', color: 'white', padding: '0.75rem 1.5rem',
+                                                        borderRadius: '3rem', fontWeight: 700, textDecoration: 'none',
+                                                        fontSize: '0.9rem', boxShadow: '0 4px 12px rgba(26, 115, 232, 0.3)'
+                                                    }}
+                                                >
+                                                    <img src="https://www.gstatic.com/images/branding/product/1x/gpay_32dp.png" alt="GPay" style={{ height: '18px' }} />
+                                                    Pay with Google Pay
+                                                </a>
+                                            </div>
+                                            <p style={{ color: '#6B7280', fontSize: '0.75rem', marginTop: '1rem', fontWeight: 600 }}>UPI ID: {(functions || []).find(f => f.id == fnId)?.upiId || hostSettings.upiId}</p>
+                                        </div>
+
+                                        <div>
+                                            <label style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>
+                                                🧾 UTR / Transaction No. *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Enter 12-digit UTR number"
+                                                style={inputStyle(errors.utr)}
+                                                value={formData.utr}
+                                                onChange={e => { setFormData({ ...formData, utr: e.target.value }); setErrors({ ...errors, utr: '' }); }}
+                                            />
+                                            {errors.utr && <p style={{ color: '#FCA5A5', fontSize: '0.8rem', marginTop: '0.25rem' }}>{errors.utr}</p>}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     ) : (
                         <div>
