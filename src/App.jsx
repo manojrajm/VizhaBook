@@ -1,8 +1,12 @@
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
+import BrandingSidebar from './components/layout/BrandingSidebar';
 
+import AuthPage from './pages/auth/AuthPage';
 import Dashboard from './pages/Dashboard';
 import Functions from './pages/Functions';
 import MoiEntry from './pages/MoiEntry';
@@ -17,6 +21,7 @@ import Expenses from './pages/Expenses';
 function Layout() {
   return (
     <div className="app-container">
+      <BrandingSidebar />
       <div className="main-wrapper">
         <Navbar />
         <main className="main-content">
@@ -39,17 +44,26 @@ function Layout() {
 
 function App() {
   return (
-    <AppProvider>
-      <HashRouter>
-        <Routes>
-          {/* Public guest check-in */}
-          <Route path="/checkin" element={<GuestCheckin />} />
+    <AuthProvider>
+      <AppProvider>
+        <HashRouter>
+          <Routes>
+            {/* Auth page — public */}
+            <Route path="/auth" element={<AuthPage />} />
 
-          {/* Main app */}
-          <Route path="/*" element={<Layout />} />
-        </Routes>
-      </HashRouter>
-    </AppProvider>
+            {/* Public guest check-in */}
+            <Route path="/checkin" element={<GuestCheckin />} />
+
+            {/* Protected main app */}
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </HashRouter>
+      </AppProvider>
+    </AuthProvider>
   );
 }
 

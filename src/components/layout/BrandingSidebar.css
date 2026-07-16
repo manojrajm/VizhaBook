@@ -1,0 +1,275 @@
+/* ==========================================
+   VizhaBook Branding Sidebar
+   Collapsible overlay sidebar
+   ========================================== */
+
+.branding-toggle-btn {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 150;
+    width: 36px;
+    height: 72px;
+    background: linear-gradient(180deg, #1A1025, #0F0F1A);
+    border: 1px solid rgba(212, 168, 69, 0.15);
+    border-left: none;
+    border-radius: 0 1rem 1rem 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #D4A845;
+    transition: all 0.3s ease;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+}
+
+.branding-toggle-btn:hover {
+    width: 42px;
+    background: linear-gradient(180deg, #1F1530, #141420);
+    box-shadow: 4px 0 25px rgba(212, 168, 69, 0.15);
+}
+
+.branding-toggle-btn img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 6px rgba(212, 168, 69, 0.3));
+}
+
+/* Overlay backdrop */
+.branding-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+}
+
+/* Sidebar panel */
+.branding-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 290px;
+    height: 100vh;
+    background: linear-gradient(170deg, #0F0F1A 0%, #1A1025 40%, #0D1117 80%, #0A0A0F 100%);
+    z-index: 250;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    box-shadow: 10px 0 40px rgba(0, 0, 0, 0.4);
+    border-right: 1px solid rgba(212, 168, 69, 0.08);
+}
+
+/* Close button */
+.branding-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #6B7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.branding-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #D4A845;
+}
+
+/* Sidebar content */
+.branding-content {
+    padding: 2.5rem 1.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    flex: 1;
+}
+
+.branding-logo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.branding-logo-img {
+    height: 64px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 20px rgba(212, 168, 69, 0.3));
+}
+
+.branding-app-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #FFFFFF;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.branding-app-tamil {
+    font-family: 'Noto Sans Tamil', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #D4A845, #F5C842);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.branding-tagline {
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: #D4A845;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+/* Nav links in sidebar */
+.branding-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.branding-nav-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #4B5563;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 0 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.branding-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.875rem;
+    border-radius: 0.75rem;
+    color: #9CA3AF;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.branding-nav-item:hover {
+    background: rgba(212, 168, 69, 0.06);
+    color: #E5E7EB;
+    border-color: rgba(212, 168, 69, 0.1);
+}
+
+.branding-nav-item.active {
+    background: rgba(212, 168, 69, 0.1);
+    color: #D4A845;
+    border-color: rgba(212, 168, 69, 0.15);
+    font-weight: 600;
+}
+
+.branding-nav-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+}
+
+.branding-nav-item:hover .branding-nav-icon,
+.branding-nav-item.active .branding-nav-icon {
+    opacity: 1;
+}
+
+/* Sidebar footer */
+.branding-footer {
+    padding: 1.25rem 1.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: auto;
+}
+
+.branding-footer-quote {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-style: italic;
+    color: #4B5563;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.branding-footer-quote .quote-mark {
+    color: #D4A845;
+    font-style: normal;
+    font-weight: 800;
+    opacity: 0.5;
+}
+
+/* User info section */
+.branding-user-info {
+    padding: 0.875rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.branding-user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #D4A845, #F5C842);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0A0A0F;
+    flex-shrink: 0;
+}
+
+.branding-user-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #E5E7EB;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.branding-user-email {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    color: #6B7280;
+    margin: 0;
+    line-height: 1.2;
+}
+
+/* Responsive — hide toggle on very small screens if needed */
+@media (max-width: 767px) {
+    .branding-sidebar {
+        width: 280px;
+    }
+}

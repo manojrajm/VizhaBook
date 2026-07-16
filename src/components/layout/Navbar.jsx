@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Moon, Sun, LayoutDashboard, Heart, ClipboardList, Gift, Menu, X, QrCode, BarChart2, CheckSquare, Wifi, IndianRupee, Cloud } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Heart, ClipboardList, Gift, Menu, X, QrCode, BarChart2, CheckSquare, Wifi, IndianRupee, Cloud, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
     const { theme, toggleTheme, lang, toggleLang, pendingEntries, isSyncing, isCloudEnabled, cloudId } = useApp();
+    const { currentUser, logout } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pendingCount = pendingEntries?.length || 0;
 
@@ -117,6 +119,16 @@ const Navbar = () => {
 
             {/* Desktop Actions */}
             <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+                {currentUser && (
+                    <span style={{
+                        fontSize: '0.8rem', fontWeight: 600,
+                        color: 'var(--text-secondary)',
+                        maxWidth: '120px', overflow: 'hidden',
+                        textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    }}>
+                        {currentUser.name}
+                    </span>
+                )}
                 <button onClick={toggleLang} style={{
                     padding: '0.4rem 0.875rem', fontWeight: 700, fontSize: '0.72rem',
                     borderRadius: '0.75rem', border: '1px solid var(--border-color)',
@@ -131,6 +143,14 @@ const Navbar = () => {
                     color: 'var(--text-secondary)'
                 }}>
                     {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                </button>
+                <button onClick={logout} title="Logout" style={{
+                    width: '2.25rem', height: '2.25rem', borderRadius: '50%',
+                    border: '1px solid rgba(239, 68, 68, 0.2)', background: 'rgba(239, 68, 68, 0.05)',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#EF4444'
+                }} id="navbar-logout">
+                    <LogOut size={16} />
                 </button>
             </div>
 
@@ -207,6 +227,14 @@ const Navbar = () => {
                                 color: 'var(--text-secondary)'
                             }}>
                                 {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                            </button>
+                            <button onClick={() => { setIsMobileMenuOpen(false); logout(); }} style={{
+                                width: '3rem', height: '3rem', borderRadius: '50%',
+                                border: '1px solid rgba(239, 68, 68, 0.2)', background: 'rgba(239, 68, 68, 0.05)',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: '#EF4444'
+                            }} id="navbar-mobile-logout" title="Logout">
+                                <LogOut size={18} />
                             </button>
                         </div>
                     </motion.div>
