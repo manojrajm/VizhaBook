@@ -1,0 +1,90 @@
+{
+  "users": [
+    {
+      "id": "u_demo_1",
+      "name": "Demo Family Admin",
+      "email": "demo@vizhabook.com",
+      "phone": "9876543210",
+      "countryCode": "+91",
+      "password": "demo1234",
+      "createdAt": "2026-08-08T10:47:01.265Z"
+    }
+  ],
+  "functions": [
+    {
+      "id": "f_1",
+      "userId": "u_demo_1",
+      "title": "Karthik & Janani Marriage",
+      "type": "Wedding",
+      "date": "2026-09-15",
+      "venue": "Sri Raja Rajeswari Hall, Chennai",
+      "budget": 500000,
+      "status": "Active"
+    },
+    {
+      "id": "f_2",
+      "userId": "u_demo_1",
+      "title": "Ananya Ear Piercing Ceremony",
+      "type": "Ear Piercing",
+      "date": "2026-10-04",
+      "venue": "Muralis Hall, Madurai",
+      "budget": 150000,
+      "status": "Upcoming"
+    }
+  ],
+  "moiEntries": [
+    {
+      "id": "m_1",
+      "functionId": "f_1",
+      "userId": "u_demo_1",
+      "guestName": "K. Senthil Nathan",
+      "villageCity": "Chennai",
+      "phone": "9876543211",
+      "amount": 5001,
+      "giftItem": "Silk Saree & Cash",
+      "paymentMode": "Cash",
+      "relation": "Uncle",
+      "whatsappSent": true,
+      "createdAt": "2026-08-08T10:47:01.266Z"
+    },
+    {
+      "id": "m_2",
+      "functionId": "f_1",
+      "userId": "u_demo_1",
+      "guestName": "Dr. Meenakshi & Family",
+      "villageCity": "Coimbatore",
+      "phone": "9876543212",
+      "amount": 10001,
+      "giftItem": "1 Sovereign Gold Coin",
+      "paymentMode": "UPI",
+      "relation": "Family Friend",
+      "whatsappSent": true,
+      "createdAt": "2026-08-08T10:47:01.266Z"
+    }
+  ],
+  "expenses": [
+    {
+      "id": "e_1",
+      "functionId": "f_1",
+      "userId": "u_demo_1",
+      "category": "Catering & Meals",
+      "vendor": "Vasantha Bhavan Caterers",
+      "amount": 180000,
+      "paidAmount": 100000,
+      "status": "Partial",
+      "date": "2026-08-01"
+    },
+    {
+      "id": "e_2",
+      "functionId": "f_1",
+      "userId": "u_demo_1",
+      "category": "Hall Rental",
+      "vendor": "Raja Rajeswari Mandapam",
+      "amount": 120000,
+      "paidAmount": 120000,
+      "status": "Paid",
+      "date": "2026-07-20"
+    }
+  ],
+  "approvals": []
+}

@@ -48,12 +48,34 @@ export const AuthProvider = ({ children }) => {
 
     // Login — check credentials against moi_users
     const login = (email, password, rememberMe = false) => {
+        const cleanEmail = (email || '').trim().toLowerCase();
+        
+        // Support 'admins' / 'password' temporary test credentials
+        if ((cleanEmail === 'admins' || cleanEmail === 'admin' || cleanEmail === 'admins@vizhabook.com') && password === 'password') {
+            const sessionUser = {
+                id: 'u_admin_1',
+                name: 'System Admin',
+                email: 'admins',
+                phone: '9876543210',
+                countryCode: '+91'
+            };
+            setCurrentUser(sessionUser);
+            if (rememberMe) {
+                localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(sessionUser));
+                sessionStorage.removeItem(SESSION_USER_KEY);
+            } else {
+                sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(sessionUser));
+                localStorage.removeItem(CURRENT_USER_KEY);
+            }
+            return { success: true };
+        }
+
         const users = getUsers();
         const user = users.find(
-            u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+            u => (u.email.toLowerCase() === cleanEmail || (u.phone && u.phone === email.trim())) && u.password === password
         );
         if (!user) {
-            return { success: false, error: 'Invalid email or password.' };
+            return { success: false, error: 'Invalid User ID/Email or Password.' };
         }
         const sessionUser = {
             id: user.id,

@@ -1,41 +1,21 @@
 {
-  "name": "digital-moi",
+  "name": "vizhabook-workspace",
+  "version": "2.0.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "description": "VizhaBook SaaS Event & Moi Management Platform (Monorepo with Frontend & Backend)",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "start:backend": "npm --prefix backend start"
   },
-  "dependencies": {
-    "canvas-confetti": "^1.9.4",
-    "firebase": "^12.10.0",
-    "framer-motion": "^12.35.0",
-    "html2canvas": "^1.4.1",
-    "lucide-react": "^0.577.0",
-    "qrcode.react": "^4.2.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-router-dom": "^7.13.1",
-    "recharts": "^3.8.0",
-    "xlsx": "^0.18.5"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
-    "autoprefixer": "^10.4.27",
-    "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "globals": "^16.5.0",
-    "postcss": "^8.5.8",
-    "vite": "^7.3.1"
-  },
-  "allowScripts": {
-    "esbuild@0.27.3": true
-  }
+  "keywords": [
+    "vizhabook",
+    "saas",
+    "react",
+    "express",
+    "moi-management"
+  ],
+  "author": "VizhaBook Team",
+  "license": "ISC"
 }

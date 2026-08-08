@@ -1,0 +1,736 @@
+/* ==========================================================================
+   VizhaBook Luxury Traditional & Digital Auth Page Styles
+   Matching exact design of login1 page.png
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;600;700;800&display=swap');
+
+/* ---- Page Outer Canvas ---- */
+.auth-page-container {
+    min-height: 100vh;
+    width: 100vw;
+    background: #EFE4D6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+/* Main Luxury Board Card */
+.auth-board {
+    width: 100%;
+    max-width: 1100px;
+    height: 680px;
+    background: #24102A;
+    border-radius: 24px;
+    box-shadow: 0 35px 90px rgba(26, 8, 31, 0.45), 0 0 40px rgba(212, 175, 55, 0.1);
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+/* ==========================================================================
+   LEFT HERO PANEL (Exact login1 page.png image)
+   ========================================================================== */
+.auth-hero-panel {
+    flex: 0 0 50%;
+    max-width: 50%;
+    height: 100%;
+    background: #FAF3EA;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.hero-image-exact {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    display: block;
+}
+
+/* Festive Background Mandala Pattern */
+.hero-mandala-bg {
+    position: absolute;
+    inset: 0;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(212, 168, 69, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(212, 168, 69, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(184, 134, 11, 0.04) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.hero-mandala-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0 C45 20 60 35 80 40 C60 45 45 60 40 80 C35 60 20 45 0 40 C20 35 35 20 40 0 Z' fill='%23D4AF37' fill-opacity='0.03'/%3E%3C/svg%3E");
+    background-size: 80px 80px;
+    opacity: 0.7;
+}
+
+/* Garland Header Overlay */
+.hero-garland-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 90px;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.garland-svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+/* Main Hero Content */
+.hero-main-content {
+    position: relative;
+    z-index: 2;
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* Logo Crest Container */
+.hero-logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2.2rem;
+}
+
+.hero-crest-emblem {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.hero-crest-emblem svg {
+    filter: drop-shadow(0 6px 15px rgba(184, 134, 11, 0.35));
+}
+
+/* Typography */
+.hero-brand-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.2rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(180deg, #A8792A 0%, #68420D 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px rgba(168, 121, 42, 0.2));
+}
+
+.hero-brand-tamil {
+    font-family: 'Noto Sans Tamil', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1.2;
+    background: linear-gradient(180deg, #8C5F1C 0%, #523408 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-top: -0.2rem;
+}
+
+.hero-brand-tagline {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    color: #5C4119;
+    text-transform: uppercase;
+    margin-top: 0.6rem;
+    opacity: 0.9;
+}
+
+/* 4 Circular Feature Cards Grid */
+.hero-features-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 470px;
+    margin-top: 1rem;
+}
+
+.feature-circle-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.feature-circle-card:hover {
+    transform: translateY(-4px);
+}
+
+.feature-circle-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1.5px solid #C49842;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5A390F;
+    box-shadow: 0 6px 16px rgba(196, 152, 66, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+}
+
+.feature-circle-card:hover .feature-circle-icon {
+    background: #FAF0D9;
+    border-color: #8C5F1C;
+    box-shadow: 0 8px 20px rgba(140, 95, 28, 0.3);
+}
+
+.feature-circle-title {
+    font-size: 0.66rem;
+    font-weight: 800;
+    color: #3A2308;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 0.65rem 0 0.25rem 0;
+    line-height: 1.25;
+}
+
+.feature-circle-desc {
+    font-size: 0.6rem;
+    color: #6E5334;
+    line-height: 1.3;
+    margin: 0;
+    max-width: 110px;
+}
+
+/* Bottom Landscape & Temple Silhouette */
+.hero-bottom-illustration {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    z-index: 1;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.hero-rangoli-kolam {
+    position: absolute;
+    bottom: 5px;
+    z-index: 2;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
+}
+
+.hero-skyline-silhouette {
+    width: 100%;
+    height: 90px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 120' fill='%235A390F' opacity='0.15'%3E%3Cpath d='M0,120 L0,90 L20,90 L20,70 L30,40 L40,70 L40,90 L80,90 L80,120 Z M120,120 L120,80 L130,50 L140,20 L150,50 L160,80 L160,120 Z M220,120 L220,95 L250,95 L250,120 Z M300,120 L300,70 L315,30 L330,70 L330,120 Z M400,120 C420,80 440,80 460,120 Z M520,120 L520,85 L535,45 L550,85 L550,120 Z M620,120 L620,95 L640,95 L640,120 Z M700,120 L700,75 L715,35 L730,75 L730,120 Z M820,120 L820,85 L835,40 L850,85 L850,120 Z M920,120 L920,90 L950,90 L950,120 Z'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-position: bottom;
+}
+
+.auth-hero-panel {
+    flex: 0 0 44%;
+    max-width: 44%;
+    height: 100%;
+    background: #FAF3EA;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.hero-image-exact {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    display: block;
+}
+
+/* ==========================================================================
+   RIGHT FORM PANEL (Royal Deep Purple Theme)
+   ========================================================================== */
+.auth-form-panel {
+    flex: 0 0 56%;
+    max-width: 56%;
+    background: linear-gradient(160deg, #2A1430 0%, #1D0C23 100%);
+    padding: 3rem 3.5rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+}
+
+/* Top Right Language Selector */
+.auth-lang-picker {
+    position: absolute;
+    top: 2rem;
+    right: 2.5rem;
+    z-index: 5;
+}
+
+.lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 100px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #E2D3E8;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lang-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+}
+
+.lang-chevron {
+    font-size: 0.75rem;
+    margin-left: 2px;
+}
+
+.auth-form-wrapper {
+    max-width: 390px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Form Typography & Ornament Header */
+.login-header-group {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.3rem;
+    font-weight: 500;
+    color: #FFFFFF;
+    margin: 0 0 0.4rem 0;
+}
+
+.login-subtitle {
+    font-size: 0.88rem;
+    color: #C2ABCE;
+    margin: 0;
+}
+
+/* Gold Ornament Divider */
+.gold-ornament-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-top: 0.85rem;
+    color: #E9B856;
+}
+
+.gold-ornament-divider .line {
+    width: 50px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #E9B856, transparent);
+}
+
+.gold-ornament-divider .diamond {
+    font-size: 0.75rem;
+}
+
+/* Form Field Groups */
+.login-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-bottom: 1.25rem;
+}
+
+.login-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.login-field-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #DECDE5;
+}
+
+.login-forgot-pass {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #E9B856;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.login-forgot-pass:hover {
+    color: #FCE1A6;
+    text-decoration: underline;
+}
+
+.login-field-input-box {
+    height: 48px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.85rem;
+    padding: 0 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.25s ease;
+}
+
+.login-field-input-box:focus-within {
+    border-color: #E9B856;
+    box-shadow: 0 0 0 3px rgba(233, 184, 86, 0.15);
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.field-icon {
+    color: #A68BB3;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.login-field-input-box:focus-within .field-icon {
+    color: #E9B856;
+}
+
+.field-input {
+    flex: 1;
+    background: transparent !important;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-family: inherit;
+    font-size: 0.88rem;
+    outline: none;
+    width: 100%;
+}
+
+.field-input::placeholder {
+    color: #836792;
+}
+
+.field-toggle-btn {
+    background: none;
+    border: none;
+    color: #A68BB3;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0.2rem;
+}
+
+.field-toggle-btn:hover {
+    color: #E9B856;
+}
+
+/* Checkbox Bar */
+.login-options-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.login-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.login-checkbox {
+    width: 17px;
+    height: 17px;
+    border-radius: 4px;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    appearance: none;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.login-checkbox:checked {
+    background: linear-gradient(135deg, #FAD675, #D49B32);
+    border-color: #E9B856;
+}
+
+.login-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #2A1430;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.checkbox-text {
+    font-size: 0.82rem;
+    color: #C9B2D4;
+}
+
+.quick-demo-link {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #E9B856;
+    background: rgba(233, 184, 86, 0.1);
+    border: 1px solid rgba(233, 184, 86, 0.25);
+    padding: 0.25rem 0.6rem;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.quick-demo-link:hover {
+    background: rgba(233, 184, 86, 0.2);
+    color: #FFFFFF;
+}
+
+/* Primary CTA Button: Log In ➔ */
+.login-btn-primary {
+    width: 100%;
+    height: 50px;
+    border-radius: 0.85rem;
+    background: linear-gradient(135deg, #FAD675 0%, #D49B32 100%);
+    border: none;
+    color: #1F0D25;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 8px 22px rgba(212, 155, 50, 0.35);
+    transition: all 0.25s ease;
+}
+
+.login-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(212, 155, 50, 0.45);
+    background: linear-gradient(135deg, #FCE195 0%, #E3A83F 100%);
+}
+
+.login-btn-primary:active {
+    transform: translateY(0);
+}
+
+/* OR Divider */
+.login-or-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.divider-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.divider-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #8C6D9E;
+    letter-spacing: 0.05em;
+}
+
+/* Social Buttons */
+.login-social-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+}
+
+.social-btn {
+    width: 100%;
+    height: 46px;
+    border-radius: 0.85rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.25s ease;
+}
+
+.social-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Footer Link */
+.login-footer-note {
+    text-align: center;
+    font-size: 0.84rem;
+    color: #C9B2D4;
+    margin: 0;
+}
+
+.create-acc-link {
+    color: #E9B856;
+    font-weight: 700;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: inherit;
+    font-family: inherit;
+}
+
+.create-acc-link:hover {
+    color: #FCE1A6;
+    text-decoration: underline;
+}
+
+/* Error & Success Boxes */
+.auth-error-box {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #FCA5A5;
+    font-size: 0.8rem;
+}
+
+.auth-success-box {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6EE7B7;
+    font-size: 0.8rem;
+}
+
+/* Modal */
+.auth-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    padding: 1.5rem;
+}
+
+.auth-modal-card {
+    background: #24102A;
+    border: 1px solid rgba(233, 184, 86, 0.3);
+    border-radius: 1.25rem;
+    padding: 1.75rem;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.modal-header h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: #FFFFFF;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #A68BB3;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   RESPONSIVENESS (Matching Mobile View in Screenshot)
+   ========================================================================== */
+@media (max-width: 991px) {
+    .auth-board {
+        flex-direction: column;
+        max-width: 480px;
+        min-height: auto;
+        border-radius: 24px;
+    }
+    
+    .auth-hero-panel {
+        flex: none;
+        max-width: 100%;
+        padding: 2rem 1.5rem 2.5rem 1.5rem;
+    }
+
+    .hero-curved-edge {
+        display: none;
+    }
+
+    .hero-features-row {
+        display: none; /* Mobile view prioritizes brand header */
+    }
+
+    .auth-form-panel {
+        flex: none;
+        max-width: 100%;
+        padding: 2rem 1.75rem 2.5rem 1.75rem;
+    }
+}
