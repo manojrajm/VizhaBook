@@ -786,8 +786,8 @@
 
 .country-code-select {
     height: 48px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: rgba(45, 20, 52, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 0.85rem;
     padding: 0 0.6rem;
     color: #E2D3E8;
@@ -795,11 +795,12 @@
     font-family: inherit;
     outline: none;
     cursor: pointer;
+    color-scheme: dark;
     transition: all 0.25s ease;
 }
 
 .country-code-select option {
-    background: #24102A;
+    background-color: #24102A;
     color: #FFFFFF;
 }
 

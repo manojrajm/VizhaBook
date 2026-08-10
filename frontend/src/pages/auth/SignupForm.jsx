@@ -279,27 +279,28 @@ const SignupForm = ({ onSwitchToLogin }) => {
             {/* CTA Button: Create Account ➔ */}
             <button
                 type="submit"
-                className={`login-submit-btn ${loading ? 'btn-loading' : ''}`}
+                className={`login-btn-primary ${loading ? 'btn-loading' : ''}`}
                 disabled={loading}
+                style={{ marginTop: '0.5rem' }}
             >
                 {loading ? (
-                    <span className="btn-spinner" />
+                    <span>Creating Account...</span>
                 ) : (
                     <span>Create Account &#10140;</span>
                 )}
             </button>
 
             {/* Footer Prompt */}
-            <div className="login-footer-prompt">
-                <span>Already have an account?</span>{' '}
+            <p className="login-footer-note" style={{ marginTop: '1.2rem' }}>
+                Already have an account?{' '}
                 <button
                     type="button"
-                    className="login-switch-btn"
+                    className="create-acc-link"
                     onClick={onSwitchToLogin}
                 >
                     Log In
                 </button>
-            </div>
+            </p>
         </motion.form>
     );
 };
