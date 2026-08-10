@@ -1,231 +1,72 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle, ShieldCheck, CheckCircle } from 'lucide-react';
+import { User, Phone, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const COUNTRY_CODES = [
-    { code: '+91', country: 'IN', label: '🇮🇳 +91' },
-    { code: '+1', country: 'US', label: '🇺🇸 +1' },
-    { code: '+44', country: 'GB', label: '🇬🇧 +44' },
-    { code: '+61', country: 'AU', label: '🇦🇺 +61' },
-    { code: '+971', country: 'AE', label: '🇦🇪 +971' },
-    { code: '+65', country: 'SG', label: '🇸🇬 +65' },
-    { code: '+60', country: 'MY', label: '🇲🇾 +60' },
-    { code: '+49', country: 'DE', label: '🇩🇪 +49' },
-    { code: '+33', country: 'FR', label: '🇫🇷 +33' },
-    { code: '+81', country: 'JP', label: '🇯🇵 +81' },
-    { code: '+86', country: 'CN', label: '🇨🇳 +86' },
-    { code: '+82', country: 'KR', label: '🇰🇷 +82' },
-    { code: '+966', country: 'SA', label: '🇸🇦 +966' },
-    { code: '+974', country: 'QA', label: '🇶🇦 +974' },
-    { code: '+968', country: 'OM', label: '🇴🇲 +968' },
-    { code: '+973', country: 'BH', label: '🇧🇭 +973' },
-    { code: '+965', country: 'KW', label: '🇰🇼 +965' },
-    { code: '+94', country: 'LK', label: '🇱🇰 +94' },
-    { code: '+977', country: 'NP', label: '🇳🇵 +977' },
-    { code: '+880', country: 'BD', label: '🇧🇩 +880' },
+    { code: '+91', label: '🇮🇳 +91' },
+    { code: '+1', label: '🇺🇸 +1' },
+    { code: '+44', label: '🇬🇧 +44' },
+    { code: '+61', label: '🇦🇺 +61' },
+    { code: '+971', label: '🇦🇪 +971' },
+    { code: '+65', label: '🇸🇬 +65' },
+    { code: '+60', label: '🇲🇾 +60' },
 ];
 
-const TOTAL_STEPS = 5;
-
-const getPasswordStrength = (password) => {
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-    if (password.length >= 12) score++;
-
-    if (score <= 1) return { level: 'weak', label: 'Weak', segments: 1 };
-    if (score <= 3) return { level: 'medium', label: 'Medium', segments: 3 };
-    return { level: 'strong', label: 'Strong', segments: 5 };
-};
-
-const slideVariants = {
-    enter: (direction) => ({ x: direction > 0 ? 80 : -80, opacity: 0 }),
-    center: { x: 0, opacity: 1 },
-    exit: (direction) => ({ x: direction > 0 ? -80 : 80, opacity: 0 })
-};
-
 const SignupForm = ({ onSwitchToLogin }) => {
-    const { signup, sendOtp, verifyOtp } = useAuth();
-    const [step, setStep] = useState(1);
-    const [direction, setDirection] = useState(1);
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    // Form data
+    const { signup } = useAuth();
     const [name, setName] = useState('');
     const [countryCode, setCountryCode] = useState('+91');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
-    const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
-    const [completed, setCompleted] = useState(false);
 
-    // OTP resend timer
-    const [resendTimer, setResendTimer] = useState(0);
-    const otpRefs = useRef([]);
+    const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (resendTimer > 0) {
-            const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [resendTimer]);
+    const getPasswordStrength = (pass) => {
+        if (!pass) return null;
+        let score = 0;
+        if (pass.length >= 8) score++;
+        if (/[A-Z]/.test(pass)) score++;
+        if (/[0-9]/.test(pass)) score++;
+        if (/[^A-Za-z0-9]/.test(pass)) score++;
+        if (score <= 1) return { level: 'weak', label: 'Weak', color: '#FCA5A5', width: '33%' };
+        if (score <= 3) return { level: 'medium', label: 'Medium', color: '#FBBF24', width: '66%' };
+        return { level: 'strong', label: 'Strong', color: '#34D399', width: '100%' };
+    };
 
-    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const strength = getPasswordStrength(password);
+    const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
 
-    const goNext = () => {
-        setDirection(1);
-        setStep(prev => prev + 1);
+    const handleSignupSubmit = async (e) => {
+        if (e) e.preventDefault();
         setError('');
-    };
+        setSuccessMsg('');
 
-    const goBack = () => {
-        setDirection(-1);
-        setStep(prev => prev - 1);
-        setError('');
-    };
+        const trimmedName = name.trim();
+        const trimmedEmail = email.trim();
+        const trimmedPhone = phone.trim();
 
-    // Step 1: Name
-    const handleNameNext = () => {
-        const trimmed = name.trim();
-        if (!trimmed) {
-            setError('Please enter your name.');
+        if (!trimmedName) {
+            setError('Please enter your full name.');
             return;
         }
-        if (!/^[A-Za-z\s]+$/.test(trimmed)) {
-            setError('Name should contain only letters and spaces.');
+        if (!trimmedPhone || !/^\d{7,15}$/.test(trimmedPhone)) {
+            setError('Please enter a valid mobile number (7-15 digits).');
             return;
         }
-        if (trimmed.length < 2) {
-            setError('Name must be at least 2 characters.');
-            return;
-        }
-        goNext();
-    };
-
-    // Step 2: Phone
-    const handlePhoneNext = () => {
-        const trimmed = phone.trim();
-        if (!trimmed) {
-            setError('Please enter your mobile number.');
-            return;
-        }
-        if (!/^\d+$/.test(trimmed)) {
-            setError('Mobile number should contain only digits.');
-            return;
-        }
-        if (countryCode === '+91' && trimmed.length !== 10) {
-            setError('Indian mobile numbers must be exactly 10 digits.');
-            return;
-        }
-        if (trimmed.length < 7 || trimmed.length > 15) {
-            setError('Please enter a valid mobile number.');
-            return;
-        }
-        goNext();
-    };
-
-    // Step 3: Email → send OTP
-    const handleEmailNext = async () => {
-        const trimmed = email.trim();
-        if (!trimmed) {
-            setError('Please enter your email address.');
-            return;
-        }
-        if (!validateEmail(trimmed)) {
+        if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
             setError('Please enter a valid email address.');
             return;
         }
-
-        setLoading(true);
-        await new Promise(r => setTimeout(r, 500));
-        const result = sendOtp(trimmed);
-        setLoading(false);
-
-        if (result.success) {
-            setResendTimer(30);
-            goNext();
-        }
-    };
-
-    // Step 4: OTP
-    const handleOtpChange = useCallback((index, value) => {
-        if (value.length > 1) value = value.slice(-1);
-        if (value && !/^\d$/.test(value)) return;
-
-        const newOtp = [...otp];
-        newOtp[index] = value;
-        setOtp(newOtp);
-        setError('');
-
-        if (value && index < 5) {
-            otpRefs.current[index + 1]?.focus();
-        }
-    }, [otp]);
-
-    const handleOtpKeyDown = useCallback((index, e) => {
-        if (e.key === 'Backspace' && !otp[index] && index > 0) {
-            otpRefs.current[index - 1]?.focus();
-        }
-    }, [otp]);
-
-    const handleOtpPaste = useCallback((e) => {
-        e.preventDefault();
-        const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-        if (pasted.length > 0) {
-            const newOtp = [...otp];
-            for (let i = 0; i < 6; i++) {
-                newOtp[i] = pasted[i] || '';
-            }
-            setOtp(newOtp);
-            const focusIdx = Math.min(pasted.length, 5);
-            otpRefs.current[focusIdx]?.focus();
-        }
-    }, [otp]);
-
-    const handleVerifyOtp = () => {
-        const code = otp.join('');
-        if (code.length !== 6) {
-            setError('Please enter the complete 6-digit code.');
-            return;
-        }
-        const result = verifyOtp(email, code);
-        if (result.success) {
-            goNext();
-        } else {
-            setError(result.error);
-        }
-    };
-
-    const handleResendOtp = () => {
-        if (resendTimer > 0) return;
-        sendOtp(email);
-        setResendTimer(30);
-        setOtp(['', '', '', '', '', '']);
-    };
-
-    // Step 5: Password → create account
-    const handleCreateAccount = async () => {
-        if (!password) {
-            setError('Please enter a password.');
-            return;
-        }
-        if (password.length < 8) {
-            setError('Password must be at least 8 characters.');
-            return;
-        }
-        if (!/[A-Z]/.test(password)) {
-            setError('Password must contain at least one uppercase letter.');
-            return;
-        }
-        if (!/[0-9]/.test(password)) {
-            setError('Password must contain at least one number.');
+        if (!password || password.length < 6) {
+            setError('Password must be at least 6 characters long.');
             return;
         }
         if (password !== confirmPassword) {
@@ -234,446 +75,245 @@ const SignupForm = ({ onSwitchToLogin }) => {
         }
 
         setLoading(true);
-        await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 300));
 
-        const result = signup({
-            name: name.trim(),
-            phone: phone.trim(),
+        const result = await signup({
+            name: trimmedName,
+            email: trimmedEmail,
+            phone: trimmedPhone,
             countryCode,
-            email: email.trim(),
             password
         });
 
-        setLoading(false);
-
         if (result.success) {
-            setCompleted(true);
+            setSuccessMsg('Account Created Successfully! Redirecting to Log In...');
+            setLoading(false);
+            setTimeout(() => {
+                onSwitchToLogin(trimmedEmail);
+            }, 1400);
         } else {
-            setError(result.error);
+            setError(result.error || 'Failed to create account. Please try again.');
+            setLoading(false);
         }
     };
 
-    const passwordStrength = getPasswordStrength(password);
-
-    // Success screen
-    if (completed) {
-        return (
-            <motion.div
-                className="auth-success-screen"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            >
-                <motion.div
-                    className="auth-success-icon"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                >
-                    🎉
-                </motion.div>
-                <h2>Account Created Successfully!</h2>
-                <p>Welcome to VizhaBook, {name.trim().split(' ')[0]}! Your account is ready.</p>
-                <button
-                    className="auth-btn-primary"
-                    onClick={onSwitchToLogin}
-                    style={{ marginTop: '1rem', maxWidth: '280px' }}
-                    id="goto-login"
-                >
-                    Go to Login Page
-                    <span className="btn-arrow"><ArrowRight size={16} /></span>
-                </button>
-            </motion.div>
-        );
-    }
-
     return (
-        <motion.div
+        <motion.form
+            onSubmit={handleSignupSubmit}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.35 }}
+            className="auth-signup-form"
         >
-            {/* Step Progress */}
-            <div className="auth-step-progress">
-                {Array.from({ length: TOTAL_STEPS }, (_, i) => (
-                    <React.Fragment key={i}>
-                        <div
-                            className={`auth-step-dot ${i + 1 === step ? 'active' : ''} ${i + 1 < step ? 'completed' : ''}`}
-                        />
-                        {i < TOTAL_STEPS - 1 && (
-                            <div className={`auth-step-connector ${i + 1 < step ? 'active' : ''}`} />
-                        )}
-                    </React.Fragment>
-                ))}
+            {/* Header */}
+            <div className="login-header-group">
+                <h2 className="login-title">Create Account</h2>
+                <p className="login-subtitle">Join VizhaBook to manage your events & mois</p>
+
+                {/* Gold Ornament Divider */}
+                <div className="gold-ornament-divider">
+                    <svg width="140" height="12" viewBox="0 0 140 12" fill="none">
+                        <path d="M0 6H55" stroke="#E9B856" strokeWidth="1" strokeOpacity="0.6" />
+                        <path d="M85 6H140" stroke="#E9B856" strokeWidth="1" strokeOpacity="0.6" />
+                        <circle cx="58" cy="6" r="2" fill="#E9B856" />
+                        <circle cx="82" cy="6" r="2" fill="#E9B856" />
+                        <path d="M64 6 C64 3, 70 3, 70 6 C70 9, 76 9, 76 6 C76 3, 70 3, 70 6 Z" stroke="#E9B856" strokeWidth="1.2" fill="none" />
+                        <circle cx="70" cy="6" r="1.5" fill="#E9B856" />
+                    </svg>
+                </div>
             </div>
 
-            {/* Error */}
+            {/* Error Banner */}
             <AnimatePresence>
                 {error && (
                     <motion.div
-                        className="auth-error"
+                        className="auth-error-box"
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                     >
                         <AlertCircle size={16} color="#FCA5A5" />
-                        <span className="auth-error-text">{error}</span>
+                        <span>{error}</span>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Steps */}
-            <AnimatePresence mode="wait" custom={direction}>
-                {/* Step 1: Name */}
-                {step === 1 && (
+            {/* Success Toast Banner */}
+            <AnimatePresence>
+                {successMsg && (
                     <motion.div
-                        key="step1"
-                        custom={direction}
-                        variants={slideVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                        className="auth-success-box"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
                     >
-                        <div className="auth-form-header">
-                            <h2>What's your <strong>Name?</strong></h2>
-                            <p>Let's start with your full name</p>
-                        </div>
-
-                        <div className="auth-input-group">
-                            <label className="auth-input-label">Full Name</label>
-                            <div className="auth-input-wrapper">
-                                <span className="auth-input-icon"><User size={18} /></span>
-                                <input
-                                    className="auth-input"
-                                    type="text"
-                                    placeholder="Enter your full name"
-                                    value={name}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (val === '' || /^[A-Za-z\s]*$/.test(val)) {
-                                            setName(val);
-                                            setError('');
-                                        }
-                                    }}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleNameNext()}
-                                    autoFocus
-                                    id="signup-name"
-                                />
-                            </div>
-                            <span style={{ fontSize: '0.7rem', color: '#4B5563', marginTop: '0.15rem' }}>
-                                Only letters and spaces allowed
-                            </span>
-                        </div>
-
-                        <button className="auth-btn-primary" onClick={handleNameNext} id="step1-next">
-                            Continue
-                            <span className="btn-arrow"><ArrowRight size={16} /></span>
-                        </button>
-
-                        <p className="auth-footer-text" style={{ marginTop: '1.5rem' }}>
-                            Already have an account?{' '}
-                            <button type="button" className="auth-footer-link" onClick={onSwitchToLogin}>
-                                Login
-                            </button>
-                        </p>
-                    </motion.div>
-                )}
-
-                {/* Step 2: Phone */}
-                {step === 2 && (
-                    <motion.div
-                        key="step2"
-                        custom={direction}
-                        variants={slideVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    >
-                        <div className="auth-form-header">
-                            <h2>Your <strong>Mobile Number</strong></h2>
-                            <p>We'll use this for your account profile</p>
-                        </div>
-
-                        <div className="auth-input-group">
-                            <label className="auth-input-label">Mobile Number</label>
-                            <div className="auth-phone-wrapper">
-                                <select
-                                    className="auth-country-select"
-                                    value={countryCode}
-                                    onChange={(e) => setCountryCode(e.target.value)}
-                                    id="signup-country-code"
-                                >
-                                    {COUNTRY_CODES.map(cc => (
-                                        <option key={cc.code} value={cc.code}>{cc.label}</option>
-                                    ))}
-                                </select>
-                                <div className="auth-phone-input-wrapper">
-                                    <div className="auth-input-wrapper">
-                                        <span className="auth-input-icon"><Phone size={18} /></span>
-                                        <input
-                                            className="auth-input"
-                                            type="tel"
-                                            placeholder="Enter mobile number"
-                                            value={phone}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                if (val === '' || /^\d*$/.test(val)) {
-                                                    setPhone(val);
-                                                    setError('');
-                                                }
-                                            }}
-                                            onKeyDown={(e) => e.key === 'Enter' && handlePhoneNext()}
-                                            autoFocus
-                                            id="signup-phone"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <span style={{ fontSize: '0.7rem', color: '#4B5563', marginTop: '0.15rem' }}>
-                                Numbers only{countryCode === '+91' ? ' • 10 digits for India' : ''}
-                            </span>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <button className="auth-btn-secondary" onClick={goBack} style={{ flex: '0 0 auto', width: '48px', padding: '0.85rem' }}>
-                                <ArrowLeft size={18} />
-                            </button>
-                            <button className="auth-btn-primary" onClick={handlePhoneNext} style={{ flex: 1 }} id="step2-next">
-                                Continue
-                                <span className="btn-arrow"><ArrowRight size={16} /></span>
-                            </button>
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* Step 3: Email */}
-                {step === 3 && (
-                    <motion.div
-                        key="step3"
-                        custom={direction}
-                        variants={slideVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    >
-                        <div className="auth-form-header">
-                            <h2>Your <strong>Email Address</strong></h2>
-                            <p>We'll send a verification code to this email</p>
-                        </div>
-
-                        <div className="auth-input-group">
-                            <label className="auth-input-label">Email Address</label>
-                            <div className="auth-input-wrapper">
-                                <span className="auth-input-icon"><Mail size={18} /></span>
-                                <input
-                                    className="auth-input"
-                                    type="email"
-                                    placeholder="Enter your email address"
-                                    value={email}
-                                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleEmailNext()}
-                                    autoFocus
-                                    id="signup-email"
-                                />
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <button className="auth-btn-secondary" onClick={goBack} style={{ flex: '0 0 auto', width: '48px', padding: '0.85rem' }}>
-                                <ArrowLeft size={18} />
-                            </button>
-                            <button className="auth-btn-primary" onClick={handleEmailNext} disabled={loading} style={{ flex: 1 }} id="step3-next">
-                                {loading ? (
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <motion.span
-                                            animate={{ rotate: 360 }}
-                                            transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-                                            style={{ display: 'inline-block', width: 18, height: 18, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%' }}
-                                        />
-                                        Sending OTP...
-                                    </span>
-                                ) : (
-                                    <>
-                                        Send Verification Code
-                                        <span className="btn-arrow"><ArrowRight size={16} /></span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* Step 4: OTP */}
-                {step === 4 && (
-                    <motion.div
-                        key="step4"
-                        custom={direction}
-                        variants={slideVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    >
-                        <div className="auth-form-header" style={{ textAlign: 'center' }}>
-                            <div style={{ marginBottom: '0.75rem' }}>
-                                <ShieldCheck size={36} color="#D4A845" />
-                            </div>
-                            <h2>Verify your <strong>Email</strong></h2>
-                            <p>Enter the 6-digit code sent to <strong style={{ color: '#D4A845' }}>{email}</strong></p>
-                        </div>
-
-                        <div className="auth-otp-container" onPaste={handleOtpPaste}>
-                            {otp.map((digit, i) => (
-                                <input
-                                    key={i}
-                                    ref={(el) => otpRefs.current[i] = el}
-                                    className={`auth-otp-input ${digit ? 'filled' : ''}`}
-                                    type="text"
-                                    inputMode="numeric"
-                                    maxLength={1}
-                                    value={digit}
-                                    onChange={(e) => handleOtpChange(i, e.target.value)}
-                                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                                    autoFocus={i === 0}
-                                    id={`otp-${i}`}
-                                />
-                            ))}
-                        </div>
-
-                        <div className="auth-resend-row">
-                            {resendTimer > 0 ? (
-                                <span className="auth-resend-timer">Resend code in {resendTimer}s</span>
-                            ) : (
-                                <button className="auth-resend-btn" onClick={handleResendOtp}>
-                                    Resend Code
-                                </button>
-                            )}
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-                            <button className="auth-btn-secondary" onClick={goBack} style={{ flex: '0 0 auto', width: '48px', padding: '0.85rem' }}>
-                                <ArrowLeft size={18} />
-                            </button>
-                            <button className="auth-btn-primary" onClick={handleVerifyOtp} style={{ flex: 1 }} id="step4-verify">
-                                Verify Code
-                                <span className="btn-arrow"><ArrowRight size={16} /></span>
-                            </button>
-                        </div>
-
-                        <p style={{ textAlign: 'center', fontSize: '0.7rem', color: '#4B5563', marginTop: '1rem' }}>
-                            💡 Dev mode: use code <strong style={{ color: '#D4A845' }}>123456</strong>
-                        </p>
-                    </motion.div>
-                )}
-
-                {/* Step 5: Password */}
-                {step === 5 && (
-                    <motion.div
-                        key="step5"
-                        custom={direction}
-                        variants={slideVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    >
-                        <div className="auth-form-header">
-                            <h2>Set your <strong>Password</strong></h2>
-                            <p>Choose a strong password for your account</p>
-                        </div>
-
-                        <div className="auth-input-group">
-                            <label className="auth-input-label">Password</label>
-                            <div className="auth-input-wrapper">
-                                <span className="auth-input-icon"><Lock size={18} /></span>
-                                <input
-                                    className="auth-input"
-                                    type={showPassword ? 'text' : 'password'}
-                                    placeholder="Create a password"
-                                    value={password}
-                                    onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                                    autoFocus
-                                    id="signup-password"
-                                />
-                                <button type="button" className="auth-input-toggle" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                            {password && (
-                                <>
-                                    <div className="auth-strength-bar">
-                                        {[1, 2, 3, 4, 5].map(i => (
-                                            <div
-                                                key={i}
-                                                className={`auth-strength-segment ${i <= passwordStrength.segments ? passwordStrength.level : ''}`}
-                                            />
-                                        ))}
-                                    </div>
-                                    <span className={`auth-strength-text ${passwordStrength.level}`}>
-                                        Password strength: {passwordStrength.label}
-                                    </span>
-                                </>
-                            )}
-                        </div>
-
-                        <div className="auth-input-group">
-                            <label className="auth-input-label">Confirm Password</label>
-                            <div className={`auth-input-wrapper ${confirmPassword && password !== confirmPassword ? 'error' : ''}`}>
-                                <span className="auth-input-icon"><Lock size={18} /></span>
-                                <input
-                                    className="auth-input"
-                                    type={showConfirm ? 'text' : 'password'}
-                                    placeholder="Confirm your password"
-                                    value={confirmPassword}
-                                    onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleCreateAccount()}
-                                    id="signup-confirm-password"
-                                />
-                                <button type="button" className="auth-input-toggle" onClick={() => setShowConfirm(!showConfirm)} tabIndex={-1}>
-                                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                            {confirmPassword && password === confirmPassword && (
-                                <span style={{ fontSize: '0.7rem', color: '#10B981', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem' }}>
-                                    <CheckCircle size={12} /> Passwords match
-                                </span>
-                            )}
-                        </div>
-
-                        <div style={{ fontSize: '0.72rem', color: '#4B5563', marginBottom: '1.25rem', lineHeight: 1.6 }}>
-                            Password must contain: min 8 characters, 1 uppercase letter, 1 number
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <button className="auth-btn-secondary" onClick={goBack} style={{ flex: '0 0 auto', width: '48px', padding: '0.85rem' }}>
-                                <ArrowLeft size={18} />
-                            </button>
-                            <button className="auth-btn-primary" onClick={handleCreateAccount} disabled={loading} style={{ flex: 1 }} id="step5-create">
-                                {loading ? (
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <motion.span
-                                            animate={{ rotate: 360 }}
-                                            transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-                                            style={{ display: 'inline-block', width: 18, height: 18, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%' }}
-                                        />
-                                        Creating Account...
-                                    </span>
-                                ) : (
-                                    <>
-                                        Create Account
-                                        <span className="btn-arrow"><ArrowRight size={16} /></span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                        <CheckCircle size={16} color="#6EE7B7" />
+                        <span>{successMsg}</span>
                     </motion.div>
                 )}
             </AnimatePresence>
-        </motion.div>
+
+            {/* Field 1: Name */}
+            <div className="login-field-group">
+                <label className="login-field-label" htmlFor="signup-name">
+                    Full Name
+                </label>
+                <div className="login-field-input-box">
+                    <span className="field-icon"><User size={18} /></span>
+                    <input
+                        className="field-input"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={name}
+                        onChange={(e) => { setName(e.target.value); setError(''); }}
+                        id="signup-name"
+                    />
+                </div>
+            </div>
+
+            {/* Field 2: Mobile Number */}
+            <div className="login-field-group">
+                <label className="login-field-label" htmlFor="signup-phone">
+                    Mobile Number
+                </label>
+                <div className="phone-field-row">
+                    <select
+                        className="country-code-select"
+                        value={countryCode}
+                        onChange={(e) => setCountryCode(e.target.value)}
+                    >
+                        {COUNTRY_CODES.map(c => (
+                            <option key={c.code} value={c.code}>{c.label}</option>
+                        ))}
+                    </select>
+                    <div className="login-field-input-box phone-input-box">
+                        <span className="field-icon"><Phone size={18} /></span>
+                        <input
+                            className="field-input"
+                            type="tel"
+                            placeholder="10-digit phone number"
+                            value={phone}
+                            onChange={(e) => { setPhone(e.target.value.replace(/\D/g, '')); setError(''); }}
+                            id="signup-phone"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Field 3: Email Address */}
+            <div className="login-field-group">
+                <label className="login-field-label" htmlFor="signup-email">
+                    Email Address
+                </label>
+                <div className="login-field-input-box">
+                    <span className="field-icon"><Mail size={18} /></span>
+                    <input
+                        className="field-input"
+                        type="email"
+                        placeholder="name@example.com"
+                        value={email}
+                        onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                        id="signup-email"
+                    />
+                </div>
+            </div>
+
+            {/* Field 4: Password */}
+            <div className="login-field-group">
+                <div className="login-label-row">
+                    <label className="login-field-label" htmlFor="signup-password">
+                        Password
+                    </label>
+                    {strength && (
+                        <span className="strength-text" style={{ color: strength.color }}>
+                            {strength.label}
+                        </span>
+                    )}
+                </div>
+                <div className="login-field-input-box">
+                    <span className="field-icon"><Lock size={18} /></span>
+                    <input
+                        className="field-input"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Create password"
+                        value={password}
+                        onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                        id="signup-password"
+                    />
+                    <button
+                        type="button"
+                        className="field-toggle-btn"
+                        onClick={() => setShowPassword(!showPassword)}
+                    >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                </div>
+                {strength && (
+                    <div className="strength-bar-bg">
+                        <div
+                            className="strength-bar-fill"
+                            style={{ width: strength.width, backgroundColor: strength.color }}
+                        />
+                    </div>
+                )}
+            </div>
+
+            {/* Field 5: Confirm Password */}
+            <div className="login-field-group">
+                <div className="login-label-row">
+                    <label className="login-field-label" htmlFor="signup-confirm-password">
+                        Confirm Password
+                    </label>
+                    {confirmPassword && (
+                        <span className="match-status" style={{ color: passwordsMatch ? '#34D399' : '#FCA5A5' }}>
+                            {passwordsMatch ? '✓ Matches' : '✗ Mismatch'}
+                        </span>
+                    )}
+                </div>
+                <div className="login-field-input-box">
+                    <span className="field-icon"><Lock size={18} /></span>
+                    <input
+                        className="field-input"
+                        type={showConfirm ? 'text' : 'password'}
+                        placeholder="Confirm password"
+                        value={confirmPassword}
+                        onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
+                        id="signup-confirm-password"
+                    />
+                    <button
+                        type="button"
+                        className="field-toggle-btn"
+                        onClick={() => setShowConfirm(!showConfirm)}
+                    >
+                        {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                </div>
+            </div>
+
+            {/* CTA Button */}
+            <button
+                type="submit"
+                className="login-btn-primary"
+                disabled={loading}
+                id="signup-submit"
+                style={{ marginTop: '0.5rem' }}
+            >
+                {loading ? (
+                    <span>Creating Account...</span>
+                ) : (
+                    <span>Create Account ➔</span>
+                )}
+            </button>
+
+            {/* Footer Switch Link */}
+            <p className="login-footer-note" style={{ marginTop: '1.2rem' }}>
+                Already have an account?{' '}
+                <button type="button" className="create-acc-link" onClick={onSwitchToLogin}>
+                    Log In
+                </button>
+            </p>
+        </motion.form>
     );
 };
 

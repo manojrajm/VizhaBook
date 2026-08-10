@@ -1,24 +1,36 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Globe } from 'lucide-react';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 import loginDesktopImg from '../../assets/LoginDesktop.png';
 import './AuthPage.css';
 
+const cardVariants = {
+    initial: { rotateY: 90, opacity: 0, scale: 0.95 },
+    animate: { rotateY: 0, opacity: 1, scale: 1, transition: { duration: 0.45, ease: [0.25, 0.8, 0.25, 1] } },
+    exit: { rotateY: -90, opacity: 0, scale: 0.95, transition: { duration: 0.35, ease: [0.25, 0.8, 0.25, 1] } }
+};
+
 const AuthPage = () => {
     const [activeTab, setActiveTab] = useState('login');
-    const [language, setLanguage] = useState('English');
+    const [prefilledEmail, setPrefilledEmail] = useState('');
 
     const switchToSignup = () => setActiveTab('signup');
-    const switchToLogin = () => setActiveTab('login');
+    const switchToLogin = (email = '') => {
+        if (typeof email === 'string' && email) {
+            setPrefilledEmail(email);
+        }
+        setActiveTab('login');
+    };
 
     return (
         <div className="auth-page-container">
-            {/* ===== MAIN AUTH BOARD CARD ===== */}
+            {/* ===== MAIN AUTH BOARD CONTAINER ===== */}
             <div className="auth-board">
 
                 {/* ==============================================
-                   LEFT HERO PANEL (Exact LoginDesktop.png image)
+                   LEFT HERO PANEL (Desktop & Tablet View)
                    ============================================== */}
                 <div className="auth-hero-panel">
                     <img
@@ -29,27 +41,28 @@ const AuthPage = () => {
                 </div>
 
                 {/* ==============================================
-                   RIGHT FORM PANEL (Royal Deep Purple Theme)
+                   RIGHT FORM PANEL (3D Golden Card Perspective)
                    ============================================== */}
                 <div className="auth-form-panel">
-                    {/* Floating MNC SaaS Card with Golden Border */}
-                    <div className="auth-form-card">
-                        {/* Language Selector Dropdown (Top Right) */}
-                        <div className="auth-lang-picker">
-                            <button className="lang-btn" type="button">
-                                <Globe size={15} />
-                                <span>{language}</span>
-                                <span className="lang-chevron">⌵</span>
-                            </button>
-                        </div>
-
-                        <div className="auth-form-wrapper">
-                            {activeTab === 'login' ? (
-                                <LoginForm onSwitchToSignup={switchToSignup} />
-                            ) : (
-                                <SignupForm onSwitchToLogin={switchToLogin} />
-                            )}
-                        </div>
+                    <div className="auth-card-perspective-wrapper">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activeTab}
+                                variants={cardVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                className="auth-form-card"
+                            >
+                                <div className="auth-form-wrapper">
+                                    {activeTab === 'login' ? (
+                                        <LoginForm onSwitchToSignup={switchToSignup} initialEmail={prefilledEmail} />
+                                    ) : (
+                                        <SignupForm onSwitchToLogin={switchToLogin} />
+                                    )}
+                                </div>
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
                 </div>
 
@@ -59,6 +72,3 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
-
-
-

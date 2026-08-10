@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, X, CheckCircle, Rocket } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const LoginForm = ({ onSwitchToSignup }) => {
+const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
     const { login, signup, resetPassword } = useAuth();
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState(initialEmail || '');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
@@ -33,7 +33,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
         setLoading(true);
         await new Promise(r => setTimeout(r, 400));
 
-        const result = login(email, password, rememberMe);
+        const result = await login(email, password, rememberMe);
         if (!result.success) {
             setError(result.error);
         }
@@ -51,7 +51,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
 
         await new Promise(r => setTimeout(r, 400));
 
-        let result = login(demoEmail, demoPass, true);
+        let result = await login(demoEmail, demoPass, true);
         if (!result.success) {
             signup({
                 name: 'Demo Admin',
@@ -60,7 +60,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
                 email: demoEmail,
                 password: demoPass
             });
-            result = login(demoEmail, demoPass, true);
+            result = await login(demoEmail, demoPass, true);
         }
 
         if (!result.success) {
