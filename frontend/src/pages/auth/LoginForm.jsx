@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, X, CheckCircle, Rocket } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
+    const navigate = useNavigate();
     const { login, signup, resetPassword } = useAuth();
     const [email, setEmail] = useState(initialEmail || '');
     const [password, setPassword] = useState('');
@@ -34,7 +36,9 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
         await new Promise(r => setTimeout(r, 400));
 
         const result = await login(email, password, rememberMe);
-        if (!result.success) {
+        if (result.success) {
+            navigate('/');
+        } else {
             setError(result.error);
         }
         setLoading(false);
@@ -53,7 +57,7 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
 
         let result = await login(demoEmail, demoPass, true);
         if (!result.success) {
-            signup({
+            await signup({
                 name: 'Demo Admin',
                 phone: '9876543210',
                 countryCode: '+91',
@@ -63,7 +67,9 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
             result = await login(demoEmail, demoPass, true);
         }
 
-        if (!result.success) {
+        if (result.success) {
+            navigate('/');
+        } else {
             setError(result.error || 'Unable to start demo mode.');
         }
         setDemoLoading(false);

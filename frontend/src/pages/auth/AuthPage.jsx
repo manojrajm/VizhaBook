@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 import loginDesktopImg from '../../assets/LoginDesktop.png';
@@ -13,8 +14,16 @@ const cardVariants = {
 };
 
 const AuthPage = () => {
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('login');
     const [prefilledEmail, setPrefilledEmail] = useState('');
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/', { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
 
     const switchToSignup = () => setActiveTab('signup');
     const switchToLogin = (email = '') => {
