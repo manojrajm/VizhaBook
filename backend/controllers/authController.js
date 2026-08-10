@@ -53,7 +53,9 @@ export const loginUser = async (req, res) => {
                         name: user.name,
                         email: user.email,
                         phone: user.phone,
-                        countryCode: user.countryCode
+                        countryCode: user.countryCode || user.country_code || '+91',
+                        role: user.role || 'USER',
+                        accountId: user.accountId || user.account_id
                     },
                     token
                 });
@@ -81,7 +83,9 @@ export const loginUser = async (req, res) => {
                         name: pgUser.name,
                         email: pgUser.email,
                         phone: pgUser.phone,
-                        countryCode: pgUser.country_code || pgUser.countryCode || '+91'
+                        countryCode: pgUser.country_code || pgUser.countryCode || '+91',
+                        role: pgUser.role || 'USER',
+                        accountId: pgUser.account_id || pgUser.accountId
                     },
                     token
                 });
@@ -94,7 +98,7 @@ export const loginUser = async (req, res) => {
     return res.status(401).json({ success: false, error: 'Invalid email/phone or password.' });
 };
 
-// @desc Register new user (Strict USER role assignment)
+// @desc Register new user (Strict USER role & Account creation)
 // @route POST /api/auth/signup
 export const registerUser = async (req, res) => {
     // Client role input is strictly ignored; public registration always assigns USER
@@ -127,7 +131,17 @@ export const registerUser = async (req, res) => {
                 email: cleanEmail,
                 phone: cleanPhone,
                 countryCode: countryCode || '+91',
-                password: hashedPassword
+                password: hashedPassword,
+                role: 'USER',
+                account: {
+                    create: {
+                        name: `${name.trim()}'s Account`,
+                        status: 'ACTIVE'
+                    }
+                }
+            },
+            include: {
+                account: true
             }
         });
 
@@ -139,8 +153,9 @@ export const registerUser = async (req, res) => {
                 name: newUser.name,
                 email: newUser.email,
                 phone: newUser.phone,
-                countryCode: newUser.countryCode,
-                role: userRole
+                countryCode: newUser.countryCode || newUser.country_code,
+                role: newUser.role || userRole,
+                accountId: newUser.accountId || newUser.account_id || (newUser.account ? newUser.account.id : null)
             },
             token
         });
@@ -151,12 +166,21 @@ export const registerUser = async (req, res) => {
     // Direct PostgreSQL pool fallback
     try {
         const id = `u_${Date.now()}`;
+        const accId = `acc_${Date.now()}`;
+
+        // Create Account
+        await pool.query(
+            "INSERT INTO accounts (id, name, status, created_at, updated_at) VALUES ($1, $2, 'ACTIVE', NOW(), NOW());",
+            [accId, `${name.trim()}'s Account`]
+        );
+
+        // Create User
         const query = `
-            INSERT INTO users (id, name, email, phone, country_code, password, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW())
+            INSERT INTO users (id, name, email, phone, country_code, password, role, account_id, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
             RETURNING *;
         `;
-        const values = [id, name.trim(), cleanEmail, cleanPhone, countryCode || '+91', hashedPassword];
+        const values = [id, name.trim(), cleanEmail, cleanPhone, countryCode || '+91', hashedPassword, userRole, accId];
         const result = await pool.query(query, values);
         const newUser = result.rows[0];
 
@@ -169,7 +193,8 @@ export const registerUser = async (req, res) => {
                 email: newUser.email,
                 phone: newUser.phone,
                 countryCode: newUser.country_code || countryCode,
-                role: userRole
+                role: newUser.role || userRole,
+                accountId: newUser.account_id || accId
             },
             token
         });
@@ -179,12 +204,34 @@ export const registerUser = async (req, res) => {
     }
 };
 
+// Self-healing helper: Ensures every user record has a valid Account and account_id
+const ensureUserAccount = async (user) => {
+    let accId = user.accountId || user.account_id;
+    if (!accId) {
+        accId = `acc_${Date.now()}`;
+        try {
+            await pool.query(
+                "INSERT INTO accounts (id, name, status, created_at, updated_at) VALUES ($1, $2, 'ACTIVE', NOW(), NOW()) ON CONFLICT (id) DO NOTHING;",
+                [accId, `${(user.name || 'User').trim()}'s Account`]
+            );
+            await pool.query(
+                "UPDATE users SET account_id = $1, role = COALESCE(role, 'USER') WHERE id = $2;",
+                [accId, user.id]
+            );
+        } catch (err) {
+            console.error('Account auto-healing error:', err.message);
+        }
+    }
+    return accId;
+};
+
 // @desc Get current user profile
 // @route GET /api/auth/me
 export const getMe = async (req, res) => {
     try {
         const user = await prisma.user.findUnique({ where: { id: req.user.id } });
         if (user) {
+            const accId = await ensureUserAccount(user);
             return res.json({
                 success: true,
                 user: {
@@ -192,7 +239,9 @@ export const getMe = async (req, res) => {
                     name: user.name,
                     email: user.email,
                     phone: user.phone,
-                    countryCode: user.countryCode
+                    countryCode: user.countryCode || user.country_code || '+91',
+                    role: user.role || 'USER',
+                    accountId: accId
                 }
             });
         }
@@ -204,6 +253,7 @@ export const getMe = async (req, res) => {
         const result = await pool.query("SELECT * FROM users WHERE id = $1 LIMIT 1", [req.user.id]);
         if (result.rows.length > 0) {
             const user = result.rows[0];
+            const accId = await ensureUserAccount(user);
             return res.json({
                 success: true,
                 user: {
@@ -211,12 +261,14 @@ export const getMe = async (req, res) => {
                     name: user.name,
                     email: user.email,
                     phone: user.phone,
-                    countryCode: user.country_code || '+91'
+                    countryCode: user.country_code || '+91',
+                    role: user.role || 'USER',
+                    accountId: accId
                 }
             });
         }
-    } catch (e) {
-        // Fallback
+    } catch (pgErr) {
+        console.error('getMe error:', pgErr.message);
     }
 
     return res.status(404).json({ success: false, error: 'User not found.' });

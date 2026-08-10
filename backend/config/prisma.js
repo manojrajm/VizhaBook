@@ -57,12 +57,28 @@ export const userQuery = {
 
     async create({ data }) {
         const id = `u_${Date.now()}`;
+        let accountId = data.accountId;
+
+        if (!accountId) {
+            const accName = (data.account && data.account.create && data.account.create.name) 
+                ? data.account.create.name 
+                : `${data.name}'s Account`;
+            const newAccId = `acc_${Date.now()}`;
+            const accQuery = `
+                INSERT INTO accounts (id, name, status, created_at, updated_at)
+                VALUES ($1, $2, 'ACTIVE', NOW(), NOW())
+                RETURNING id;
+            `;
+            const accRes = await pool.query(accQuery, [newAccId, accName]);
+            accountId = accRes.rows[0].id;
+        }
+
         const query = `
-            INSERT INTO users (id, name, email, phone, country_code, password, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW())
+            INSERT INTO users (id, name, email, phone, country_code, password, role, account_id, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
             RETURNING *;
         `;
-        const values = [id, data.name, data.email, data.phone || '', data.countryCode || '+91', data.password];
+        const values = [id, data.name, data.email, data.phone || '', data.countryCode || '+91', data.password, 'USER', accountId];
         const res = await pool.query(query, values);
         return res.rows[0];
     }

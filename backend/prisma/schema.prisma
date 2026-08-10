@@ -6,15 +6,29 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Account {
+  id        String   @id @default(uuid())
+  name      String
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  users     User[]
+
+  @@map("accounts")
+}
+
 model User {
   id          String   @id @default(uuid())
   name        String
   email       String   @unique
   phone       String?  @unique
-  countryCode String   @default("+91")
+  countryCode String   @default("+91") @map("country_code")
   password    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  role        String   @default("USER")
+  accountId   String?  @map("account_id")
+  account     Account? @relation(fields: [accountId], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("users")
 }
