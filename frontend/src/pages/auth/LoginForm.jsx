@@ -103,9 +103,14 @@ const LoginForm = ({ onSwitchToSignup }) => {
                     
                     {/* Gold Ornament Divider */}
                     <div className="gold-ornament-divider">
-                        <span className="line" />
-                        <span className="diamond">❖</span>
-                        <span className="line" />
+                        <svg width="140" height="12" viewBox="0 0 140 12" fill="none">
+                            <path d="M0 6H55" stroke="#E9B856" strokeWidth="1" strokeOpacity="0.6"/>
+                            <path d="M85 6H140" stroke="#E9B856" strokeWidth="1" strokeOpacity="0.6"/>
+                            <circle cx="58" cy="6" r="2" fill="#E9B856"/>
+                            <circle cx="82" cy="6" r="2" fill="#E9B856"/>
+                            <path d="M64 6 C64 3, 70 3, 70 6 C70 9, 76 9, 76 6 C76 3, 70 3, 70 6 Z" stroke="#E9B856" strokeWidth="1.2" fill="none"/>
+                            <circle cx="70" cy="6" r="1.5" fill="#E9B856"/>
+                        </svg>
                     </div>
                 </div>
 

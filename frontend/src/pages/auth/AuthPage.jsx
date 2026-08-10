@@ -15,14 +15,14 @@ const AuthPage = () => {
         <div className="auth-page-container">
             {/* ===== MAIN AUTH BOARD CARD ===== */}
             <div className="auth-board">
-                
+
                 {/* ==============================================
                    LEFT HERO PANEL (Exact login1 page.png image)
                    ============================================== */}
                 <div className="auth-hero-panel">
-                    <img 
-                        src="/login_hero_panel.png" 
-                        alt="VizhaBook Traditions" 
+                    <img
+                        src="/login1_page_exact.png"
+                        alt="VizhaBook Traditions"
                         className="hero-image-exact"
                     />
                 </div>
@@ -31,7 +31,7 @@ const AuthPage = () => {
                    RIGHT FORM PANEL (Royal Deep Purple Theme)
                    ============================================== */}
                 <div className="auth-form-panel">
-                    
+
                     {/* Language Selector Dropdown (Top Right) */}
                     <div className="auth-lang-picker">
                         <button className="lang-btn" type="button">

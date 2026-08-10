@@ -253,8 +253,8 @@
 }
 
 .auth-hero-panel {
-    flex: 0 0 44%;
-    max-width: 44%;
+    flex: 0 0 46%;
+    max-width: 46%;
     height: 100%;
     background: #FAF3EA;
     position: relative;
@@ -278,8 +278,8 @@
    RIGHT FORM PANEL (Royal Deep Purple Theme)
    ========================================================================== */
 .auth-form-panel {
-    flex: 0 0 56%;
-    max-width: 56%;
+    flex: 0 0 54%;
+    max-width: 54%;
     background: linear-gradient(160deg, #2A1430 0%, #1D0C23 100%);
     padding: 3rem 3.5rem;
     box-sizing: border-box;

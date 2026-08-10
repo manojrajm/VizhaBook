@@ -1,53 +1,61 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-import authRoutes from './routes/authRoutes.js';
-import functionRoutes from './routes/functionRoutes.js';
-import moiRoutes from './routes/moiRoutes.js';
-import expenseRoutes from './routes/expenseRoutes.js';
-import reportRoutes from './routes/reportRoutes.js';
+import express from "express";
+import dotenv from "dotenv";
+import pool from "./config/db.js";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors({
-    origin: '*',
-    credentials: true
-}));
 app.use(express.json());
 
-// API Health Check
-app.get('/api/health', (req, res) => {
+
+// ===============================
+// ROOT ROUTE
+// ===============================
+
+app.get("/", (req, res) => {
     res.json({
-        status: 'online',
-        app: 'VizhaBook SaaS API Server',
-        timestamp: new Date().toISOString()
+        success: true,
+        message: "VizhaBook API is running",
     });
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/functions', functionRoutes);
-app.use('/api/moi', moiRoutes);
-app.use('/api/expenses', expenseRoutes);
-app.use('/api/reports', reportRoutes);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Unhandled Server Error:', err);
-    res.status(err.status || 500).json({
-        success: false,
-        error: err.message || 'Internal Server Error'
-    });
+// ===============================
+// DATABASE TEST
+// ===============================
+
+app.get("/api/test-db", async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT NOW() AS current_time"
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "PostgreSQL connected successfully",
+            time: result.rows[0].current_time,
+        });
+
+    } catch (error) {
+
+        console.error("Database Error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Database connection failed",
+            error: error.message,
+        });
+    }
 });
 
-// Start Server
+
+// ===============================
+// SERVER
+// ===============================
+
+const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-    console.log(`🚀 VizhaBook SaaS Backend Server running on http://localhost:${PORT}`);
+    console.log(`🚀 VizhaBook server running on port ${PORT}`);
 });

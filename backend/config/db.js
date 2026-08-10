@@ -1,127 +1,58 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import pg from "pg";
+import dotenv from "dotenv";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dataDir = path.join(__dirname, '../data');
-const dbFile = path.join(dataDir, 'store.json');
+dotenv.config();
 
-// Initial seed data
-const initialData = {
-    users: [
-        {
-            id: 'u_demo_1',
-            name: 'Demo Family Admin',
-            email: 'demo@vizhabook.com',
-            phone: '9876543210',
-            countryCode: '+91',
-            password: 'demo1234',
-            createdAt: new Date().toISOString()
-        }
-    ],
-    functions: [
-        {
-            id: 'f_1',
-            userId: 'u_demo_1',
-            title: 'Karthik & Janani Marriage',
-            type: 'Wedding',
-            date: '2026-09-15',
-            venue: 'Sri Raja Rajeswari Hall, Chennai',
-            budget: 500000,
-            status: 'Active'
-        },
-        {
-            id: 'f_2',
-            userId: 'u_demo_1',
-            title: 'Ananya Ear Piercing Ceremony',
-            type: 'Ear Piercing',
-            date: '2026-10-04',
-            venue: 'Muralis Hall, Madurai',
-            budget: 150000,
-            status: 'Upcoming'
-        }
-    ],
-    moiEntries: [
-        {
-            id: 'm_1',
-            functionId: 'f_1',
-            userId: 'u_demo_1',
-            guestName: 'K. Senthil Nathan',
-            villageCity: 'Chennai',
-            phone: '9876543211',
-            amount: 5001,
-            giftItem: 'Silk Saree & Cash',
-            paymentMode: 'Cash',
-            relation: 'Uncle',
-            whatsappSent: true,
-            createdAt: new Date().toISOString()
-        },
-        {
-            id: 'm_2',
-            functionId: 'f_1',
-            userId: 'u_demo_1',
-            guestName: 'Dr. Meenakshi & Family',
-            villageCity: 'Coimbatore',
-            phone: '9876543212',
-            amount: 10001,
-            giftItem: '1 Sovereign Gold Coin',
-            paymentMode: 'UPI',
-            relation: 'Family Friend',
-            whatsappSent: true,
-            createdAt: new Date().toISOString()
-        }
-    ],
-    expenses: [
-        {
-            id: 'e_1',
-            functionId: 'f_1',
-            userId: 'u_demo_1',
-            category: 'Catering & Meals',
-            vendor: 'Vasantha Bhavan Caterers',
-            amount: 180000,
-            paidAmount: 100000,
-            status: 'Partial',
-            date: '2026-08-01'
-        },
-        {
-            id: 'e_2',
-            functionId: 'f_1',
-            userId: 'u_demo_1',
-            category: 'Hall Rental',
-            vendor: 'Raja Rajeswari Mandapam',
-            amount: 120000,
-            paidAmount: 120000,
-            status: 'Paid',
-            date: '2026-07-20'
-        }
-    ],
-    approvals: []
-};
+const { Pool } = pg;
 
-// Ensure directory and db file exist
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-}
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
 
-if (!fs.existsSync(dbFile)) {
-    fs.writeFileSync(dbFile, JSON.stringify(initialData, null, 2), 'utf-8');
-}
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+});
 
-export const readDB = () => {
+
+// ===============================
+// TEST DATABASE CONNECTION
+// ===============================
+
+pool.on("connect", () => {
+    console.log("✅ PostgreSQL client connected");
+});
+
+pool.on("error", (error) => {
+    console.error("❌ Unexpected PostgreSQL error:", error);
+});
+
+
+const testDatabase = async () => {
     try {
-        const raw = fs.readFileSync(dbFile, 'utf-8');
-        return JSON.parse(raw);
-    } catch (err) {
-        console.error('Error reading database file:', err);
-        return initialData;
+
+        const result = await pool.query(
+            "SELECT NOW() AS current_time"
+        );
+
+        console.log(
+            "✅ PostgreSQL connected:",
+            result.rows[0].current_time
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ PostgreSQL connection failed:",
+            error.message
+        );
+
     }
 };
 
-export const writeDB = (data) => {
-    try {
-        fs.writeFileSync(dbFile, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (err) {
-        console.error('Error writing database file:', err);
-    }
-};
+testDatabase();
+
+export default pool;

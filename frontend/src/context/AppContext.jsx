@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { db, auth } from '../firebase';
-import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 
 const AppContext = createContext();
 
@@ -137,47 +135,6 @@ export const AppProvider = ({ children }) => {
 
     // -------- Cloud Sync Logic --------
     const isFirstRun = useRef(true);
-
-    // Pull from Cloud on mount if enabled
-    useEffect(() => {
-        if (!isCloudEnabled || !cloudId) return;
-
-        const syncDoc = doc(db, 'sync_sessions', cloudId);
-        
-        // Use onSnapshot for real-time pull from other devices
-        const unsub = onSnapshot(syncDoc, (snapshot) => {
-            if (snapshot.exists()) {
-                const data = snapshot.data();
-                // Avoid infinite loops by checking source
-                if (isBroadcasting.current) return;
-                
-                setIsSyncing(true);
-                if (data.functions) setFunctions(data.functions);
-                if (data.guests) setGuests(data.guests);
-                if (data.entries) setEntries(data.entries);
-                if (data.expenses) setExpenses(data.expenses);
-                setTimeout(() => setIsSyncing(false), 1000);
-            }
-        });
-
-        return () => unsub();
-    }, [cloudId, isCloudEnabled]);
-
-    // Push to Cloud on local changes
-    useEffect(() => {
-        if (!isCloudEnabled || !cloudId) return;
-        if (isBroadcasting.current) return; // Don't push what we just pulled
-
-        const timer = setTimeout(async () => {
-            const syncDoc = doc(db, 'sync_sessions', cloudId);
-            await setDoc(syncDoc, {
-                functions, guests, entries, expenses,
-                lastSynced: new Date().toISOString()
-            }, { merge: true });
-        }, 2000); // Debounce push
-
-        return () => clearTimeout(timer);
-    }, [functions, guests, entries, expenses, cloudId, isCloudEnabled]);
 
     // -------- CRUD Operations --------
     const addFunction = (func) => {

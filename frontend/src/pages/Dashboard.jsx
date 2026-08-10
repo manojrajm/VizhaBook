@@ -123,30 +123,12 @@ const Dashboard = () => {
                                         style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
                                     />
                                 </div>
-                                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem' }}>
-                                    <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>FIREBASE CLOUD CONFIG</p>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                        <input 
-                                            type="text" 
-                                            placeholder="API Key"
-                                            value={tempSettings.apiKey || ''} 
-                                            onChange={e => setTempSettings({ ...tempSettings, apiKey: e.target.value })}
-                                            style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', background: 'var(--bg-main)', fontSize: '0.8rem' }}
-                                        />
-                                        <input 
-                                            type="text" 
-                                            placeholder="Project ID"
-                                            value={tempSettings.projectId || ''} 
-                                            onChange={e => setTempSettings({ ...tempSettings, projectId: e.target.value })}
-                                            style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', background: 'var(--bg-main)', fontSize: '0.8rem' }}
-                                        />
-                                    </div>
-                                </div>
+
                                 <button 
                                     onClick={() => {
                                         setHostSettings(tempSettings);
                                         setShowSettings(false);
-                                        alert("Settings saved! Please reload if you changed Firebase config.");
+                                        alert("Settings saved successfully!");
                                     }}
                                     style={{ background: 'var(--primary-gradient)', color: 'white', padding: '1rem', borderRadius: '0.75rem', border: 'none', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}
                                 >
