@@ -88,7 +88,13 @@ const initTables = async () => {
             END $$;
         `);
 
-        console.log("✅ PostgreSQL 'accounts' & 'users' tables ready with Account + Role migration");
+        // 5. Enforce NOT NULL constraints on account_id and role
+        await pool.query(`
+            ALTER TABLE users ALTER COLUMN role SET NOT NULL;
+            ALTER TABLE users ALTER COLUMN account_id SET NOT NULL;
+        `);
+
+        console.log("✅ PostgreSQL 'accounts' & 'users' tables ready with Account + Role migration and NOT NULL constraints");
     } catch (e) {
         console.error("❌ Table initialization error:", e.message);
     }

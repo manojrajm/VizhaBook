@@ -25,8 +25,8 @@ model User {
   countryCode String   @default("+91") @map("country_code")
   password    String
   role        String   @default("USER")
-  accountId   String?  @map("account_id")
-  account     Account? @relation(fields: [accountId], references: [id])
+  accountId   String   @map("account_id")
+  account     Account  @relation(fields: [accountId], references: [id])
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
