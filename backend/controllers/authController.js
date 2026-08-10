@@ -94,12 +94,14 @@ export const loginUser = async (req, res) => {
     return res.status(401).json({ success: false, error: 'Invalid email/phone or password.' });
 };
 
-// @desc Register new user
+// @desc Register new user (Strict USER role assignment)
 // @route POST /api/auth/signup
 export const registerUser = async (req, res) => {
+    // Client role input is strictly ignored; public registration always assigns USER
     const { name, email, phone, countryCode, password } = req.body;
     const cleanEmail = email.toLowerCase().trim();
     const cleanPhone = phone ? phone.trim() : '';
+    const userRole = 'USER';
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -137,7 +139,8 @@ export const registerUser = async (req, res) => {
                 name: newUser.name,
                 email: newUser.email,
                 phone: newUser.phone,
-                countryCode: newUser.countryCode
+                countryCode: newUser.countryCode,
+                role: userRole
             },
             token
         });
@@ -165,7 +168,8 @@ export const registerUser = async (req, res) => {
                 name: newUser.name,
                 email: newUser.email,
                 phone: newUser.phone,
-                countryCode: newUser.country_code || countryCode
+                countryCode: newUser.country_code || countryCode,
+                role: userRole
             },
             token
         });

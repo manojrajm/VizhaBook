@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Phone, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { signupSchema } from '../../schemas/auth.schema';
 
 const COUNTRY_CODES = [
     { code: '+91', label: '🇮🇳 +91' },
@@ -15,12 +18,23 @@ const COUNTRY_CODES = [
 
 const SignupForm = ({ onSwitchToLogin }) => {
     const { signup } = useAuth();
-    const [name, setName] = useState('');
-    const [countryCode, setCountryCode] = useState('+91');
-    const [phone, setPhone] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
+
+    const {
+        register,
+        handleSubmit,
+        watch,
+        formState: { errors }
+    } = useForm({
+        resolver: zodResolver(signupSchema),
+        defaultValues: {
+            name: '',
+            phone: '',
+            countryCode: '+91',
+            email: '',
+            password: '',
+            confirmPassword: ''
+        }
+    });
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -28,6 +42,9 @@ const SignupForm = ({ onSwitchToLogin }) => {
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const passwordValue = watch('password') || '';
+    const confirmPasswordValue = watch('confirmPassword') || '';
 
     const getPasswordStrength = (pass) => {
         if (!pass) return null;
@@ -41,55 +58,27 @@ const SignupForm = ({ onSwitchToLogin }) => {
         return { level: 'strong', label: 'Strong', color: '#34D399', width: '100%' };
     };
 
-    const strength = getPasswordStrength(password);
-    const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+    const strength = getPasswordStrength(passwordValue);
+    const passwordsMatch = confirmPasswordValue.length > 0 && passwordValue === confirmPasswordValue;
 
-    const handleSignupSubmit = async (e) => {
-        if (e) e.preventDefault();
+    const onValidSubmit = async (formData) => {
         setError('');
         setSuccessMsg('');
-
-        const trimmedName = name.trim();
-        const trimmedEmail = email.trim();
-        const trimmedPhone = phone.trim();
-
-        if (!trimmedName) {
-            setError('Please enter your full name.');
-            return;
-        }
-        if (!trimmedPhone || !/^\d{7,15}$/.test(trimmedPhone)) {
-            setError('Please enter a valid mobile number (7-15 digits).');
-            return;
-        }
-        if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-            setError('Please enter a valid email address.');
-            return;
-        }
-        if (!password || password.length < 6) {
-            setError('Password must be at least 6 characters long.');
-            return;
-        }
-        if (password !== confirmPassword) {
-            setError('Passwords do not match.');
-            return;
-        }
-
         setLoading(true);
-        await new Promise(r => setTimeout(r, 300));
 
         const result = await signup({
-            name: trimmedName,
-            email: trimmedEmail,
-            phone: trimmedPhone,
-            countryCode,
-            password
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            phone: formData.phone.trim(),
+            countryCode: formData.countryCode,
+            password: formData.password
         });
 
         if (result.success) {
             setSuccessMsg('Account Created Successfully! Redirecting to Log In...');
             setLoading(false);
             setTimeout(() => {
-                onSwitchToLogin(trimmedEmail);
+                onSwitchToLogin(formData.email.trim());
             }, 1400);
         } else {
             setError(result.error || 'Failed to create account. Please try again.');
@@ -97,9 +86,11 @@ const SignupForm = ({ onSwitchToLogin }) => {
         }
     };
 
+    const firstError = error || errors.name?.message || errors.phone?.message || errors.email?.message || errors.password?.message || errors.confirmPassword?.message;
+
     return (
         <motion.form
-            onSubmit={handleSignupSubmit}
+            onSubmit={handleSubmit(onValidSubmit)}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
@@ -126,7 +117,7 @@ const SignupForm = ({ onSwitchToLogin }) => {
 
             {/* Error Banner */}
             <AnimatePresence>
-                {error && (
+                {firstError && (
                     <motion.div
                         className="auth-error-box"
                         initial={{ opacity: 0, height: 0 }}
@@ -134,7 +125,7 @@ const SignupForm = ({ onSwitchToLogin }) => {
                         exit={{ opacity: 0, height: 0 }}
                     >
                         <AlertCircle size={16} color="#FCA5A5" />
-                        <span>{error}</span>
+                        <span>{firstError}</span>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -165,8 +156,7 @@ const SignupForm = ({ onSwitchToLogin }) => {
                         className="field-input"
                         type="text"
                         placeholder="Enter your full name"
-                        value={name}
-                        onChange={(e) => { setName(e.target.value); setError(''); }}
+                        {...register('name')}
                         id="signup-name"
                     />
                 </div>
@@ -180,8 +170,7 @@ const SignupForm = ({ onSwitchToLogin }) => {
                 <div className="phone-field-row">
                     <select
                         className="country-code-select"
-                        value={countryCode}
-                        onChange={(e) => setCountryCode(e.target.value)}
+                        {...register('countryCode')}
                     >
                         {COUNTRY_CODES.map(c => (
                             <option key={c.code} value={c.code}>{c.label}</option>
@@ -193,8 +182,7 @@ const SignupForm = ({ onSwitchToLogin }) => {
                             className="field-input"
                             type="tel"
                             placeholder="10-digit phone number"
-                            value={phone}
-                            onChange={(e) => { setPhone(e.target.value.replace(/\D/g, '')); setError(''); }}
+                            {...register('phone')}
                             id="signup-phone"
                         />
                     </div>
@@ -212,8 +200,7 @@ const SignupForm = ({ onSwitchToLogin }) => {
                         className="field-input"
                         type="email"
                         placeholder="name@example.com"
-                        value={email}
-                        onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                        {...register('email')}
                         id="signup-email"
                     />
                 </div>
@@ -237,8 +224,7 @@ const SignupForm = ({ onSwitchToLogin }) => {
                         className="field-input"
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Create password"
-                        value={password}
-                        onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                        {...register('password')}
                         id="signup-password"
                     />
                     <button
@@ -265,7 +251,7 @@ const SignupForm = ({ onSwitchToLogin }) => {
                     <label className="login-field-label" htmlFor="signup-confirm-password">
                         Confirm Password
                     </label>
-                    {confirmPassword && (
+                    {confirmPasswordValue && (
                         <span className="match-status" style={{ color: passwordsMatch ? '#34D399' : '#FCA5A5' }}>
                             {passwordsMatch ? '✓ Matches' : '✗ Mismatch'}
                         </span>
@@ -277,8 +263,7 @@ const SignupForm = ({ onSwitchToLogin }) => {
                         className="field-input"
                         type={showConfirm ? 'text' : 'password'}
                         placeholder="Confirm password"
-                        value={confirmPassword}
-                        onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
+                        {...register('confirmPassword')}
                         id="signup-confirm-password"
                     />
                     <button
@@ -291,28 +276,30 @@ const SignupForm = ({ onSwitchToLogin }) => {
                 </div>
             </div>
 
-            {/* CTA Button */}
+            {/* CTA Button: Create Account ➔ */}
             <button
                 type="submit"
-                className="login-btn-primary"
+                className={`login-submit-btn ${loading ? 'btn-loading' : ''}`}
                 disabled={loading}
-                id="signup-submit"
-                style={{ marginTop: '0.5rem' }}
             >
                 {loading ? (
-                    <span>Creating Account...</span>
+                    <span className="btn-spinner" />
                 ) : (
-                    <span>Create Account ➔</span>
+                    <span>Create Account &#10140;</span>
                 )}
             </button>
 
-            {/* Footer Switch Link */}
-            <p className="login-footer-note" style={{ marginTop: '1.2rem' }}>
-                Already have an account?{' '}
-                <button type="button" className="create-acc-link" onClick={onSwitchToLogin}>
+            {/* Footer Prompt */}
+            <div className="login-footer-prompt">
+                <span>Already have an account?</span>{' '}
+                <button
+                    type="button"
+                    className="login-switch-btn"
+                    onClick={onSwitchToLogin}
+                >
                     Log In
                 </button>
-            </p>
+            </div>
         </motion.form>
     );
 };

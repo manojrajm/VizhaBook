@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, X, CheckCircle, Rocket } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { loginSchema } from '../../schemas/auth.schema';
 
 const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
     const navigate = useNavigate();
     const { login, signup, resetPassword } = useAuth();
-    const [email, setEmail] = useState(initialEmail || '');
-    const [password, setPassword] = useState('');
+    
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        watch,
+        formState: { errors }
+    } = useForm({
+        resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: initialEmail || '',
+            password: ''
+        }
+    });
+
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
@@ -19,23 +35,20 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
     const [forgotSuccess, setForgotSuccess] = useState('');
     const [forgotError, setForgotError] = useState('');
 
-    const handleLogin = async (e) => {
-        if (e) e.preventDefault();
+    const currentEmail = watch('email');
+
+    useEffect(() => {
+        if (initialEmail) {
+            setValue('email', initialEmail);
+        }
+    }, [initialEmail, setValue]);
+
+    const onValidSubmit = async (formData) => {
         setError('');
-
-        if (!email.trim()) {
-            setError('Please enter your email address or phone number.');
-            return;
-        }
-        if (!password) {
-            setError('Please enter your password.');
-            return;
-        }
-
         setLoading(true);
         await new Promise(r => setTimeout(r, 400));
 
-        const result = await login(email, password, rememberMe);
+        const result = await login(formData.email, formData.password, rememberMe);
         if (result.success) {
             navigate('/');
         } else {
@@ -50,8 +63,8 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
         const demoEmail = 'demo@vizhabook.com';
         const demoPass = 'demo1234';
 
-        setEmail(demoEmail);
-        setPassword(demoPass);
+        setValue('email', demoEmail);
+        setValue('password', demoPass);
 
         await new Promise(r => setTimeout(r, 400));
 
@@ -95,7 +108,7 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
     return (
         <>
             <motion.form
-                onSubmit={handleLogin}
+                onSubmit={handleSubmit(onValidSubmit)}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
@@ -122,7 +135,7 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
 
                 {/* Error Banner */}
                 <AnimatePresence>
-                    {error && (
+                    {(error || errors.email || errors.password) && (
                         <motion.div
                             className="auth-error-box"
                             initial={{ opacity: 0, height: 0 }}
@@ -130,7 +143,7 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
                             exit={{ opacity: 0, height: 0 }}
                         >
                             <AlertCircle size={16} color="#FCA5A5" />
-                            <span>{error}</span>
+                            <span>{error || errors.email?.message || errors.password?.message}</span>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -146,8 +159,7 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
                             className="field-input"
                             type="text"
                             placeholder="Enter your email or phone number"
-                            value={email}
-                            onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                            {...register('email')}
                             autoComplete="username"
                             id="login-email"
                         />
@@ -163,7 +175,7 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
                         <button
                             type="button"
                             className="login-forgot-pass"
-                            onClick={() => { setShowForgot(true); setForgotEmail(email); }}
+                            onClick={() => { setShowForgot(true); setForgotEmail(currentEmail || ''); }}
                         >
                             Forgot Password?
                         </button>
@@ -174,8 +186,7 @@ const LoginForm = ({ onSwitchToSignup, initialEmail = '' }) => {
                             className="field-input"
                             type={showPassword ? 'text' : 'password'}
                             placeholder="Enter your password"
-                            value={password}
-                            onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                            {...register('password')}
                             autoComplete="current-password"
                             id="login-password"
                         />

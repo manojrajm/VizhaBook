@@ -10,13 +10,50 @@ export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // On mount, check for existing session
+    // On mount, validate active authentication token with backend
     useEffect(() => {
-        const persisted = localStorage.getItem(CURRENT_USER_KEY);
-        const session = sessionStorage.getItem(SESSION_USER_KEY);
-        const user = persisted ? JSON.parse(persisted) : session ? JSON.parse(session) : null;
-        setCurrentUser(user);
-        setLoading(false);
+        const verifySession = async () => {
+            setLoading(true);
+            const token = localStorage.getItem('vizhabook_token');
+            const persistedUser = localStorage.getItem(CURRENT_USER_KEY);
+
+            if (token) {
+                try {
+                    const res = await fetch('/api/auth/me', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success && data.user) {
+                        setCurrentUser(data.user);
+                        setLoading(false);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Token validation offline fallback check:', err);
+                }
+            }
+
+            // Fallback to persisted session if valid token was present or stored offline user
+            if (token && persistedUser) {
+                try {
+                    setCurrentUser(JSON.parse(persistedUser));
+                } catch (e) {
+                    setCurrentUser(null);
+                }
+            } else {
+                setCurrentUser(null);
+                localStorage.removeItem(CURRENT_USER_KEY);
+                sessionStorage.removeItem(SESSION_USER_KEY);
+                localStorage.removeItem('vizhabook_token');
+            }
+
+            setLoading(false);
+        };
+
+        verifySession();
     }, []);
 
     // Get all registered users
@@ -123,6 +160,7 @@ export const AuthProvider = ({ children }) => {
         setCurrentUser(null);
         localStorage.removeItem(CURRENT_USER_KEY);
         sessionStorage.removeItem(SESSION_USER_KEY);
+        localStorage.removeItem('vizhabook_token');
     };
 
     // Simulated OTP — always generates 123456, logs to console
