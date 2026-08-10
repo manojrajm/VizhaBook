@@ -8,29 +8,31 @@
 /* ---- Page Outer Canvas ---- */
 .auth-page-container {
     min-height: 100vh;
+    height: 100vh;
     width: 100vw;
-    background: #EFE4D6;
+    background: #24102A;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+    margin: 0;
     font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
     box-sizing: border-box;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 /* Main Luxury Board Card */
 .auth-board {
-    width: 100%;
-    max-width: 1100px;
-    height: 680px;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100%;
     background: #24102A;
-    border-radius: 24px;
-    box-shadow: 0 35px 90px rgba(26, 8, 31, 0.45), 0 0 40px rgba(212, 175, 55, 0.1);
+    border-radius: 0;
+    box-shadow: none;
     display: flex;
     overflow: hidden;
     position: relative;
-    border: 1px solid rgba(212, 175, 55, 0.25);
+    border: none;
 }
 
 /* ==========================================================================
@@ -253,10 +255,10 @@
 }
 
 .auth-hero-panel {
-    flex: 0 0 46%;
-    max-width: 46%;
+    flex: 0 0 72%;
+    max-width: 72%;
     height: 100%;
-    background: #FAF3EA;
+    background: #24102A;
     position: relative;
     display: flex;
     align-items: center;
@@ -271,30 +273,59 @@
     width: 100%;
     height: 100%;
     object-fit: fill;
+    object-position: left center;
     display: block;
 }
 
 /* ==========================================================================
-   RIGHT FORM PANEL (Royal Deep Purple Theme)
+   RIGHT FORM PANEL & FLOATING GOLDEN CARD (MNC SaaS Theme)
    ========================================================================== */
 .auth-form-panel {
-    flex: 0 0 54%;
-    max-width: 54%;
-    background: linear-gradient(160deg, #2A1430 0%, #1D0C23 100%);
-    padding: 3rem 3.5rem;
+    flex: 0 0 28%;
+    min-width: 440px;
+    height: 100%;
+    background: linear-gradient(160deg, #24102A 0%, #15061B 100%);
+    padding: 1.75rem 2rem;
     box-sizing: border-box;
     display: flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
     position: relative;
     z-index: 2;
 }
 
-/* Top Right Language Selector */
+/* Floating Luxury MNC SaaS Card with Golden Border */
+.auth-form-card {
+    width: 100%;
+    max-width: 410px;
+    background: rgba(30, 12, 35, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(233, 184, 86, 0.5);
+    border-radius: 20px;
+    padding: 2.25rem 2rem 1.75rem 2rem;
+    box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.6),
+        0 0 35px rgba(233, 184, 86, 0.15),
+        inset 0 1px 1px rgba(255, 255, 255, 0.12);
+    position: relative;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.auth-form-card:hover {
+    border-color: rgba(233, 184, 86, 0.75);
+    box-shadow: 
+        0 30px 70px rgba(0, 0, 0, 0.7),
+        0 0 45px rgba(233, 184, 86, 0.25),
+        inset 0 1px 1px rgba(255, 255, 255, 0.18);
+}
+
+/* Top Right Language Selector inside Card */
 .auth-lang-picker {
     position: absolute;
-    top: 2rem;
-    right: 2.5rem;
+    top: 1.4rem;
+    right: 1.5rem;
     z-index: 5;
 }
 
@@ -333,6 +364,7 @@
 .login-header-group {
     text-align: center;
     margin-bottom: 2rem;
+    
 }
 
 .login-title {
@@ -629,6 +661,37 @@
 
 .create-acc-link:hover {
     color: #FCE1A6;
+    text-decoration: underline;
+}
+
+/* Legal Footer Links (Full Screen Page Bottom) */
+.auth-footer-legal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.75rem;
+    font-size: 0.73rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.auth-footer-legal .dot {
+    opacity: 0.4;
+}
+
+.auth-footer-legal .legal-link {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.73rem;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    transition: color 0.2s;
+}
+
+.auth-footer-legal .legal-link:hover {
+    color: #E9B856;
     text-decoration: underline;
 }
 

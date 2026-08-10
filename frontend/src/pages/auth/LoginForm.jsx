@@ -260,6 +260,15 @@ const LoginForm = ({ onSwitchToSignup }) => {
                         Create Account
                     </button>
                 </p>
+
+                {/* Legal Footer Links */}
+                <div className="auth-footer-legal">
+                    <span>© 2026 VizhaBook. All rights reserved.</span>
+                    <span className="dot">•</span>
+                    <button type="button" className="legal-link">Privacy Policy</button>
+                    <span className="dot">•</span>
+                    <button type="button" className="legal-link">Terms of Service</button>
+                </div>
             </motion.form>
 
             {/* Forgot Password Modal */}

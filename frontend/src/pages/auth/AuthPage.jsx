@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Globe } from 'lucide-react';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
+import loginDesktopImg from '../../assets/LoginDesktop.png';
 import './AuthPage.css';
 
 const AuthPage = () => {
@@ -17,11 +18,11 @@ const AuthPage = () => {
             <div className="auth-board">
 
                 {/* ==============================================
-                   LEFT HERO PANEL (Exact login1 page.png image)
+                   LEFT HERO PANEL (Exact LoginDesktop.png image)
                    ============================================== */}
                 <div className="auth-hero-panel">
                     <img
-                        src="/login1_page_exact.png"
+                        src={loginDesktopImg}
                         alt="VizhaBook Traditions"
                         className="hero-image-exact"
                     />
@@ -31,22 +32,24 @@ const AuthPage = () => {
                    RIGHT FORM PANEL (Royal Deep Purple Theme)
                    ============================================== */}
                 <div className="auth-form-panel">
+                    {/* Floating MNC SaaS Card with Golden Border */}
+                    <div className="auth-form-card">
+                        {/* Language Selector Dropdown (Top Right) */}
+                        <div className="auth-lang-picker">
+                            <button className="lang-btn" type="button">
+                                <Globe size={15} />
+                                <span>{language}</span>
+                                <span className="lang-chevron">⌵</span>
+                            </button>
+                        </div>
 
-                    {/* Language Selector Dropdown (Top Right) */}
-                    <div className="auth-lang-picker">
-                        <button className="lang-btn" type="button">
-                            <Globe size={15} />
-                            <span>{language}</span>
-                            <span className="lang-chevron">⌵</span>
-                        </button>
-                    </div>
-
-                    <div className="auth-form-wrapper">
-                        {activeTab === 'login' ? (
-                            <LoginForm onSwitchToSignup={switchToSignup} />
-                        ) : (
-                            <SignupForm onSwitchToLogin={switchToLogin} />
-                        )}
+                        <div className="auth-form-wrapper">
+                            {activeTab === 'login' ? (
+                                <LoginForm onSwitchToSignup={switchToSignup} />
+                            ) : (
+                                <SignupForm onSwitchToLogin={switchToLogin} />
+                            )}
+                        </div>
                     </div>
                 </div>
 
