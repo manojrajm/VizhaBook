@@ -1,0 +1,153 @@
+/* ==========================================================================
+   VizhaBook Top App Header Styles (Enterprise SaaS Layout)
+   ========================================================================== */
+
+.saas-app-header {
+    height: 64px;
+    padding: 0 1.75rem;
+    background: var(--bg-card, rgba(255, 255, 255, 0.8));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-color, rgba(226, 232, 240, 0.8));
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.header-left-group {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.header-hamburger-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 8px;
+}
+
+.header-page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.header-right-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-sync-status {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 100px;
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #3B82F6;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.header-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color, #E2E8F0);
+    background: var(--bg-card, #FFFFFF);
+    color: var(--text-primary);
+    border-radius: 10px;
+    height: 36px;
+    padding: 0 0.75rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.header-btn:hover {
+    background: var(--bg-nested, #F1F5F9);
+}
+
+.header-icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.header-notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #EF4444;
+    color: #FFFFFF;
+    font-size: 0.6rem;
+    font-weight: 800;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+.header-user-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid var(--border-color, #E2E8F0);
+}
+
+.header-user-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.header-logout-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.06);
+    color: #EF4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.header-logout-btn:hover {
+    background: #EF4444;
+    color: #FFFFFF;
+}
+
+@media (max-width: 1024px) {
+    .header-hamburger-btn {
+        display: flex;
+    }
+    .saas-app-header {
+        padding: 0 1rem;
+    }
+}

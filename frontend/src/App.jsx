@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import Navbar from './components/layout/Navbar';
-import BrandingSidebar from './components/layout/BrandingSidebar';
+import Sidebar from './components/layout/Sidebar';
+import AppHeader from './components/layout/AppHeader';
 
 import AuthPage from './pages/auth/AuthPage';
 import Dashboard from './pages/Dashboard';
@@ -17,20 +17,27 @@ import QRDisplay from './pages/QRDisplay';
 import GuestCheckin from './pages/GuestCheckin';
 import PendingApprovals from './pages/PendingApprovals';
 import Expenses from './pages/Expenses';
+import SettingsPage from './pages/SettingsPage';
 
 import PricingPage from './pages/subscription/PricingPage';
 import SubscriptionPage from './pages/subscription/SubscriptionPage';
-import SubscriptionSettingsPage from './pages/subscription/SubscriptionSettingsPage';
 import TrialExpiredPage from './pages/subscription/TrialExpiredPage';
 import SubscriptionSuccessPage from './pages/subscription/SubscriptionSuccessPage';
 
 function Layout() {
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   return (
-    <div className="app-container">
-      <BrandingSidebar />
-      <div className="main-wrapper">
-        <Navbar />
-        <main className="main-content">
+    <div className="saas-app-container">
+      <Sidebar
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+      />
+      <div className="saas-main-wrapper">
+        <AppHeader
+          onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        />
+        <main className="saas-main-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/functions" element={<Functions />} />
@@ -41,11 +48,12 @@ function Layout() {
             <Route path="/qr-display" element={<QRDisplay />} />
             <Route path="/approvals" element={<PendingApprovals />} />
             <Route path="/expenses" element={<Expenses />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings/subscription" element={<SettingsPage />} />
 
             {/* Subscription Lifecycle Routes */}
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/subscription" element={<SubscriptionPage />} />
-            <Route path="/settings/subscription" element={<SubscriptionSettingsPage />} />
             <Route path="/subscription/expired" element={<TrialExpiredPage />} />
             <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
           </Routes>

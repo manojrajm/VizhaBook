@@ -1,0 +1,116 @@
+/* Settings Page Layout */
+.settings-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+    color: var(--text-primary);
+}
+
+.settings-header-banner {
+    margin-bottom: 2rem;
+}
+
+.settings-header-banner h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0 0 0.35rem 0;
+}
+
+.settings-header-banner p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Tabs Header */
+.settings-tabs-list {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border-color, #E2E8F0);
+    margin-bottom: 2rem;
+    overflow-x: auto;
+}
+
+.settings-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.settings-tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.settings-tab-btn.active {
+    color: var(--primary-color, #D4A845);
+    border-bottom-color: var(--sidebar-gold-accent, #D4A845);
+    font-weight: 700;
+}
+
+/* Tab Panel Base */
+.settings-tab-content {
+    background: var(--bg-card, #FFFFFF);
+    border: 1px solid var(--border-color, #E2E8F0);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.settings-card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+}
+
+.settings-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form-group label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.form-input {
+    height: 44px;
+    border-radius: 10px;
+    padding: 0 1rem;
+    border: 1px solid var(--border-color, #CBD5E1);
+    background: var(--bg-input, #FFFFFF);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.btn-save-settings {
+    height: 44px;
+    padding: 0 1.5rem;
+    border-radius: 10px;
+    background: var(--primary-gradient, linear-gradient(135deg, #FAD675 0%, #D49B32 100%));
+    border: none;
+    color: var(--text-primary, #24102A);
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 1.5rem;
+}

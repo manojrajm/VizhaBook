@@ -690,3 +690,45 @@ h3 { font-size: clamp(1.25rem, 5vw, 1.75rem); }
   text-transform: none;
   font-weight: 700;
 }
+
+/* ==========================================================================
+   SaaS Enterprise Layout Grid (Fixed Left Vertical Sidebar + Main Area)
+   ========================================================================== */
+.saas-app-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+.saas-main-wrapper {
+  flex: 1;
+  margin-left: 260px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: calc(100vw - 260px);
+  box-sizing: border-box;
+}
+
+.saas-main-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1350px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  .saas-main-wrapper {
+    margin-left: 0;
+    width: 100vw;
+  }
+  .saas-main-content {
+    padding: 1.25rem 1rem;
+  }
+}
+
