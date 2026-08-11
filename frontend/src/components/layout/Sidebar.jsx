@@ -8,14 +8,16 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import useSubscription from '../../hooks/useSubscription';
+import { TRANSLATIONS } from '../../utils/translations';
 import './Sidebar.css';
 
 const Sidebar = ({ isOpen, onClose, onCollapseChange }) => {
     const location = useLocation();
     const { currentUser, logout } = useAuth();
-    const { pendingEntries } = useApp();
-    const { subscription, plan, status, isTrial, isExpired, functionsUsed, functionLimit } = useSubscription();
+    const { lang, pendingEntries } = useApp();
+    const { subscription, plan, isTrial, isExpired, functionsUsed, functionLimit } = useSubscription();
 
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const pendingCount = pendingEntries?.length || 0;
 
     // Collapsed state initialized from localStorage
@@ -40,34 +42,34 @@ const Sidebar = ({ isOpen, onClose, onCollapseChange }) => {
 
     const navSections = [
         {
-            title: 'MAIN',
+            title: t.mainSection,
             items: [
-                { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-                { path: '/functions', label: 'Functions', icon: Heart },
-                { path: '/entry', label: 'Moi Entry', icon: Gift },
-                { path: '/ledger', label: 'Ledger', icon: ClipboardList },
-                { path: '/expenses', label: 'Expenses', icon: IndianRupee },
-                { path: '/analytics', label: 'Analytics', icon: BarChart3 }
+                { path: '/', label: t.dashboard, icon: LayoutDashboard },
+                { path: '/functions', label: t.functions, icon: Heart },
+                { path: '/entry', label: t.moiEntry, icon: Gift },
+                { path: '/ledger', label: t.ledger, icon: ClipboardList },
+                { path: '/expenses', label: t.expenses, icon: IndianRupee },
+                { path: '/analytics', label: t.analytics, icon: BarChart3 }
             ]
         },
         {
-            title: 'TOOLS',
+            title: t.toolsSection,
             items: [
-                { path: '/qr-display', label: 'QR Check-In', icon: QrCode },
-                { path: '/approvals', label: 'Approvals', icon: CheckSquare, badge: pendingCount > 0 ? pendingCount : null }
+                { path: '/qr-display', label: t.qrCheckIn, icon: QrCode },
+                { path: '/approvals', label: t.approvals, icon: CheckSquare, badge: pendingCount > 0 ? pendingCount : null }
             ]
         },
         {
-            title: 'BILLING',
+            title: t.billingSection,
             items: [
-                { path: '/subscription', label: 'Subscription', icon: ShieldCheck },
-                { path: '/pricing', label: 'Upgrade Plan', icon: Zap }
+                { path: '/subscription', label: t.subscription, icon: ShieldCheck },
+                { path: '/pricing', label: t.upgradePlan, icon: Zap }
             ]
         },
         {
-            title: 'SYSTEM',
+            title: t.systemSection,
             items: [
-                { path: '/settings', label: 'Settings', icon: Settings }
+                { path: '/settings', label: t.settings, icon: Settings }
             ]
         }
     ];
@@ -80,10 +82,10 @@ const Sidebar = ({ isOpen, onClose, onCollapseChange }) => {
     const planLabel = plan
         ? `${plan.name} • Active`
         : isTrial
-        ? 'Free Trial'
-        : isExpired
-        ? 'Trial Expired'
-        : 'Free Account';
+            ? t.freeTrial
+            : isExpired
+                ? t.trialExpired
+                : 'Free Account';
 
     const expiryDate = subscription?.end_date
         ? new Date(subscription.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -109,6 +111,7 @@ const Sidebar = ({ isOpen, onClose, onCollapseChange }) => {
                         <img src="/logo.png" alt="Vizha Book" className="sidebar-logo-img" />
                         <div className="sidebar-brand-text">
                             <span className="sidebar-app-name">Vizha Book</span>
+
                             <span className="sidebar-app-tamil">விழாபுக்</span>
                         </div>
                     </NavLink>
@@ -184,18 +187,18 @@ const Sidebar = ({ isOpen, onClose, onCollapseChange }) => {
                             <div className="progress-track">
                                 <div className="progress-fill" style={{ width: `${funcPercent}%` }} />
                             </div>
-                            <p className="sidebar-renew-date">Renews on {expiryDate}</p>
+                            <p className="sidebar-renew-date">{t.renewsOn} {expiryDate}</p>
                         </div>
 
                         {/* Card Logout Button */}
                         <button
                             onClick={logout}
-                            title="Logout"
+                            title={t.logout}
                             className="sidebar-card-logout"
                             id="sidebar-logout"
                         >
                             <LogOut size={14} />
-                            <span className="sidebar-user-info-text">Logout</span>
+                            <span className="sidebar-user-info-text">{t.logout}</span>
                         </button>
                     </div>
                 </div>
@@ -209,7 +212,7 @@ const Sidebar = ({ isOpen, onClose, onCollapseChange }) => {
                         title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
                     >
                         {isCollapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
-                        <span className="sidebar-collapse-text">Collapse</span>
+                        <span className="sidebar-collapse-text">{t.collapse}</span>
                     </button>
                 </div>
             </aside>
