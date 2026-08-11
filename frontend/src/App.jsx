@@ -26,14 +26,16 @@ import SubscriptionSuccessPage from './pages/subscription/SubscriptionSuccessPag
 
 function Layout() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
     <div className="saas-app-container">
       <Sidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
+        onCollapseChange={(collapsed) => setIsSidebarCollapsed(collapsed)}
       />
-      <div className="saas-main-wrapper">
+      <div className={`saas-main-wrapper ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <AppHeader
           onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />

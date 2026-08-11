@@ -711,6 +711,12 @@ h3 { font-size: clamp(1.25rem, 5vw, 1.75rem); }
   flex-direction: column;
   width: calc(100vw - 260px);
   box-sizing: border-box;
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.saas-main-wrapper.sidebar-collapsed {
+  margin-left: 72px;
+  width: calc(100vw - 72px);
 }
 
 .saas-main-content {

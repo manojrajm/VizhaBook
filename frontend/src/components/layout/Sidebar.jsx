@@ -1,21 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-    LayoutDashboard, Heart, Gift, ClipboardList, IndianRupee, BarChart2,
-    QrCode, CheckSquare, ShieldCheck, Zap, Settings, Wifi, LogOut, X
+    LayoutDashboard, Heart, Gift, ClipboardList, IndianRupee, BarChart3,
+    QrCode, CheckSquare, ShieldCheck, Zap, Settings, LogOut,
+    ChevronsLeft, ChevronsRight, ChevronDown, X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import useSubscription from '../../hooks/useSubscription';
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, onClose }) => {
+const Sidebar = ({ isOpen, onClose, onCollapseChange }) => {
     const location = useLocation();
     const { currentUser, logout } = useAuth();
-    const { pendingEntries, isSyncing } = useApp();
-    const { plan, status, isTrial, isExpired } = useSubscription();
+    const { pendingEntries } = useApp();
+    const { subscription, plan, status, isTrial, isExpired, functionsUsed, functionLimit } = useSubscription();
 
     const pendingCount = pendingEntries?.length || 0;
+
+    // Collapsed state initialized from localStorage
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        return localStorage.getItem('vizhabook_sidebar_collapsed') === 'true';
+    });
+
+    const toggleCollapse = () => {
+        const nextState = !isCollapsed;
+        setIsCollapsed(nextState);
+        localStorage.setItem('vizhabook_sidebar_collapsed', String(nextState));
+        if (onCollapseChange) {
+            onCollapseChange(nextState);
+        }
+    };
+
+    useEffect(() => {
+        if (onCollapseChange) {
+            onCollapseChange(isCollapsed);
+        }
+    }, [isCollapsed, onCollapseChange]);
 
     const navSections = [
         {
@@ -26,13 +47,13 @@ const Sidebar = ({ isOpen, onClose }) => {
                 { path: '/entry', label: 'Moi Entry', icon: Gift },
                 { path: '/ledger', label: 'Ledger', icon: ClipboardList },
                 { path: '/expenses', label: 'Expenses', icon: IndianRupee },
-                { path: '/analytics', label: 'Analytics', icon: BarChart2 }
+                { path: '/analytics', label: 'Analytics', icon: BarChart3 }
             ]
         },
         {
             title: 'TOOLS',
             items: [
-                { path: '/qr-display', label: 'QR Check-In', icon: QrCode, badge: pendingCount > 0 ? pendingCount : null },
+                { path: '/qr-display', label: 'QR Check-In', icon: QrCode },
                 { path: '/approvals', label: 'Approvals', icon: CheckSquare, badge: pendingCount > 0 ? pendingCount : null }
             ]
         },
@@ -64,6 +85,12 @@ const Sidebar = ({ isOpen, onClose }) => {
         ? 'Trial Expired'
         : 'Free Account';
 
+    const expiryDate = subscription?.end_date
+        ? new Date(subscription.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+        : '31 Aug 2027';
+
+    const funcPercent = functionLimit === null ? 25 : Math.min(100, Math.round((functionsUsed / (functionLimit || 1)) * 100));
+
     return (
         <>
             {/* Backdrop for Mobile Drawer */}
@@ -74,9 +101,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                 />
             )}
 
-            {/* Main Vertical Sidebar */}
-            <aside className={`saas-sidebar ${isOpen ? 'mobile-open' : ''}`}>
-                {/* Header / Logo */}
+            {/* Main Dark Navy Vertical Sidebar */}
+            <aside className={`saas-sidebar ${isCollapsed ? 'collapsed' : ''} ${isOpen ? 'mobile-open' : ''}`}>
+                {/* Header / Brand Logo */}
                 <div className="sidebar-header">
                     <NavLink to="/" className="sidebar-brand-box" onClick={onClose}>
                         <img src="/logo.png" alt="Vizha Book" className="sidebar-logo-img" />
@@ -87,15 +114,15 @@ const Sidebar = ({ isOpen, onClose }) => {
                     </NavLink>
 
                     <div className="sidebar-live-badge">
-                        <Wifi size={10} />
+                        <span className="sidebar-live-dot" />
                         <span>LIVE</span>
                     </div>
 
-                    {/* Close Mobile Drawer Icon */}
+                    {/* Mobile Drawer Close */}
                     {isOpen && (
                         <button
                             onClick={onClose}
-                            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                            style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', display: 'flex' }}
                             className="mobile-only"
                         >
                             <X size={20} />
@@ -118,13 +145,14 @@ const Sidebar = ({ isOpen, onClose }) => {
                                         key={item.path}
                                         to={item.path}
                                         onClick={onClose}
+                                        title={isCollapsed ? item.label : undefined}
                                         className={`sidebar-nav-item ${isCurrent ? 'active' : ''}`}
                                     >
                                         {isCurrent && <span className="sidebar-active-bar" />}
                                         <span className="sidebar-nav-icon">
                                             <IconComponent size={18} />
                                         </span>
-                                        <span>{item.label}</span>
+                                        <span className="sidebar-item-text">{item.label}</span>
                                         {item.badge && (
                                             <span className="sidebar-badge">{item.badge}</span>
                                         )}
@@ -135,25 +163,53 @@ const Sidebar = ({ isOpen, onClose }) => {
                     ))}
                 </div>
 
-                {/* Bottom User Profile */}
-                <div className="sidebar-user-footer">
-                    <div className="sidebar-user-details">
-                        <div className="sidebar-avatar-circle">
-                            {getInitials(currentUser?.name)}
+                {/* Bottom User Profile Section (MNC SaaS Card) */}
+                <div className="sidebar-profile-section">
+                    <div className="sidebar-user-card">
+                        <div className="sidebar-user-top">
+                            <div className="sidebar-user-left">
+                                <div className="sidebar-avatar-circle">
+                                    {getInitials(currentUser?.name)}
+                                </div>
+                                <div className="sidebar-user-info-text">
+                                    <div className="sidebar-user-name">{currentUser?.name || 'Aravind'}</div>
+                                    <div className="sidebar-user-plan">{planLabel}</div>
+                                </div>
+                            </div>
+                            <ChevronDown size={14} className="sidebar-user-chevron sidebar-user-info-text" />
                         </div>
-                        <div>
-                            <div className="sidebar-user-name">{currentUser?.name || 'Aravind'}</div>
-                            <div className="sidebar-user-plan">{planLabel}</div>
-                        </div>
-                    </div>
 
+                        {/* Usage Progress Meter */}
+                        <div className="sidebar-user-progress">
+                            <div className="progress-track">
+                                <div className="progress-fill" style={{ width: `${funcPercent}%` }} />
+                            </div>
+                            <p className="sidebar-renew-date">Renews on {expiryDate}</p>
+                        </div>
+
+                        {/* Card Logout Button */}
+                        <button
+                            onClick={logout}
+                            title="Logout"
+                            className="sidebar-card-logout"
+                            id="sidebar-logout"
+                        >
+                            <LogOut size={14} />
+                            <span className="sidebar-user-info-text">Logout</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Bottom Collapse Control */}
+                <div className="sidebar-collapse-bar">
                     <button
-                        onClick={logout}
-                        title="Logout"
-                        className="sidebar-logout-btn"
-                        id="sidebar-logout"
+                        type="button"
+                        className="sidebar-collapse-btn"
+                        onClick={toggleCollapse}
+                        title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
                     >
-                        <LogOut size={16} />
+                        {isCollapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
+                        <span className="sidebar-collapse-text">Collapse</span>
                     </button>
                 </div>
             </aside>
