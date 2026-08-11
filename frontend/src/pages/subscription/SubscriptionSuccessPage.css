@@ -1,0 +1,143 @@
+.sub-success-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #FFFFFF;
+}
+
+.success-card {
+    background: rgba(30, 12, 35, 0.9);
+    border: 1.5px solid rgba(52, 211, 153, 0.4);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    max-width: 540px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(52, 211, 153, 0.15);
+}
+
+.success-icon-box {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: rgba(52, 211, 153, 0.15);
+    border: 1.5px solid rgba(52, 211, 153, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem auto;
+}
+
+.success-sparkle-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.85rem;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    background: rgba(52, 211, 153, 0.18);
+    color: #6EE7B7;
+    margin-bottom: 0.75rem;
+}
+
+.success-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    margin: 0 0 0.4rem 0;
+    color: #FFFFFF;
+}
+
+.success-subtitle {
+    font-size: 0.95rem;
+    color: #DECDE5;
+    margin: 0 0 2rem 0;
+}
+
+/* Receipt */
+.success-receipt-box {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.receipt-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 0.85rem;
+}
+
+.receipt-row:last-child {
+    border-bottom: none;
+}
+
+.rec-label {
+    color: #9C83A8;
+}
+
+.rec-val {
+    font-weight: 700;
+    color: #FFFFFF;
+}
+
+.rec-val.gold { color: #E9B856; }
+.rec-val.green { color: #34D399; }
+
+/* Features Chips */
+.success-features-box {
+    text-align: left;
+    margin-bottom: 2rem;
+}
+
+.success-features-box h4 {
+    font-size: 0.82rem;
+    color: #DECDE5;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.75rem 0;
+}
+
+.features-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.chip {
+    background: rgba(233, 184, 86, 0.12);
+    border: 1px solid rgba(233, 184, 86, 0.25);
+    color: #FAD675;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.7rem;
+    border-radius: 100px;
+}
+
+.btn-success-cta {
+    width: 100%;
+    height: 52px;
+    background: linear-gradient(135deg, #FAD675 0%, #D49B32 100%);
+    border: none;
+    border-radius: 12px;
+    color: #24102A;
+    font-weight: 800;
+    font-size: 0.98rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    box-shadow: 0 8px 22px rgba(212, 155, 50, 0.35);
+}
+
+.btn-success-cta:hover {
+    transform: translateY(-2px);
+}

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Gift, Wallet, Send, User, Calendar, MessageCircle, CheckCircle2, MessageSquare, Mic, MicOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Gift, Wallet, Send, User, Calendar, MessageCircle, CheckCircle2, MessageSquare, Mic, MicOff, AlertTriangle, Zap } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
+import useSubscription from '../hooks/useSubscription';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { MOCK_FUNCTIONS, MOCK_GUESTS } from '../utils/mockData';
@@ -10,8 +12,11 @@ import GreetingCard from '../components/ui/GreetingCard';
 import { sendWhatsAppMessage, sendSMSMessage } from '../utils/communication';
 
 const MoiEntry = () => {
+    const navigate = useNavigate();
     const { functions, guests, addEntry, addGuest, lang } = useApp();
+    const { canCreateEntry, isExpired, entryLimit, entriesUsed } = useSubscription();
     const t = TRANSLATIONS[lang];
+    const [showLimitModal, setShowLimitModal] = useState(false);
     const [formData, setFormData] = useState({
         guestName: '',
         phone: '',
@@ -105,6 +110,15 @@ const MoiEntry = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (isExpired) {
+            navigate('/subscription/expired');
+            return;
+        }
+        if (!canCreateEntry) {
+            setShowLimitModal(true);
+            return;
+        }
 
         // Automatically create a new Guest record in the background
         const newGuest = addGuest({
@@ -340,7 +354,41 @@ const MoiEntry = () => {
                     </Card>
                 </div>
             )}
-        </div >
+
+            {/* Moi Entry Limit Reached Modal */}
+            {showLimitModal && (
+                <div className="sub-modal-overlay">
+                    <div className="sub-modal-box">
+                        <div className="modal-icon-alert">
+                            <AlertTriangle size={42} color="#FBBF24" />
+                        </div>
+                        <h3>Moi Entry Limit Reached</h3>
+                        <p>
+                            Your current plan allows <strong>{entryLimit}</strong> total Moi & Gift entries. Upgrade your plan to continue recording entries for your events.
+                        </p>
+
+                        <div className="modal-btn-row">
+                            <button
+                                type="button"
+                                className="btn-modal-cancel"
+                                onClick={() => setShowLimitModal(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-settings-primary"
+                                style={{ flex: 1, height: '44px', justifyContent: 'center' }}
+                                onClick={() => { setShowLimitModal(false); navigate('/pricing'); }}
+                            >
+                                <Zap size={16} />
+                                <span>Upgrade Plan</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 

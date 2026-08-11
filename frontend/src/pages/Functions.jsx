@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
-import { Plus, MapPin, Calendar as CalendarIcon, User, Search, Filter, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, MapPin, Calendar as CalendarIcon, User, Search, Filter, ArrowRight, AlertTriangle, Zap } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import useSubscription from '../hooks/useSubscription';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { MOCK_FUNCTIONS } from '../utils/mockData';
 import { TRANSLATIONS } from '../utils/translations';
 
 const Functions = () => {
+    const navigate = useNavigate();
     const { functions, addFunction, removeFunction, lang } = useApp();
+    const { canCreateFunction, isExpired, functionLimit, functionsUsed } = useSubscription();
     const t = TRANSLATIONS[lang];
     const [showForm, setShowForm] = useState(false);
+    const [showLimitModal, setShowLimitModal] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         type: 'Marriage',
@@ -21,8 +26,29 @@ const Functions = () => {
 
     const displayFunctions = functions.length ? functions : MOCK_FUNCTIONS;
 
+    const handleOpenCreateForm = () => {
+        if (isExpired) {
+            navigate('/subscription/expired');
+            return;
+        }
+        if (!canCreateFunction) {
+            setShowLimitModal(true);
+            return;
+        }
+        setShowForm(true);
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (isExpired) {
+            navigate('/subscription/expired');
+            return;
+        }
+        if (!canCreateFunction) {
+            setShowForm(false);
+            setShowLimitModal(true);
+            return;
+        }
         addFunction(formData);
         setFormData({ name: '', type: 'Marriage', date: '', location: '', host: '', upiId: '' });
         setShowForm(false);
@@ -66,7 +92,7 @@ const Functions = () => {
                         {lang === 'en' ? 'Manage and track all your family functions in one beautiful place.' : 'உங்கள் குடும்ப விழாக்களை இங்கே அழகாக நிர்வகிக்கலாம்.'}
                     </p>
                 </div>
-                <button onClick={() => setShowForm(true)} style={{
+                <button onClick={handleOpenCreateForm} style={{
                     padding: '1rem 2rem',
                     borderRadius: '999px',
                     background: 'var(--bg-card)',
@@ -98,6 +124,40 @@ const Functions = () => {
                     {lang === 'en' ? 'NEW FUNCTION' : 'புதிய விழா'}
                 </button>
             </header>
+
+            {/* Function Limit Reached Modal */}
+            {showLimitModal && (
+                <div className="sub-modal-overlay">
+                    <div className="sub-modal-box">
+                        <div className="modal-icon-alert">
+                            <AlertTriangle size={42} color="#FBBF24" />
+                        </div>
+                        <h3>Function Limit Reached</h3>
+                        <p>
+                            Your current plan allows <strong>{functionLimit === null ? 'Unlimited' : functionLimit}</strong> function(s). Upgrade your plan to create more functions for your events.
+                        </p>
+
+                        <div className="modal-btn-row">
+                            <button
+                                type="button"
+                                className="btn-modal-cancel"
+                                onClick={() => setShowLimitModal(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-settings-primary"
+                                style={{ flex: 1, height: '44px', justifyContent: 'center' }}
+                                onClick={() => { setShowLimitModal(false); navigate('/pricing'); }}
+                            >
+                                <Zap size={16} />
+                                <span>Upgrade Plan</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Glassmorphic Modal */}
             {showForm && (

@@ -8,6 +8,7 @@ import functionRoutes from "./routes/functionRoutes.js";
 import moiRoutes from "./routes/moiRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use("/api/functions", functionRoutes);
 app.use("/api/moi", moiRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api", subscriptionRoutes);
 
 // ===============================
 // ROOT ROUTE

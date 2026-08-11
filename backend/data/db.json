@@ -1,0 +1,29 @@
+{
+  "users": [],
+  "functions": [
+    {
+      "id": "f_1786449119915",
+      "userId": "u_1786449055956",
+      "title": "Surya Marriage Celebration",
+      "type": "Marriage",
+      "date": "2026-09-15",
+      "venue": "Grand Palace Hall, Madurai",
+      "budget": 500000,
+      "status": "Active",
+      "createdAt": "2026-08-11T11:51:59.915Z"
+    },
+    {
+      "id": "f_1786449143725",
+      "userId": "u_1786449055956",
+      "title": "Surya Reception",
+      "type": "Marriage",
+      "date": "2026-09-16",
+      "venue": "Grand Palace Hall, Madurai",
+      "budget": 200000,
+      "status": "Active",
+      "createdAt": "2026-08-11T11:52:23.725Z"
+    }
+  ],
+  "moiEntries": [],
+  "expenses": []
+}

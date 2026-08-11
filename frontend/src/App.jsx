@@ -18,6 +18,12 @@ import GuestCheckin from './pages/GuestCheckin';
 import PendingApprovals from './pages/PendingApprovals';
 import Expenses from './pages/Expenses';
 
+import PricingPage from './pages/subscription/PricingPage';
+import SubscriptionPage from './pages/subscription/SubscriptionPage';
+import SubscriptionSettingsPage from './pages/subscription/SubscriptionSettingsPage';
+import TrialExpiredPage from './pages/subscription/TrialExpiredPage';
+import SubscriptionSuccessPage from './pages/subscription/SubscriptionSuccessPage';
+
 function Layout() {
   return (
     <div className="app-container">
@@ -35,6 +41,13 @@ function Layout() {
             <Route path="/qr-display" element={<QRDisplay />} />
             <Route path="/approvals" element={<PendingApprovals />} />
             <Route path="/expenses" element={<Expenses />} />
+
+            {/* Subscription Lifecycle Routes */}
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/subscription" element={<SubscriptionPage />} />
+            <Route path="/settings/subscription" element={<SubscriptionSettingsPage />} />
+            <Route path="/subscription/expired" element={<TrialExpiredPage />} />
+            <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
           </Routes>
         </main>
       </div>

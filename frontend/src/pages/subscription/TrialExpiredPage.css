@@ -1,0 +1,126 @@
+.trial-expired-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #FFFFFF;
+}
+
+.expired-card {
+    background: rgba(30, 12, 35, 0.9);
+    border: 1.5px solid rgba(239, 68, 68, 0.4);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    max-width: 580px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(239, 68, 68, 0.15);
+}
+
+.expired-icon-box {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1.5px solid rgba(239, 68, 68, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem auto;
+}
+
+.expired-top-tag {
+    display: inline-block;
+    padding: 0.25rem 0.85rem;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    background: rgba(239, 68, 68, 0.2);
+    color: #FCA5A5;
+    margin-bottom: 0.75rem;
+}
+
+.expired-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.3rem;
+    margin: 0 0 0.8rem 0;
+    color: #FFFFFF;
+}
+
+.expired-message {
+    font-size: 0.95rem;
+    color: #DECDE5;
+    line-height: 1.55;
+    margin: 0 0 1.75rem 0;
+}
+
+.data-safe-banner {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    text-align: left;
+    margin-bottom: 2rem;
+}
+
+.data-safe-banner strong {
+    display: block;
+    color: #6EE7B7;
+    font-size: 0.88rem;
+    margin-bottom: 0.2rem;
+}
+
+.data-safe-banner p {
+    font-size: 0.78rem;
+    color: #A7F3D0;
+    margin: 0;
+    line-height: 1.35;
+}
+
+.expired-btn-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.btn-expired-primary {
+    width: 100%;
+    height: 50px;
+    background: linear-gradient(135deg, #FAD675 0%, #D49B32 100%);
+    border: none;
+    border-radius: 12px;
+    color: #24102A;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    box-shadow: 0 8px 20px rgba(212, 155, 50, 0.3);
+}
+
+.btn-expired-primary:hover {
+    transform: translateY(-2px);
+}
+
+.btn-expired-secondary {
+    width: 100%;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: #E2D3E8;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+}
