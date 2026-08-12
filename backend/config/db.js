@@ -95,6 +95,28 @@ const initTables = async () => {
         `);
 
         console.log("✅ PostgreSQL 'accounts' & 'users' tables ready with Account + Role migration and NOT NULL constraints");
+
+        // 6. Create functions table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS functions (
+                id VARCHAR(100) PRIMARY KEY,
+                account_id VARCHAR(100) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+                name VARCHAR(150) NOT NULL,
+                event_date DATE NOT NULL,
+                location VARCHAR(255),
+                description TEXT,
+                status VARCHAR(20) DEFAULT 'ACTIVE',
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+        `);
+
+        // 7. Indexes for functions
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_functions_account_id ON functions(account_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_functions_account_event_date ON functions(account_id, event_date);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_functions_account_status ON functions(account_id, status);`);
+
+        console.log("✅ PostgreSQL 'functions' table and indexes ready");
     } catch (e) {
         console.error("❌ Table initialization error:", e.message);
     }

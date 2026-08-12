@@ -1,367 +1,532 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MapPin, Calendar as CalendarIcon, User, Search, Filter, ArrowRight, AlertTriangle, Zap } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import useSubscription from '../hooks/useSubscription';
-import Card from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import { MOCK_FUNCTIONS } from '../utils/mockData';
-import { TRANSLATIONS } from '../utils/translations';
+import {
+    Plus, Search, ArrowUpDown, Heart, MapPin, Calendar,
+    Eye, Pencil, Trash2, AlertTriangle, Zap, CheckCircle2,
+    AlertCircle, X, Loader2, FolderOpen
+} from 'lucide-react';
+import useFunctions from '../hooks/useFunctions';
+import { functionSchema } from '../schemas/function.schema';
+import './Functions.css';
 
-const Functions = () => {
-    const navigate = useNavigate();
-    const { functions, addFunction, removeFunction, lang } = useApp();
-    const { canCreateFunction, isExpired, functionLimit, functionsUsed } = useSubscription();
-    const t = TRANSLATIONS[lang];
-    const [showForm, setShowForm] = useState(false);
-    const [showLimitModal, setShowLimitModal] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        type: 'Marriage',
-        date: '',
-        location: '',
-        host: '',
-        upiId: ''
+/* ─── Toast Component ───────────────────────────────────────────────────────── */
+const Toast = ({ message, type, onClose }) => {
+    useEffect(() => {
+        const t = setTimeout(onClose, 3500);
+        return () => clearTimeout(t);
+    }, [onClose]);
+
+    return (
+        <div className={`fn-toast ${type}`}>
+            {type === 'success'
+                ? <CheckCircle2 size={18} />
+                : <AlertCircle size={18} />
+            }
+            <span>{message}</span>
+        </div>
+    );
+};
+
+/* ─── Function Form (Create / Edit Modal) ────────────────────────────────────── */
+const FunctionForm = ({ initial, onSubmit, onClose, title, submitting }) => {
+    const [form, setForm] = useState({
+        name: initial?.name || '',
+        event_date: initial?.event_date
+            ? initial.event_date.split('T')[0]
+            : '',
+        location: initial?.location || '',
+        description: initial?.description || '',
+        status: initial?.status || 'ACTIVE'
     });
+    const [errors, setErrors] = useState({});
 
-    const displayFunctions = functions.length ? functions : MOCK_FUNCTIONS;
-
-    const handleOpenCreateForm = () => {
-        if (isExpired) {
-            navigate('/subscription/expired');
-            return;
-        }
-        if (!canCreateFunction) {
-            setShowLimitModal(true);
-            return;
-        }
-        setShowForm(true);
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (isExpired) {
-            navigate('/subscription/expired');
+        const parsed = functionSchema.safeParse(form);
+        if (!parsed.success) {
+            const fieldErrors = {};
+            for (const issue of parsed.error.issues) {
+                fieldErrors[issue.path[0]] = issue.message;
+            }
+            setErrors(fieldErrors);
             return;
         }
-        if (!canCreateFunction) {
-            setShowForm(false);
-            setShowLimitModal(true);
-            return;
-        }
-        addFunction(formData);
-        setFormData({ name: '', type: 'Marriage', date: '', location: '', host: '', upiId: '' });
-        setShowForm(false);
-    };
-
-    const functionTypes = [
-        'Marriage', 'Engagement', 'Mottai', 'House Warming', 'Birthday', 'Baby Shower'
-    ];
-
-    const getCategoryImage = (type) => {
-        const images = {
-            'Marriage': '🏮',
-            'Engagement': '💍',
-            'Mottai': '🪒',
-            'House Warming': '🏠',
-            'Birthday': '🎂',
-            'Baby Shower': '🍼'
-        };
-        return images[type] || '✨';
+        onSubmit(form);
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-            {/* Animated Header */}
-            <header className="animate-fade" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h2 style={{
-                        fontSize: '3.5rem',
-                        fontWeight: 900,
-                        fontFamily: "'Playfair Display', serif",
-                        marginBottom: '0.5rem',
-                        background: 'var(--primary-gradient)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        filter: 'drop-shadow(0 4px 8px rgba(30, 58, 138, 0.2))'
-                    }}>
-                        {lang === 'en' ? 'Celebration Events' : 'நிர்வகிக்கும் விழாக்கள்'}
-                    </h2>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem', fontWeight: 600 }}>
-                        {lang === 'en' ? 'Manage and track all your family functions in one beautiful place.' : 'உங்கள் குடும்ப விழாக்களை இங்கே அழகாக நிர்வகிக்கலாம்.'}
-                    </p>
+        <div className="fn-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+            <div className="fn-modal" role="dialog" aria-modal="true">
+                <div className="fn-modal-header">
+                    <h2 className="fn-modal-title">{title}</h2>
+                    <button className="fn-modal-close" onClick={onClose} aria-label="Close">
+                        <X size={16} />
+                    </button>
                 </div>
-                <button onClick={handleOpenCreateForm} style={{
-                    padding: '1rem 2rem',
-                    borderRadius: '999px',
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--primary-color)',
-                    fontWeight: 800,
-                    fontSize: '1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    cursor: 'pointer',
-                    boxShadow: 'var(--shadow-md)',
-                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                }}
-                    className="btn-secondary"
-                    onMouseOver={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
-                        e.currentTarget.style.background = 'var(--primary-gradient)';
-                        e.currentTarget.style.color = 'white';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                    }}
-                    onMouseOut={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                        e.currentTarget.style.background = 'var(--bg-card)';
-                        e.currentTarget.style.color = 'var(--primary-color)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                    }}>
-                    <Plus size={20} style={{ strokeWidth: 3 }} />
-                    {lang === 'en' ? 'NEW FUNCTION' : 'புதிய விழா'}
-                </button>
-            </header>
 
-            {/* Function Limit Reached Modal */}
-            {showLimitModal && (
-                <div className="sub-modal-overlay">
-                    <div className="sub-modal-box">
-                        <div className="modal-icon-alert">
-                            <AlertTriangle size={42} color="#FBBF24" />
-                        </div>
-                        <h3>Function Limit Reached</h3>
-                        <p>
-                            Your current plan allows <strong>{functionLimit === null ? 'Unlimited' : functionLimit}</strong> function(s). Upgrade your plan to create more functions for your events.
-                        </p>
-
-                        <div className="modal-btn-row">
-                            <button
-                                type="button"
-                                className="btn-modal-cancel"
-                                onClick={() => setShowLimitModal(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="btn-settings-primary"
-                                style={{ flex: 1, height: '44px', justifyContent: 'center' }}
-                                onClick={() => { setShowLimitModal(false); navigate('/pricing'); }}
-                            >
-                                <Zap size={16} />
-                                <span>Upgrade Plan</span>
-                            </button>
-                        </div>
+                <form className="fn-form" onSubmit={handleSubmit} noValidate>
+                    {/* Name */}
+                    <div className="fn-field">
+                        <label htmlFor="fn-name">
+                            Function Name <span className="required">*</span>
+                        </label>
+                        <input
+                            id="fn-name"
+                            className={`fn-input ${errors.name ? 'error' : ''}`}
+                            type="text"
+                            name="name"
+                            placeholder="e.g. Arjun's Wedding Reception"
+                            value={form.name}
+                            onChange={handleChange}
+                            maxLength={150}
+                            autoFocus
+                        />
+                        {errors.name && <p className="fn-field-error"><AlertCircle size={12} />{errors.name}</p>}
                     </div>
-                </div>
-            )}
 
-            {/* Glassmorphic Modal */}
-            {showForm && (
-                <div className="modal-backdrop" onClick={() => setShowForm(false)} style={{
-                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                    <div className="modal-content animate-fade" onClick={e => e.stopPropagation()} style={{
-                        background: 'var(--bg-card)',
-                        backdropFilter: 'blur(20px)',
-                        padding: '2.5rem',
-                        borderRadius: '2rem',
-                        width: '100%',
-                        maxWidth: '550px',
-                        boxShadow: 'var(--shadow-3d)',
-                        border: 'var(--glass-border)'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                            <h3 style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-primary)', margin: 0, fontFamily: "'Playfair Display', serif" }}>
-                                {lang === 'en' ? 'Add New Celebration' : 'புதிய விழா'}
-                            </h3>
-                            <button
-                                onClick={() => setShowForm(false)}
-                                style={{
-                                    background: '#f3f4f6', border: 'none', width: '2.5rem', height: '2.5rem', borderRadius: '50%', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s'
-                                }}
-                                onMouseOver={(e) => e.currentTarget.style.background = '#e5e7eb'}
-                                onMouseOut={(e) => e.currentTarget.style.background = '#f3f4f6'}
-                            >
-                                <Plus size={24} style={{ transform: 'rotate(45deg)' }} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div className="form-group">
-                                <label className="form-label">{lang === 'en' ? 'Function Name' : 'விழாவின் பெயர்'}</label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder={lang === 'en' ? 'e.g. Ramesh & Priya Wedding' : 'உதாரணமாக: ரமேஷ் மற்றும் பிரியா திருமணம்'}
-                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500 }}
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                />
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                <div className="form-group">
-                                    <label className="form-label">{lang === 'en' ? 'Function Type' : 'விழா வகை'}</label>
-                                    <select
-                                        style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500, cursor: 'pointer' }}
-                                        value={formData.type}
-                                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                    >
-                                        {functionTypes.map(type => <option key={type} value={type} style={{ background: 'var(--bg-primary)' }}>{getCategoryImage(type)} {type}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">{lang === 'en' ? 'Date' : 'தேதி'}</label>
-                                    <input
-                                        type="date"
-                                        required
-                                        style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500 }}
-                                        value={formData.date}
-                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">{lang === 'en' ? 'Location' : 'இடம்'}</label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder={lang === 'en' ? 'e.g. Chennai' : 'உதாரணமாக: சென்னை'}
-                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500 }}
-                                    value={formData.location}
-                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">{lang === 'en' ? 'Host Name' : 'நடத்துபவர் பெயர்'}</label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder={lang === 'en' ? 'Who is hosting?' : 'விழா நடத்துபவர் யார்?'}
-                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500 }}
-                                    value={formData.host}
-                                    onChange={(e) => setFormData({ ...formData, host: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">{lang === 'en' ? 'UPI ID for Payments (Optional)' : 'பணம் செலுத்த UPI ID (விருப்பம்)'}</label>
-                                <input
-                                    type="text"
-                                    placeholder={lang === 'en' ? 'e.g. name@upi' : 'உதாரணமாக: name@upi'}
-                                    style={{ padding: '1rem', borderRadius: '0.75rem', border: '2px solid var(--border-color)', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 500 }}
-                                    value={formData.upiId}
-                                    onChange={(e) => setFormData({ ...formData, upiId: e.target.value })}
-                                />
-                            </div>
-                            <div style={{ marginTop: '1rem' }}>
-                                <button type="submit" style={{
-                                    width: '100%', padding: '1.25rem', borderRadius: '1rem', background: 'var(--primary-gradient)', color: 'white', border: 'none', fontSize: '1.125rem', fontWeight: 800, cursor: 'pointer', boxShadow: '0 10px 20px rgba(214, 51, 132, 0.3)', transition: 'transform 0.2s ease'
-                                }}
-                                    onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                    onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                                >
-                                    {lang === 'en' ? 'CREATE EXTRAVAGANZA 🎉' : 'விழாவை உருவாக்கு 🎉'}
-                                </button>
-                            </div>
-                        </form>
+                    {/* Event Date */}
+                    <div className="fn-field">
+                        <label htmlFor="fn-event-date">
+                            Event Date <span className="required">*</span>
+                        </label>
+                        <input
+                            id="fn-event-date"
+                            className={`fn-input ${errors.event_date ? 'error' : ''}`}
+                            type="date"
+                            name="event_date"
+                            value={form.event_date}
+                            onChange={handleChange}
+                        />
+                        {errors.event_date && <p className="fn-field-error"><AlertCircle size={12} />{errors.event_date}</p>}
                     </div>
-                </div>
-            )}
 
-            {/* Creative Animated Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '2.5rem' }}>
-                {displayFunctions.map((func, idx) => (
-                    <Card key={func.id} className="celebration-card glass-premium float-3d" style={{
-                        animation: `modalSlide 0.5s ease-out forwards`,
-                        animationDelay: `${idx * 0.1}s`,
-                        opacity: 0,
-                        padding: 0,
-                        overflow: 'hidden'
-                    }}>
-                        {/* Breathtaking Gradient Banner */}
-                        <div style={{
-                            height: '140px',
-                            background: 'var(--primary-gradient)',
-                            position: 'relative',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            overflow: 'hidden'
-                        }}>
-                            {/* Decorative background circle */}
-                            <div className="glow-pulse" style={{ position: 'absolute', width: '300px', height: '300px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%', right: '-50px', top: '-100px' }}></div>
-                            <div style={{ position: 'absolute', width: '150px', height: '150px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', left: '-20px', bottom: '-50px' }}></div>
+                    {/* Location */}
+                    <div className="fn-field">
+                        <label htmlFor="fn-location">Location</label>
+                        <input
+                            id="fn-location"
+                            className={`fn-input ${errors.location ? 'error' : ''}`}
+                            type="text"
+                            name="location"
+                            placeholder="e.g. Chennai, Tamil Nadu"
+                            value={form.location}
+                            onChange={handleChange}
+                            maxLength={255}
+                        />
+                        {errors.location && <p className="fn-field-error"><AlertCircle size={12} />{errors.location}</p>}
+                    </div>
 
-                            <span style={{ fontSize: '4.5rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))', transform: 'translateY(10px)' }}>{getCategoryImage(func.type)}</span>
+                    {/* Status */}
+                    <div className="fn-field">
+                        <label htmlFor="fn-status">Status</label>
+                        <select
+                            id="fn-status"
+                            className="fn-select"
+                            name="status"
+                            value={form.status}
+                            onChange={handleChange}
+                        >
+                            <option value="ACTIVE">Active</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="ARCHIVED">Archived</option>
+                        </select>
+                    </div>
 
-                            <button
-                                onClick={() => removeFunction(func.id)}
-                                style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', border: 'none', color: 'white', width: '2rem', height: '2rem', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
-                                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,0,0,0.6)'}
-                                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-                                title="Remove Event"
-                            >
-                                <Plus size={16} style={{ transform: 'rotate(45deg)', strokeWidth: 3 }} />
-                            </button>
-                        </div>
+                    {/* Description */}
+                    <div className="fn-field">
+                        <label htmlFor="fn-description">Description</label>
+                        <textarea
+                            id="fn-description"
+                            className="fn-textarea"
+                            name="description"
+                            placeholder="Optional details about this function…"
+                            value={form.description}
+                            onChange={handleChange}
+                        />
+                    </div>
 
-                        {/* Bold Overlapping Date Badge */}
-                        <div style={{
-                            position: 'absolute',
-                            top: '110px',
-                            left: '2rem',
-                            background: 'var(--bg-secondary)',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '1rem',
-                            boxShadow: 'var(--shadow-lg)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            border: '1px solid var(--border-color)',
-                            zIndex: 10
-                        }}>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-color)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                {new Date(func.date).toLocaleString('default', { month: 'short' })}
-                            </span>
-                            <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>
-                                {new Date(func.date).getDate()}
-                            </span>
-                        </div>
-
-                        {/* Rich Content Area */}
-                        <div style={{ padding: '3rem 2rem 2rem 2rem' }}>
-                            <div style={{ display: 'inline-block', padding: '0.25rem 0.75rem', background: 'rgba(225, 29, 72, 0.1)', color: '#e11d48', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
-                                {func.type}
-                            </div>
-
-                            <h3 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1.5rem', lineHeight: 1.2, fontFamily: "'Playfair Display', serif" }}>
-                                {func.name}
-                            </h3>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                    <div style={{ width: '2rem', height: '2rem', borderRadius: '8px', background: 'var(--bg-nested)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)', border: '1px solid var(--border-color)' }}>
-                                        <MapPin size={16} style={{ strokeWidth: 2.5 }} />
-                                    </div>
-                                    {func.location}
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                    <div style={{ width: '2rem', height: '2rem', borderRadius: '8px', background: 'var(--bg-nested)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)', border: '1px solid var(--border-color)' }}>
-                                        <User size={16} style={{ strokeWidth: 2.5 }} />
-                                    </div>
-                                    <span>Hosted by <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{func.host}</span></span>
-                                </div>
-                            </div>
-                        </div>
-                    </Card>
-                ))}
+                    <div className="fn-modal-footer">
+                        <button type="button" className="fn-btn-cancel" onClick={onClose}>
+                            Cancel
+                        </button>
+                        <button type="submit" className="fn-btn-submit" disabled={submitting}>
+                            {submitting
+                                ? <><Loader2 size={15} className="spin" /> Saving…</>
+                                : <><CheckCircle2 size={15} /> {initial ? 'Update Function' : 'Create Function'}</>
+                            }
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );
 };
 
-export default Functions;
+/* ─── Delete Confirmation Dialog ─────────────────────────────────────────────── */
+const DeleteConfirm = ({ fn, onConfirm, onClose, deleting }) => (
+    <div className="fn-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="fn-confirm-modal" role="dialog" aria-modal="true">
+            <div className="fn-confirm-icon">
+                <Trash2 size={24} />
+            </div>
+            <h3 className="fn-confirm-title">Delete this function?</h3>
+            <p className="fn-confirm-desc">
+                You are about to permanently delete <strong>{fn.name}</strong>.
+                This may also remove or affect its associated Moi entries and expenses.
+                This action cannot be undone.
+            </p>
+            <div className="fn-confirm-footer">
+                <button className="fn-btn-cancel" onClick={onClose}>Cancel</button>
+                <button className="fn-btn-danger" onClick={onConfirm} disabled={deleting}>
+                    {deleting
+                        ? <><Loader2 size={14} className="spin" /> Deleting…</>
+                        : <><Trash2 size={14} /> Delete</>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+);
 
+/* ─── Subscription Limit Modal ───────────────────────────────────────────────── */
+const LimitModal = ({ limitInfo, onClose, onViewPlans }) => (
+    <div className="fn-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="fn-limit-modal" role="dialog" aria-modal="true">
+            <div className="fn-limit-icon">
+                {limitInfo?.isExpired ? <AlertTriangle size={28} /> : <Zap size={28} />}
+            </div>
+            <h3 className="fn-limit-title">
+                {limitInfo?.isExpired ? 'Subscription Expired' : 'Function Limit Reached'}
+            </h3>
+            <p className="fn-limit-desc">
+                {limitInfo?.isExpired
+                    ? 'Your trial or subscription has expired. Please choose a plan to continue creating functions and recording Moi entries.'
+                    : `Your current plan allows ${limitInfo?.functionLimit || 1} function(s). Upgrade your plan to create more functions and manage larger events.`
+                }
+            </p>
+            <div className="fn-limit-footer">
+                <button className="fn-btn-cancel" onClick={onClose}>Close</button>
+                <button className="fn-btn-upgrade" onClick={onViewPlans}>
+                    <Zap size={14} /> View Plans
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
+/* ─── Main Functions Page ────────────────────────────────────────────────────── */
+const Functions = () => {
+    const navigate = useNavigate();
+    const { functions, loading, error, refetch, createFn, updateFn, deleteFn } = useFunctions();
+
+    // Fetch on mount
+    useEffect(() => { refetch(); }, [refetch]);
+
+    // UI state
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+    const [sortAsc, setSortAsc] = useState(false);
+    const [showCreate, setShowCreate] = useState(false);
+    const [editTarget, setEditTarget] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [limitInfo, setLimitInfo] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+    };
+
+    // Derived filtered + sorted list
+    const displayFunctions = useMemo(() => {
+        let list = [...functions];
+
+        if (search.trim()) {
+            const q = search.toLowerCase();
+            list = list.filter(f =>
+                f.name?.toLowerCase().includes(q) ||
+                f.location?.toLowerCase().includes(q)
+            );
+        }
+
+        if (statusFilter !== 'ALL') {
+            list = list.filter(f => f.status === statusFilter);
+        }
+
+        list.sort((a, b) => {
+            const da = new Date(a.event_date);
+            const db = new Date(b.event_date);
+            return sortAsc ? da - db : db - da;
+        });
+
+        return list;
+    }, [functions, search, statusFilter, sortAsc]);
+
+    const handleCreate = async (data) => {
+        setSubmitting(true);
+        const res = await createFn(data);
+        setSubmitting(false);
+        if (res.success) {
+            setShowCreate(false);
+            showToast('Function created successfully!');
+        } else if (res.limitReached || res.isExpired) {
+            setShowCreate(false);
+            setLimitInfo(res);
+        } else {
+            showToast(res.error || 'Failed to create function.', 'error');
+        }
+    };
+
+    const handleEdit = async (data) => {
+        setSubmitting(true);
+        const res = await updateFn(editTarget.id, data);
+        setSubmitting(false);
+        if (res.success) {
+            setEditTarget(null);
+            showToast('Function updated successfully!');
+        } else {
+            showToast(res.error || 'Failed to update function.', 'error');
+        }
+    };
+
+    const handleDelete = async () => {
+        setDeleting(true);
+        const res = await deleteFn(deleteTarget.id);
+        setDeleting(false);
+        setDeleteTarget(null);
+        if (res.success) {
+            showToast('Function deleted successfully!');
+        } else {
+            showToast(res.error || 'Failed to delete function.', 'error');
+        }
+    };
+
+    const formatDate = (d) => {
+        if (!d) return '—';
+        try {
+            return new Date(d).toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric'
+            });
+        } catch { return d; }
+    };
+
+    const formatAmount = (n) => {
+        const num = Number(n) || 0;
+        return `₹${num.toLocaleString('en-IN')}`;
+    };
+
+    return (
+        <div className="fn-page">
+            {/* ── Header ── */}
+            <header className="fn-header">
+                <div className="fn-header-left">
+                    <h1>Functions</h1>
+                    <p>Manage all your celebration events in one place</p>
+                </div>
+                <button
+                    id="btn-create-function"
+                    className="fn-create-btn"
+                    onClick={() => setShowCreate(true)}
+                >
+                    <Plus size={16} />
+                    Create Function
+                </button>
+            </header>
+
+            {/* ── Toolbar ── */}
+            <div className="fn-toolbar">
+                <div className="fn-search-box">
+                    <Search className="search-icon" size={16} />
+                    <input
+                        id="fn-search"
+                        className="fn-search-input"
+                        type="text"
+                        placeholder="Search by name or location…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+                <select
+                    id="fn-status-filter"
+                    className="fn-filter-select"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                    <option value="ALL">All Statuses</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="ARCHIVED">Archived</option>
+                </select>
+                <button
+                    className="fn-sort-btn"
+                    onClick={() => setSortAsc(prev => !prev)}
+                    title="Toggle date sort"
+                >
+                    <ArrowUpDown size={14} />
+                    Date {sortAsc ? '↑' : '↓'}
+                </button>
+            </div>
+
+            {/* ── Content ── */}
+            {loading && (
+                <div className="fn-skeleton-grid">
+                    {[1, 2, 3].map(i => <div key={i} className="fn-skeleton-card" />)}
+                </div>
+            )}
+
+            {!loading && error && (
+                <div className="fn-state-box">
+                    <AlertCircle size={48} className="fn-state-icon" />
+                    <h3 className="fn-state-title">Unable to load functions</h3>
+                    <p className="fn-state-desc">{error}</p>
+                    <button className="fn-create-btn" style={{ marginTop: '0.5rem' }} onClick={refetch}>
+                        Try Again
+                    </button>
+                </div>
+            )}
+
+            {!loading && !error && displayFunctions.length === 0 && (
+                <div className="fn-state-box">
+                    <FolderOpen size={56} className="fn-state-icon" />
+                    <h3 className="fn-state-title">
+                        {functions.length === 0 ? 'No functions yet' : 'No results found'}
+                    </h3>
+                    <p className="fn-state-desc">
+                        {functions.length === 0
+                            ? 'Create your first function to start recording Moi and gifts.'
+                            : 'Try adjusting your search or filter.'
+                        }
+                    </p>
+                    {functions.length === 0 && (
+                        <button className="fn-create-btn" style={{ marginTop: '0.5rem' }} onClick={() => setShowCreate(true)}>
+                            <Plus size={14} /> Create Function
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {!loading && !error && displayFunctions.length > 0 && (
+                <div className="fn-grid">
+                    {displayFunctions.map(fn => (
+                        <div key={fn.id} className="fn-card">
+                            <div className="fn-card-header">
+                                <div className="fn-card-icon">
+                                    <Heart size={20} />
+                                </div>
+                                <div className="fn-card-title-group">
+                                    <h3 className="fn-card-name" title={fn.name}>{fn.name}</h3>
+                                    <p className="fn-card-date">
+                                        <Calendar size={12} />
+                                        {formatDate(fn.event_date)}
+                                    </p>
+                                </div>
+                                <span className={`fn-status-badge ${fn.status}`}>
+                                    {fn.status === 'ACTIVE' ? 'Active'
+                                        : fn.status === 'COMPLETED' ? 'Completed'
+                                        : 'Archived'}
+                                </span>
+                            </div>
+
+                            {fn.location && (
+                                <p className="fn-card-location">
+                                    <MapPin size={13} />
+                                    {fn.location}
+                                </p>
+                            )}
+
+                            <div className="fn-card-stats">
+                                <div className="fn-stat-chip">
+                                    <span className="fn-stat-label">Moi Entries</span>
+                                    <span className="fn-stat-value">{fn.moi_entry_count || 0}</span>
+                                </div>
+                                <div className="fn-stat-chip">
+                                    <span className="fn-stat-label">Total Moi</span>
+                                    <span className="fn-stat-value">{formatAmount(fn.total_moi_amount)}</span>
+                                </div>
+                            </div>
+
+                            <div className="fn-card-actions">
+                                <button
+                                    className="fn-action-btn view"
+                                    onClick={() => navigate(`/functions/${fn.id}`)}
+                                    id={`btn-view-${fn.id}`}
+                                >
+                                    <Eye size={14} /> View
+                                </button>
+                                <button
+                                    className="fn-action-btn"
+                                    onClick={() => setEditTarget(fn)}
+                                    id={`btn-edit-${fn.id}`}
+                                >
+                                    <Pencil size={13} /> Edit
+                                </button>
+                                <button
+                                    className="fn-action-btn delete"
+                                    onClick={() => setDeleteTarget(fn)}
+                                    id={`btn-delete-${fn.id}`}
+                                >
+                                    <Trash2 size={13} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* ── Modals ── */}
+            {showCreate && (
+                <FunctionForm
+                    title="Create Function"
+                    onSubmit={handleCreate}
+                    onClose={() => setShowCreate(false)}
+                    submitting={submitting}
+                />
+            )}
+
+            {editTarget && (
+                <FunctionForm
+                    title="Edit Function"
+                    initial={editTarget}
+                    onSubmit={handleEdit}
+                    onClose={() => setEditTarget(null)}
+                    submitting={submitting}
+                />
+            )}
+
+            {deleteTarget && (
+                <DeleteConfirm
+                    fn={deleteTarget}
+                    onConfirm={handleDelete}
+                    onClose={() => setDeleteTarget(null)}
+                    deleting={deleting}
+                />
+            )}
+
+            {limitInfo && (
+                <LimitModal
+                    limitInfo={limitInfo}
+                    onClose={() => setLimitInfo(null)}
+                    onViewPlans={() => { setLimitInfo(null); navigate('/pricing'); }}
+                />
+            )}
+
+            {/* ── Toast ── */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+        </div>
+    );
+};
+
+export default Functions;

@@ -18,6 +18,7 @@ import GuestCheckin from './pages/GuestCheckin';
 import PendingApprovals from './pages/PendingApprovals';
 import Expenses from './pages/Expenses';
 import SettingsPage from './pages/SettingsPage';
+import FunctionDetail from './pages/FunctionDetail';
 
 import PricingPage from './pages/subscription/PricingPage';
 import SubscriptionPage from './pages/subscription/SubscriptionPage';
@@ -49,6 +50,7 @@ function Layout() {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/qr-display" element={<QRDisplay />} />
             <Route path="/approvals" element={<PendingApprovals />} />
+            <Route path="/functions/:functionId" element={<FunctionDetail />} />
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/settings/subscription" element={<SettingsPage />} />
@@ -77,7 +79,14 @@ function App() {
             {/* Public guest check-in */}
             <Route path="/checkin" element={<GuestCheckin />} />
 
-            {/* Protected main app */}
+            {/* Full-screen Pricing page — authenticated but without sidebar */}
+            <Route path="/pricing" element={
+              <ProtectedRoute>
+                <PricingPage />
+              </ProtectedRoute>
+            } />
+
+            {/* Protected main app with sidebar */}
             <Route path="/*" element={
               <ProtectedRoute>
                 <Layout />
@@ -90,4 +99,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;

@@ -1,0 +1,748 @@
+/* ==========================================================================
+   VizhaBook — Function Management Page Styles
+   Premium SaaS — Consistent with VizhaBook Navy + Gold design system
+   ========================================================================== */
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin { animation: spin 1s linear infinite; }
+
+/* ─── Page Header ───────────────────────────────────────────────────────────── */
+.fn-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.fn-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.fn-header-left h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem;
+}
+
+.fn-header-left p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* ─── Toolbar (Search + Filter) ─────────────────────────────────────────────── */
+.fn-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.fn-search-box {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+    max-width: 360px;
+}
+
+.fn-search-box .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.fn-search-input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px 0 38px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+}
+
+.fn-search-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.08);
+}
+
+.fn-filter-select {
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+}
+
+.fn-sort-btn {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.fn-sort-btn:hover {
+    background: var(--bg-nested);
+    color: var(--text-primary);
+}
+
+/* ─── Create Button ──────────────────────────────────────────────────────────── */
+.fn-create-btn {
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 8px;
+    background: var(--primary-color);
+    color: #ffffff;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s ease, transform 0.15s ease;
+    white-space: nowrap;
+    font-family: inherit;
+}
+
+.fn-create-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* ─── Function Cards Grid ────────────────────────────────────────────────────── */
+.fn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+}
+
+.fn-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1.4rem 1.4rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    position: relative;
+}
+
+.fn-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.fn-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.fn-card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.fn-card-title-group {
+    flex: 1;
+    min-width: 0;
+}
+
+.fn-card-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fn-card-date {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+}
+
+/* Status Badge */
+.fn-status-badge {
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.fn-status-badge.ACTIVE {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+}
+
+.fn-status-badge.COMPLETED {
+    background: rgba(99, 102, 241, 0.12);
+    color: #4F46E5;
+}
+
+.fn-status-badge.ARCHIVED {
+    background: rgba(107, 114, 128, 0.12);
+    color: #6B7280;
+}
+
+/* Card Stats Row */
+.fn-card-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+}
+
+.fn-stat-chip {
+    background: var(--bg-nested);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fn-stat-label {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.fn-stat-value {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Location Row */
+.fn-card-location {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Card Actions */
+.fn-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.fn-action-btn {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 7px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.18s ease;
+    color: var(--text-secondary);
+    font-family: inherit;
+}
+
+.fn-action-btn:hover {
+    background: var(--bg-nested);
+    color: var(--text-primary);
+    border-color: var(--primary-color);
+}
+
+.fn-action-btn.view {
+    background: rgba(30, 58, 138, 0.06);
+    color: var(--primary-color);
+    border-color: rgba(30, 58, 138, 0.2);
+    margin-right: auto;
+}
+
+.fn-action-btn.view:hover {
+    background: rgba(30, 58, 138, 0.12);
+}
+
+.fn-action-btn.delete {
+    color: #DC2626;
+    border-color: rgba(220, 38, 38, 0.2);
+}
+
+.fn-action-btn.delete:hover {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: #DC2626;
+}
+
+/* ─── Empty / Error / Loading States ────────────────────────────────────────── */
+.fn-state-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 2rem;
+    text-align: center;
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px dashed var(--border-color);
+    gap: 1rem;
+}
+
+.fn-state-icon {
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.fn-state-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.fn-state-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 340px;
+}
+
+/* Skeleton Loading */
+.fn-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+}
+
+.fn-skeleton-card {
+    height: 220px;
+    border-radius: 14px;
+    background: var(--bg-nested);
+    animation: fn-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes fn-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ─── Modal Overlay ──────────────────────────────────────────────────────────── */
+.fn-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.fn-modal {
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: var(--shadow-3d);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.fn-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.fn-modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.fn-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.18s ease;
+}
+
+.fn-modal-close:hover {
+    background: var(--bg-nested);
+    color: var(--text-primary);
+}
+
+/* Form Layout inside Modal */
+.fn-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.fn-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.fn-field label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.fn-field label span.required {
+    color: #DC2626;
+    margin-left: 2px;
+}
+
+.fn-input,
+.fn-select,
+.fn-textarea {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.fn-input:focus,
+.fn-select:focus,
+.fn-textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.08);
+}
+
+.fn-input.error,
+.fn-select.error,
+.fn-textarea.error {
+    border-color: #DC2626;
+}
+
+.fn-textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.fn-field-error {
+    font-size: 0.75rem;
+    color: #DC2626;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+}
+
+/* Modal Footer */
+.fn-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.fn-btn-cancel {
+    height: 38px;
+    padding: 0 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    font-family: inherit;
+}
+
+.fn-btn-cancel:hover {
+    background: var(--bg-nested);
+    color: var(--text-primary);
+}
+
+.fn-btn-submit {
+    height: 38px;
+    padding: 0 22px;
+    border-radius: 8px;
+    background: var(--primary-color);
+    color: #ffffff;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fn-btn-submit:hover:not(:disabled) {
+    background: var(--primary-hover);
+}
+
+.fn-btn-submit:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* ─── Delete Confirmation Dialog ─────────────────────────────────────────────── */
+.fn-confirm-modal {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--shadow-3d);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.fn-confirm-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(220, 38, 38, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #DC2626;
+}
+
+.fn-confirm-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.fn-confirm-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.fn-confirm-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.fn-btn-danger {
+    height: 38px;
+    padding: 0 18px;
+    border-radius: 8px;
+    background: #DC2626;
+    color: #ffffff;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fn-btn-danger:hover:not(:disabled) {
+    background: #B91C1C;
+}
+
+.fn-btn-danger:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* ─── Subscription Limit Modal ───────────────────────────────────────────────── */
+.fn-limit-modal {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--shadow-3d);
+    border: 1px solid rgba(217, 119, 6, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    text-align: center;
+    align-items: center;
+}
+
+.fn-limit-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: rgba(217, 119, 6, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #D97706;
+}
+
+.fn-limit-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.fn-limit-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.fn-limit-footer {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.fn-btn-upgrade {
+    height: 38px;
+    padding: 0 22px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+    color: #ffffff;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fn-btn-upgrade:hover {
+    opacity: 0.88;
+}
+
+/* ─── Toast ──────────────────────────────────────────────────────────────────── */
+.fn-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 9999;
+    min-width: 260px;
+    max-width: 380px;
+    padding: 0.9rem 1.1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-3d);
+    font-size: 0.875rem;
+    font-weight: 600;
+    animation: fn-toast-in 0.3s ease;
+}
+
+.fn-toast.success {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    color: #15803D;
+}
+
+.fn-toast.error {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #DC2626;
+}
+
+@keyframes fn-toast-in {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .fn-header { flex-direction: column; align-items: flex-start; }
+    .fn-toolbar { flex-direction: column; align-items: stretch; }
+    .fn-search-box { max-width: 100%; }
+    .fn-grid { grid-template-columns: 1fr; }
+    .fn-modal { padding: 1.4rem; }
+}

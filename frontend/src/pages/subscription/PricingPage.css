@@ -1,510 +1,473 @@
 /* ==========================================================================
-   VizhaBook Luxury Subscription Pricing Page Styles (100% Exact Reference UI)
+   VizhaBook — Premium Subscription Pricing Page
+   Exact visual match to reference screenshot
+   Left: LoginDesktop.png reuse  |  Right: Deep purple luxury SaaS cards
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;600;700;800&display=swap');
 
-.pricing-page-container {
+/* ============================================================
+   Page Root — identical outer background to Login page
+   ============================================================ */
+.pp-container {
     min-height: 100vh;
     width: 100vw;
-    background: #24102A;
     display: flex;
-    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    background: #24102A;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     box-sizing: border-box;
     overflow-x: hidden;
 }
 
-/* Outer Board Layout */
-.pricing-board {
-    width: 100vw;
-    min-height: 100vh;
-    display: flex;
-    position: relative;
-}
-
-/* ==========================================================================
-   LEFT HERO PANEL (Traditional Cream & Gold Festive Visual Language)
-   ========================================================================== */
-.pricing-hero-panel {
-    flex: 0 0 42%;
-    max-width: 42%;
-    background: #F9F4EC;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 3rem 2.5rem 2rem 2.5rem;
-    box-sizing: border-box;
-    overflow: hidden;
-    z-index: 1;
-}
-
-/* Garland Header Overlay */
-.pricing-garland-top {
-    position: absolute;
+/* ============================================================
+   LEFT — Exact Login artwork (LoginDesktop.png full-fill)
+   ============================================================ */
+.pp-hero-panel {
+    flex: 0 0 43%;
+    max-width: 43%;
+    height: 100vh;
+    position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    z-index: 3;
-    pointer-events: none;
-}
-
-/* Emblem & Logo Header */
-.pricing-logo-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    z-index: 2;
-    margin-top: 1.5rem;
-}
-
-.pricing-emblem-icon {
-    width: 110px;
-    height: 110px;
-    margin-bottom: 0.5rem;
-    filter: drop-shadow(0 6px 16px rgba(184, 134, 11, 0.3));
-}
-
-.pricing-brand-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 3rem;
-    font-weight: 700;
-    margin: 0;
-    line-height: 1;
-    background: linear-gradient(180deg, #A8792A 0%, #68420D 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.pricing-brand-tamil {
-    font-family: 'Noto Sans Tamil', sans-serif;
-    font-size: 1.7rem;
-    font-weight: 800;
-    line-height: 1.2;
-    background: linear-gradient(180deg, #8C5F1C 0%, #523408 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.pricing-brand-tagline {
-    font-size: 0.65rem;
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    color: #5C4119;
-    text-transform: uppercase;
-    margin-top: 0.4rem;
-}
-
-/* 4 Feature Circles Grid */
-.pricing-features-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.85rem;
-    width: 100%;
-    max-width: 440px;
-    z-index: 2;
-    margin: 2rem 0;
-}
-
-.pricing-circle-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.pricing-circle-icon-box {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1.5px solid #C49842;
+    background: #FAF3EA;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #5A390F;
-    box-shadow: 0 4px 12px rgba(196, 152, 66, 0.2);
 }
 
-.pricing-circle-title {
-    font-size: 0.62rem;
-    font-weight: 800;
-    color: #3A2308;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    margin: 0.6rem 0 0.2rem 0;
-    line-height: 1.2;
-}
-
-.pricing-circle-desc {
-    font-size: 0.58rem;
-    color: #6E5334;
-    line-height: 1.25;
-    margin: 0;
-}
-
-/* Bottom Landscape Illustration */
-.pricing-bottom-illustration {
-    position: relative;
+.pp-hero-image {
     width: 100%;
-    height: 110px;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
+    height: 100%;
+    object-fit: fill;
+    display: block;
 }
 
-.pricing-kolam-rangoli {
-    width: 160px;
-    height: 60px;
-    margin-bottom: -5px;
-    z-index: 2;
-}
-
-.pricing-skyline-bg {
-    width: 100%;
-    height: 70px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 120' fill='%235A390F' opacity='0.18'%3E%3Cpath d='M0,120 L0,90 L20,90 L20,70 L30,40 L40,70 L40,90 L80,90 L80,120 Z M120,120 L120,80 L130,50 L140,20 L150,50 L160,80 L160,120 Z M220,120 L220,95 L250,95 L250,120 Z M300,120 L300,70 L315,30 L330,70 L330,120 Z M400,120 C420,80 440,80 460,120 Z M520,120 L520,85 L535,45 L550,85 L550,120 Z M620,120 L620,95 L640,95 L640,120 Z M700,120 L700,75 L715,35 L730,75 L730,120 Z M820,120 L820,85 L835,40 L850,85 L850,120 Z M920,120 L920,90 L950,90 L950,120 Z'/%3E%3C/svg%3E");
-    background-repeat: repeat-x;
-    background-position: bottom;
-}
-
-/* ==========================================================================
-   RIGHT CONTENT PANEL (Luxury Deep Purple & Gold Cards)
-   ========================================================================== */
-.pricing-content-panel {
-    flex: 0 0 58%;
-    max-width: 58%;
+/* ============================================================
+   RIGHT — Premium Deep Purple Pricing Content
+   ============================================================ */
+.pp-content-panel {
+    flex: 1;
+    min-height: 100vh;
     background: linear-gradient(160deg, #24102A 0%, #17071C 100%);
-    padding: 2rem 2.5rem;
+    padding: 1.8rem 2.5rem 2rem 2.5rem;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    z-index: 2;
+    overflow-y: auto;
     position: relative;
 }
 
-/* Header & Toggle */
-.pricing-header-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    position: relative;
-}
-
-.pricing-top-lang {
+/* Subtle decorative dot pattern */
+.pp-content-panel::before {
+    content: '';
     position: absolute;
-    top: 0;
-    right: 0;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(201,154,50,0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
 }
 
-.pricing-main-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 2.2rem;
-    font-weight: 500;
-    color: #FFFFFF;
-    margin: 0 0 0.3rem 0;
+/* ============================================================
+   Language Toggle — Top Right
+   ============================================================ */
+.pp-lang-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 2;
 }
 
-.pricing-main-subtitle {
-    font-size: 0.85rem;
-    color: #C2ABCE;
-    margin: 0 0 0.8rem 0;
-}
-
-/* Toggle Switch Pill */
-.pricing-toggle-wrapper {
+.pp-lang-btn {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    margin-top: 0.5rem;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    color: #E2D3E8;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.pricing-save-badge {
-    font-size: 0.76rem;
+.pp-lang-btn:hover {
+    background: rgba(255,255,255,0.12);
+    color: #FFFFFF;
+}
+
+/* ============================================================
+   Heading Area
+   ============================================================ */
+.pp-heading-area {
+    text-align: center;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.pp-main-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.25rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    line-height: 1.2;
+    margin: 0 0 0.5rem 0;
+}
+
+.pp-title-gold {
+    color: #FAD675;
+}
+
+.pp-main-subtitle {
+    font-size: 0.86rem;
+    color: #C2ABCE;
+    margin: 0 0 1rem 0;
+    line-height: 1.5;
+}
+
+/* Decorative Gold Divider */
+.pp-gold-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 0 auto;
+}
+
+.pp-gold-divider span {
+    display: block;
+    height: 1px;
+    width: 80px;
+    background: linear-gradient(90deg, transparent, #C99A32, transparent);
+}
+
+/* ============================================================
+   Billing Toggle
+   ============================================================ */
+.pp-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    margin: 0.85rem 0 1.25rem;
+    position: relative;
+    z-index: 2;
+}
+
+.pp-save-text {
+    font-size: 0.77rem;
     color: #E9B856;
     font-weight: 600;
 }
 
-.pricing-toggle-pill {
+.pp-toggle-pill {
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 100px;
     padding: 3px;
 }
 
-.toggle-btn {
-    padding: 0.35rem 1rem;
+.pp-toggle-btn {
+    padding: 0.35rem 1.1rem;
     border-radius: 100px;
     border: none;
     background: transparent;
-    color: #C9B2D4;
+    color: #B49DC4;
     font-size: 0.78rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all 0.22s ease;
+    font-family: inherit;
 }
 
-.toggle-btn.active {
+.pp-toggle-btn.active {
     background: #FAD675;
     color: #24102A;
-    box-shadow: 0 2px 8px rgba(250, 214, 117, 0.3);
+    box-shadow: 0 2px 10px rgba(250,214,117,0.3);
 }
 
-/* 3 Plan Cards Container */
-.pricing-cards-container {
+/* ============================================================
+   Plan Cards Grid — 3 Column
+   ============================================================ */
+.pp-cards-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    margin: 1.5rem 0;
+    margin-bottom: 1.25rem;
     align-items: stretch;
+    position: relative;
+    z-index: 2;
 }
 
-/* Individual Card Base */
-.pricing-plan-card {
+/* ============================================================
+   Individual Card Base
+   ============================================================ */
+.pp-card {
     background: #FAF8F5;
     border-radius: 16px;
-    padding: 1.5rem 1.15rem 1.25rem 1.15rem;
+    padding: 1.6rem 1.2rem 1.3rem;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    align-items: center;
+    text-align: center;
     position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 10px 32px rgba(0,0,0,0.35);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1), box-shadow 0.28s ease;
 }
 
-.pricing-plan-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+.pp-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.45);
 }
 
-/* Standard Featured Card Highlight */
-.pricing-plan-card.featured {
-    background: #FAF8F5;
+/* Standard "MOST POPULAR" featured card */
+.pp-card.featured {
     border: 2px solid #8B5CF6;
-    box-shadow: 0 12px 35px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 14px 40px rgba(139,92,246,0.28);
 }
 
-.featured-top-badge {
+/* Current active plan */
+.pp-card.is-current {
+    border: 2px solid #C99A32;
+    box-shadow: 0 14px 40px rgba(201,154,50,0.22);
+}
+
+/* Most Popular Badge */
+.pp-popular-badge {
     position: absolute;
-    top: -12px;
+    top: -13px;
     left: 50%;
     transform: translateX(-50%);
     background: #6B21A8;
     color: #FFFFFF;
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     font-weight: 800;
-    letter-spacing: 0.08em;
-    padding: 0.25rem 0.85rem;
+    letter-spacing: 0.09em;
+    padding: 0.25rem 0.9rem;
     border-radius: 100px;
     text-transform: uppercase;
-    box-shadow: 0 4px 10px rgba(107, 33, 168, 0.4);
+    box-shadow: 0 4px 12px rgba(107,33,168,0.45);
+    white-space: nowrap;
 }
 
-/* Plan Header inside Card */
-.card-icon-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    margin-bottom: 0.85rem;
-}
-
-.plan-accent-icon {
-    width: 44px;
-    height: 44px;
+/* ============================================================
+   Plan Icon Box
+   ============================================================ */
+.pp-plan-icon-box {
+    width: 46px;
+    height: 46px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.55rem;
 }
 
-.plan-accent-icon.basic {
-    background: #DCFCE7;
-    color: #16A34A;
-}
+.pp-plan-icon-box.basic   { background: #DCFCE7; color: #16A34A; }
+.pp-plan-icon-box.standard { background: #F3E8FF; color: #9333EA; }
+.pp-plan-icon-box.premium  { background: #FEF3C7; color: #D97706; }
 
-.plan-accent-icon.standard {
-    background: #F3E8FF;
-    color: #9333EA;
-}
-
-.plan-accent-icon.premium {
-    background: #FEF3C7;
-    color: #D97706;
-}
-
-.card-plan-name {
+/* ============================================================
+   Plan Name, Subtitle, Price
+   ============================================================ */
+.pp-plan-name {
+    font-family: 'Playfair Display', serif;
     font-size: 1.15rem;
     font-weight: 800;
     color: #1F2937;
-    margin: 0;
+    margin: 0 0 0.18rem;
 }
 
-.card-plan-subtitle {
-    font-size: 0.7rem;
+.pp-plan-subtitle {
+    font-size: 0.68rem;
     color: #6B7280;
-    margin: 0.15rem 0 0.5rem 0;
+    margin: 0 0 0.75rem;
+    line-height: 1.3;
 }
 
-/* Pricing Display */
-.card-price-box {
-    text-align: center;
+.pp-price-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px;
     margin-bottom: 0.75rem;
 }
 
-.price-val {
-    font-size: 1.55rem;
+.pp-price-currency {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+}
+
+.pp-price-value {
+    font-size: 1.8rem;
     font-weight: 900;
     color: #111827;
+    line-height: 1;
 }
 
-.price-period {
-    font-size: 0.75rem;
+.pp-price-period {
+    font-size: 0.72rem;
     color: #6B7280;
     font-weight: 600;
+    margin-left: 2px;
 }
 
-/* Limit Pill Badge */
-.limit-pill-badge {
-    text-align: center;
-    padding: 0.35rem 0.5rem;
+/* ============================================================
+   Limit Pill Badge
+   ============================================================ */
+.pp-limit-pill {
+    padding: 0.3rem 0.7rem;
     border-radius: 100px;
-    font-size: 0.68rem;
+    font-size: 0.64rem;
     font-weight: 800;
     margin-bottom: 1rem;
+    display: inline-block;
 }
 
-.limit-pill-badge.basic {
-    background: #DCFCE7;
-    color: #15803D;
-}
+.pp-limit-pill.basic    { background: #DCFCE7; color: #15803D; }
+.pp-limit-pill.standard { background: #F3E8FF; color: #7E22CE; }
+.pp-limit-pill.premium  { background: #FEF3C7; color: #B45309; }
 
-.limit-pill-badge.standard {
-    background: #F3E8FF;
-    color: #7E22CE;
-}
-
-.limit-pill-badge.premium {
-    background: #FEF3C7;
-    color: #B45309;
-}
-
-/* Features Checkmarks */
-.card-features-list {
+/* ============================================================
+   Feature List
+   ============================================================ */
+.pp-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
-    margin-bottom: 1.25rem;
-    padding: 0;
-    list-style: none;
+    gap: 0.42rem;
+    text-align: left;
+    width: 100%;
 }
 
-.feature-item-row {
+.pp-feature-row {
     display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-size: 0.71rem;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.69rem;
     color: #374151;
     font-weight: 500;
+    line-height: 1.3;
 }
 
-.check-icon.basic { color: #16A34A; }
-.check-icon.standard { color: #9333EA; }
-.check-icon.premium { color: #D97706; }
+.pp-check { flex-shrink: 0; margin-top: 1px; }
+.pp-check.basic    { color: #16A34A; }
+.pp-check.standard { color: #9333EA; }
+.pp-check.premium  { color: #D97706; }
 
-/* CTA Buttons */
-.card-cta-btn {
+/* ============================================================
+   CTA Buttons
+   ============================================================ */
+.pp-cta-btn {
     width: 100%;
     height: 42px;
     border-radius: 10px;
     font-size: 0.82rem;
     font-weight: 800;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.22s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-top: auto;
+    font-family: inherit;
 }
 
-.card-cta-btn.basic {
+.pp-cta-btn.basic {
     background: #FFFFFF;
     border: 1.5px solid #16A34A;
     color: #16A34A;
 }
 
-.card-cta-btn.basic:hover {
+.pp-cta-btn.basic:hover:not(:disabled) {
     background: #F0FDF4;
 }
 
-.card-cta-btn.standard {
+.pp-cta-btn.standard {
     background: #4C1D95;
     border: none;
     color: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(76, 29, 149, 0.3);
+    box-shadow: 0 4px 14px rgba(76,29,149,0.3);
 }
 
-.card-cta-btn.standard:hover {
+.pp-cta-btn.standard:hover:not(:disabled) {
     background: #5B21B6;
-    box-shadow: 0 6px 16px rgba(76, 29, 149, 0.4);
+    box-shadow: 0 6px 18px rgba(76,29,149,0.4);
 }
 
-.card-cta-btn.premium {
+.pp-cta-btn.premium {
     background: #FAF0D9;
     border: 1.5px solid #C49842;
     color: #5A390F;
 }
 
-.card-cta-btn.premium:hover {
+.pp-cta-btn.premium:hover:not(:disabled) {
     background: #F5E5C0;
 }
 
-/* Bottom Shield Note */
-.pricing-shield-banner {
+/* "Current Plan" disabled state */
+.pp-cta-btn.current,
+.pp-cta-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ============================================================
+   Shield Banner
+   ============================================================ */
+.pp-shield-banner {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
     border-radius: 100px;
     padding: 0.55rem 1.25rem;
     color: #DECDE5;
-    font-size: 0.74rem;
-    margin-bottom: 1.25rem;
+    font-size: 0.72rem;
+    margin-bottom: 1.2rem;
+    position: relative;
+    z-index: 2;
+    text-align: center;
 }
 
-/* Bottom Security Icons Grid */
-.pricing-security-bar {
+/* ============================================================
+   Trust / Security Bar
+   ============================================================ */
+.pp-trust-bar {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 0.75rem;
     padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+    z-index: 2;
 }
 
-.security-item {
+.pp-trust-item {
     display: flex;
     align-items: flex-start;
     gap: 0.5rem;
     color: #E2D3E8;
 }
 
-.sec-icon-box {
+.pp-trust-icon {
     width: 28px;
     height: 28px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255,255,255,0.07);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -512,44 +475,113 @@
     flex-shrink: 0;
 }
 
-.sec-title {
-    font-size: 0.7rem;
+.pp-trust-title {
+    font-size: 0.68rem;
     font-weight: 700;
     color: #FFFFFF;
     margin-bottom: 0.1rem;
 }
 
-.sec-desc {
-    font-size: 0.6rem;
+.pp-trust-desc {
+    font-size: 0.58rem;
     color: #9C83A8;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
-/* Contact Footer Link */
-.pricing-contact-link {
+/* ============================================================
+   Contact Footer
+   ============================================================ */
+.pp-contact-footer {
     text-align: center;
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     color: #9C83A8;
     margin-top: 1rem;
+    position: relative;
+    z-index: 2;
 }
 
-.pricing-contact-link button {
+.pp-contact-footer button {
     background: none;
     border: none;
     color: #E9B856;
     font-weight: 700;
     cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
 }
 
-.pricing-contact-link button:hover {
+.pp-contact-footer button:hover {
     text-decoration: underline;
 }
 
-/* Responsive Scaling */
-@media (max-width: 1200px) {
-    .pricing-board { flex-direction: column; }
-    .pricing-hero-panel { flex: 1 1 auto; max-width: 100%; min-height: 400px; }
-    .pricing-content-panel { flex: 1 1 auto; max-width: 100%; }
-    .pricing-cards-container { grid-template-columns: 1fr; }
-    .pricing-security-bar { grid-template-columns: repeat(2, 1fr); }
+/* ============================================================
+   Responsive Breakpoints
+   ============================================================ */
+@media (max-width: 1280px) {
+    .pp-content-panel {
+        padding: 1.5rem 1.75rem;
+    }
+    .pp-main-title {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .pp-container {
+        flex-direction: column;
+    }
+    .pp-hero-panel {
+        flex: 0 0 auto;
+        max-width: 100%;
+        height: 280px;
+        position: relative;
+    }
+    .pp-content-panel {
+        flex: 1;
+        padding: 1.5rem 1.5rem;
+    }
+    .pp-cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.85rem;
+    }
+    .pp-trust-bar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .pp-hero-panel {
+        height: 200px;
+    }
+    .pp-content-panel {
+        padding: 1.25rem 1rem;
+    }
+    .pp-main-title {
+        font-size: 1.7rem;
+    }
+    .pp-cards-grid {
+        grid-template-columns: 1fr;
+        max-width: 380px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .pp-toggle-wrapper {
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+    .pp-trust-bar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .pp-content-panel {
+        padding: 1rem 0.85rem;
+    }
+    .pp-main-title {
+        font-size: 1.5rem;
+    }
+    .pp-hero-panel {
+        height: 160px;
+    }
 }

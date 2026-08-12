@@ -1,327 +1,324 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Leaf, Star, Crown, Check, Shield, Lock, Clock, Zap, Globe, Sparkles } from 'lucide-react';
+import { Leaf, Star, Crown, Check, Shield, Lock, Clock, Zap, Globe, ChevronDown } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+import useSubscription from '../../hooks/useSubscription';
 import paymentService from '../../services/paymentService';
+import loginDesktopImg from '../../assets/LoginDesktop.png';
 import './PricingPage.css';
+
+/* =============================================================
+   Static plan config — IDs match subscription_plans DB table
+   ============================================================= */
+const PLAN_CONFIGS = [
+    {
+        id: 'PLAN_BASIC',
+        name: 'Basic Plan',
+        subtitle: 'Perfect for small functions',
+        price: 499,
+        period: '/ year',
+        limitPill: '1 Function / 300 Entries',
+        tier: 'basic',
+        icon: Leaf,
+        features: [
+            '1 Function',
+            'Up to 300 Moi/Gift Entries',
+            'Expense Tracking',
+            'Basic Reports',
+            'PDF Export',
+            'Basic Dashboard',
+            'Email Support'
+        ],
+        btnText: 'Choose Basic'
+    },
+    {
+        id: 'PLAN_STANDARD',
+        name: 'Standard Plan',
+        subtitle: 'Best for multiple functions',
+        price: 999,
+        period: '/ year',
+        limitPill: '5 Functions / 2000 Entries',
+        tier: 'standard',
+        icon: Star,
+        isPopular: true,
+        features: [
+            '5 Functions',
+            'Up to 2000 Moi/Gift Entries',
+            'Expense Tracking',
+            'Advanced Reports',
+            'PDF & Excel Export',
+            'QR Guest Check-in',
+            'Advanced Dashboard',
+            'Priority Email Support'
+        ],
+        btnText: 'Choose Standard'
+    },
+    {
+        id: 'PLAN_PREMIUM',
+        name: 'Premium Plan',
+        subtitle: 'For large events & families',
+        price: 1999,
+        period: '/ year',
+        limitPill: 'Unlimited Functions / 5000 Entries',
+        tier: 'premium',
+        icon: Crown,
+        features: [
+            'Unlimited Functions (Within Year)',
+            'Up to 5000 Moi/Gift Entries',
+            'Expense Tracking',
+            'Advanced Reports',
+            'PDF & Excel Export',
+            'QR Guest Check-in',
+            'Advanced Dashboard',
+            'Priority Support',
+            'Data Backup & Restore'
+        ],
+        btnText: 'Choose Premium'
+    }
+];
 
 const PricingPage = () => {
     const navigate = useNavigate();
+    const { lang, toggleLang } = useApp();
+    const { subscription, plan: activePlan, isTrial, isActive, isExpired, loading: subLoading } = useSubscription();
+
     const [plans, setPlans] = useState([]);
     const [billingPeriod, setBillingPeriod] = useState('annual');
-    const [loading, setLoading] = useState(true);
+    const [loadingPlans, setLoadingPlans] = useState(true);
     const [selectedPlanId, setSelectedPlanId] = useState(null);
 
     useEffect(() => {
         const loadPlans = async () => {
-            setLoading(true);
+            setLoadingPlans(true);
             const data = await paymentService.getPlans();
             setPlans(data);
-            setLoading(false);
+            setLoadingPlans(false);
         };
         loadPlans();
     }, []);
 
+    /* Merge live prices from backend, fall back to static config */
+    const displayPlans = PLAN_CONFIGS.map(cfg => {
+        const live = plans.find(p => p.id === cfg.id);
+        return live
+            ? { ...cfg, price: Number(live.price) || cfg.price }
+            : cfg;
+    });
+
+    const isCurrentPlan = (planId) => {
+        if (!isActive || !activePlan) return false;
+        return activePlan.id === planId;
+    };
+
     const handleChoosePlan = async (planId) => {
+        if (isCurrentPlan(planId)) return;
         setSelectedPlanId(planId);
         const res = await paymentService.selectPlan(planId);
         if (res.success) {
-            navigate('/subscription/success', { state: { plan: res.plan, subscription: res.subscription } });
+            navigate('/subscription/success', {
+                state: { plan: res.plan, subscription: res.subscription }
+            });
         } else {
-            alert(res.error || 'Failed to select plan');
+            alert(res.error || 'Failed to select plan. Please try again.');
             setSelectedPlanId(null);
         }
     };
 
-    // Default static fallback definitions matching reference screenshot if backend is starting up
-    const defaultPlans = [
-        {
-            id: 'PLAN_BASIC',
-            name: 'Basic Plan',
-            subtitle: 'Perfect for small functions',
-            price: 499,
-            period: '/ year',
-            limitPill: '1 Function / 300 Entries',
-            accentClass: 'basic',
-            icon: Leaf,
-            features: [
-                '1 Function',
-                'Up to 300 Moi/Gift Entries',
-                'Expense Tracking',
-                'Basic Reports',
-                'PDF Export',
-                'Basic Dashboard',
-                'Email Support'
-            ],
-            btnText: 'Choose Basic',
-            btnClass: 'basic'
-        },
-        {
-            id: 'PLAN_STANDARD',
-            name: 'Standard Plan',
-            subtitle: 'Best for multiple functions',
-            price: 999,
-            period: '/ year',
-            limitPill: '5 Functions / 2000 Entries',
-            accentClass: 'standard',
-            icon: Star,
-            isPopular: true,
-            features: [
-                '5 Functions',
-                'Up to 2000 Moi/Gift Entries',
-                'Expense Tracking',
-                'Advanced Reports',
-                'PDF & Excel Export',
-                'QR Guest Check-in',
-                'Advanced Dashboard',
-                'Priority Email Support'
-            ],
-            btnText: 'Choose Standard',
-            btnClass: 'standard'
-        },
-        {
-            id: 'PLAN_PREMIUM',
-            name: 'Premium Plan',
-            subtitle: 'For large events & families',
-            price: 1999,
-            period: '/ year',
-            limitPill: 'Unlimited Functions / 5000 Entries',
-            accentClass: 'premium',
-            icon: Crown,
-            features: [
-                'Unlimited Functions (Within Year)',
-                'Up to 5000 Moi/Gift Entries',
-                'Expense Tracking',
-                'Advanced Reports',
-                'PDF & Excel Export',
-                'QR Guest Check-in',
-                'Advanced Dashboard',
-                'Priority Support',
-                'Data Backup & Restore'
-            ],
-            btnText: 'Choose Premium',
-            btnClass: 'premium'
-        }
-    ];
-
-    const displayPlans = plans.length > 0 ? plans.map(p => {
-        const idLower = (p.id || p.name).toLowerCase();
-        if (idLower.includes('basic')) {
-            return { ...defaultPlans[0], id: p.id, price: Number(p.price) || 499 };
-        } else if (idLower.includes('standard')) {
-            return { ...defaultPlans[1], id: p.id, price: Number(p.price) || 999 };
-        } else {
-            return { ...defaultPlans[2], id: p.id, price: Number(p.price) || 1999 };
-        }
-    }) : defaultPlans;
+    const getCtaLabel = (plan) => {
+        if (isCurrentPlan(plan.id)) return 'Current Plan';
+        if (selectedPlanId === plan.id) return 'Processing…';
+        return plan.btnText;
+    };
 
     return (
-        <div className="pricing-page-container">
-            <div className="pricing-board">
-                {/* LEFT HERO PANEL (Traditional Cream & Gold Cultural Identity) */}
-                <div className="pricing-hero-panel">
-                    {/* Garland Top */}
-                    <div className="pricing-garland-top">
-                        <svg width="100%" height="80" viewBox="0 0 500 80" fill="none" preserveAspectRatio="none">
-                            <path d="M0,0 Q125,70 250,0 Q375,70 500,0 L500,0 L0,0 Z" fill="#D4AF37" fillOpacity="0.15" />
-                            <path d="M0,0 Q125,50 250,0 Q375,50 500,0" stroke="#E9B856" strokeWidth="2" fill="none" />
-                            <circle cx="125" cy="35" r="4" fill="#E9B856" />
-                            <circle cx="375" cy="35" r="4" fill="#E9B856" />
+        <div className="pp-container">
+            {/* ============================================
+                LEFT — Exact LoginDesktop.png artwork reuse
+                ============================================ */}
+            <div className="pp-hero-panel">
+                <img
+                    src={loginDesktopImg}
+                    alt="VizhaBook Traditions"
+                    className="pp-hero-image"
+                />
+            </div>
+
+            {/* ============================================
+                RIGHT — Premium Pricing Content
+                ============================================ */}
+            <div className="pp-content-panel">
+
+                {/* Language selector top-right */}
+                <div className="pp-lang-row">
+                    <button
+                        type="button"
+                        className="pp-lang-btn"
+                        onClick={toggleLang}
+                        id="pricing-lang-toggle"
+                    >
+                        <Globe size={15} />
+                        <span>{lang === 'en' ? 'English' : 'தமிழ்'}</span>
+                        <ChevronDown size={14} />
+                    </button>
+                </div>
+
+                {/* Heading */}
+                <div className="pp-heading-area">
+                    <h1 className="pp-main-title">
+                        Choose Your<br />
+                        <span className="pp-title-gold">Subscription Plan</span>
+                    </h1>
+                    <p className="pp-main-subtitle">
+                        Select the perfect plan to continue<br />your digital journey
+                    </p>
+                    <div className="pp-gold-divider" aria-hidden="true">
+                        <span />
+                        <svg width="24" height="10" viewBox="0 0 24 10" fill="none">
+                            <circle cx="12" cy="5" r="3" fill="#C99A32" />
+                            <circle cx="4" cy="5" r="1.5" fill="#C99A32" opacity="0.5" />
+                            <circle cx="20" cy="5" r="1.5" fill="#C99A32" opacity="0.5" />
                         </svg>
-                    </div>
-
-                    {/* Logo & Branding */}
-                    <div className="pricing-logo-wrapper">
-                        {/* Gold Crest Emblem */}
-                        <svg className="pricing-emblem-icon" viewBox="0 0 120 120" fill="none">
-                            <circle cx="60" cy="60" r="54" stroke="#D4AF37" strokeWidth="2" strokeDasharray="4 2" />
-                            <path d="M60 15 L72 38 L98 42 L79 61 L83 87 L60 75 L37 87 L41 61 L22 42 L48 38 Z" fill="url(#goldGrad)" stroke="#B8860B" strokeWidth="1" />
-                            <rect x="42" y="42" width="36" height="36" rx="4" fill="#5A390F" />
-                            <text x="60" y="65" fill="#FAF0D9" fontSize="16" fontFamily="Playfair Display" textAnchor="middle" fontWeight="bold">மொய்</text>
-                            <defs>
-                                <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
-                                    <stop offset="0%" stopColor="#FAD675" />
-                                    <stop offset="100%" stopColor="#C49842" />
-                                </linearGradient>
-                            </defs>
-                        </svg>
-
-                        <h1 className="pricing-brand-title">VizhaBook</h1>
-                        <h2 className="pricing-brand-tamil">விழாபுக்</h2>
-                        <p className="pricing-brand-tagline">FROM MOI TO DIGITAL, TRADITIONS SUSTAINED</p>
-                    </div>
-
-                    {/* 4 Feature Circles */}
-                    <div className="pricing-features-grid">
-                        <div className="pricing-circle-card">
-                            <div className="pricing-circle-icon-box">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="7" r="4"/><path d="M10 15H6a4 4 0 00-4 4v2"/><circle cx="17" cy="11" r="3"/><path d="M22 21v-2a3 3 0 00-3-3h-1"/></svg>
-                            </div>
-                            <h4 className="pricing-circle-title">MANAGE FUNCTIONS</h4>
-                            <p className="pricing-circle-desc">Create & manage your functions effortlessly</p>
-                        </div>
-
-                        <div className="pricing-circle-card">
-                            <div className="pricing-circle-icon-box">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-                            </div>
-                            <h4 className="pricing-circle-title">TRACK MOI & GIFTS</h4>
-                            <p className="pricing-circle-desc">Record and track contributions with ease</p>
-                        </div>
-
-                        <div className="pricing-circle-card">
-                            <div className="pricing-circle-icon-box">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                            </div>
-                            <h4 className="pricing-circle-title">MANAGE EXPENSES</h4>
-                            <p className="pricing-circle-desc">Keep track of all your expenses in one place</p>
-                        </div>
-
-                        <div className="pricing-circle-card">
-                            <div className="pricing-circle-icon-box">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                            </div>
-                            <h4 className="pricing-circle-title">DETAILED REPORTS</h4>
-                            <p className="pricing-circle-desc">Get powerful insights and export reports</p>
-                        </div>
-                    </div>
-
-                    {/* Bottom Skyline & Kolam */}
-                    <div className="pricing-bottom-illustration">
-                        <svg className="pricing-kolam-rangoli" viewBox="0 0 200 80" fill="none">
-                            <path d="M100 10 C120 30, 160 30, 180 10 C160 50, 160 70, 100 70 C40 70, 40 50, 20 10 C40 30, 80 30, 100 10 Z" stroke="#C49842" strokeWidth="1.5" />
-                            <circle cx="100" cy="40" r="8" fill="#E9B856" />
-                        </svg>
-                        <div className="pricing-skyline-bg" />
+                        <span />
                     </div>
                 </div>
 
-                {/* RIGHT CONTENT PANEL (Luxury Deep Purple & SaaS Cards) */}
-                <div className="pricing-content-panel">
-                    {/* Header & Annual Toggle */}
-                    <div className="pricing-header-area">
-                        <h2 className="pricing-main-title">Choose Your Subscription Plan</h2>
-                        <p className="pricing-main-subtitle">Select the perfect plan to continue your digital journey</p>
-
-                        <div className="pricing-toggle-wrapper">
-                            <span className="pricing-save-badge">Save up to 20% with Annual Plan</span>
-                            <div className="pricing-toggle-pill">
-                                <button
-                                    type="button"
-                                    className={`toggle-btn ${billingPeriod === 'annual' ? 'active' : ''}`}
-                                    onClick={() => setBillingPeriod('annual')}
-                                >
-                                    Annual
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`toggle-btn ${billingPeriod === 'monthly' ? 'active' : ''}`}
-                                    onClick={() => setBillingPeriod('monthly')}
-                                >
-                                    Monthly
-                                </button>
-                            </div>
-                        </div>
+                {/* Annual / Monthly Toggle */}
+                <div className="pp-toggle-wrapper">
+                    <span className="pp-save-text">Save up to 20% with Annual Plan</span>
+                    <div className="pp-toggle-pill" role="group" aria-label="Billing Period">
+                        <button
+                            type="button"
+                            id="billing-annual"
+                            className={`pp-toggle-btn ${billingPeriod === 'annual' ? 'active' : ''}`}
+                            onClick={() => setBillingPeriod('annual')}
+                        >
+                            Annual
+                        </button>
+                        <button
+                            type="button"
+                            id="billing-monthly"
+                            className={`pp-toggle-btn ${billingPeriod === 'monthly' ? 'active' : ''}`}
+                            onClick={() => setBillingPeriod('monthly')}
+                        >
+                            Monthly
+                        </button>
                     </div>
+                </div>
 
-                    {/* 3 Plan Cards Container */}
-                    <div className="pricing-cards-container">
-                        {displayPlans.map((plan) => {
-                            const IconComponent = plan.icon;
-                            return (
-                                <div
-                                    key={plan.id}
-                                    className={`pricing-plan-card ${plan.isPopular ? 'featured' : ''}`}
-                                >
-                                    {plan.isPopular && (
-                                        <div className="featured-top-badge">MOST POPULAR</div>
-                                    )}
+                {/* =========================================
+                    PLAN CARDS
+                    ========================================= */}
+                <div className="pp-cards-grid">
+                    {displayPlans.map((plan) => {
+                        const Icon = plan.icon;
+                        const isCurrent = isCurrentPlan(plan.id);
+                        const isProcessing = selectedPlanId === plan.id;
 
-                                    <div>
-                                        <div className="card-icon-header">
-                                            <div className={`plan-accent-icon ${plan.accentClass}`}>
-                                                <IconComponent size={22} />
-                                            </div>
-                                            <h3 className="card-plan-name">{plan.name}</h3>
-                                            <p className="card-plan-subtitle">{plan.subtitle}</p>
-                                        </div>
-
-                                        <div className="card-price-box">
-                                            <span className="price-val">₹{plan.price}</span>
-                                            <span className="price-period"> {plan.period}</span>
-                                        </div>
-
-                                        <div className={`limit-pill-badge ${plan.accentClass}`}>
-                                            {plan.limitPill}
-                                        </div>
-
-                                        <ul className="card-features-list">
-                                            {plan.features.map((feat, idx) => (
-                                                <li key={idx} className="feature-item-row">
-                                                    <Check size={14} className={`check-icon ${plan.accentClass}`} />
-                                                    <span>{feat}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
+                        return (
+                            <div
+                                key={plan.id}
+                                className={`pp-card ${plan.tier} ${plan.isPopular ? 'featured' : ''} ${isCurrent ? 'is-current' : ''}`}
+                            >
+                                {plan.isPopular && (
+                                    <div className="pp-popular-badge" aria-label="Most Popular Plan">
+                                        MOST POPULAR
                                     </div>
+                                )}
 
-                                    <button
-                                        type="button"
-                                        className={`card-cta-btn ${plan.btnClass}`}
-                                        onClick={() => handleChoosePlan(plan.id)}
-                                        disabled={selectedPlanId === plan.id}
-                                    >
-                                        {selectedPlanId === plan.id ? 'Processing...' : plan.btnText}
-                                    </button>
+                                {/* Plan icon */}
+                                <div className={`pp-plan-icon-box ${plan.tier}`}>
+                                    <Icon size={22} />
                                 </div>
-                            );
-                        })}
+
+                                {/* Plan name */}
+                                <h3 className="pp-plan-name">{plan.name}</h3>
+                                <p className="pp-plan-subtitle">{plan.subtitle}</p>
+
+                                {/* Price */}
+                                <div className="pp-price-row">
+                                    <span className="pp-price-currency">₹</span>
+                                    <span className="pp-price-value">{plan.price.toLocaleString('en-IN')}</span>
+                                    <span className="pp-price-period">{plan.period}</span>
+                                </div>
+
+                                {/* Limit pill */}
+                                <div className={`pp-limit-pill ${plan.tier}`}>
+                                    {plan.limitPill}
+                                </div>
+
+                                {/* Feature list */}
+                                <ul className="pp-features-list">
+                                    {plan.features.map((feat, i) => (
+                                        <li key={i} className="pp-feature-row">
+                                            <Check size={13} className={`pp-check ${plan.tier}`} />
+                                            <span>{feat}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                {/* CTA */}
+                                <button
+                                    type="button"
+                                    id={`cta-${plan.id.toLowerCase()}`}
+                                    className={`pp-cta-btn ${plan.tier} ${isCurrent ? 'current' : ''}`}
+                                    onClick={() => handleChoosePlan(plan.id)}
+                                    disabled={isCurrent || isProcessing}
+                                >
+                                    {getCtaLabel(plan)}
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Shield Banner */}
+                <div className="pp-shield-banner">
+                    <Shield size={15} color="#E9B856" />
+                    <span>All plans include regular updates, secure cloud storage and dedicated data protection.</span>
+                </div>
+
+                {/* Security Trust Icons */}
+                <div className="pp-trust-bar">
+                    <div className="pp-trust-item">
+                        <div className="pp-trust-icon"><Shield size={15} /></div>
+                        <div>
+                            <div className="pp-trust-title">Secure Payment</div>
+                            <div className="pp-trust-desc">Powered by Razorpay<br />100% secure transactions</div>
+                        </div>
                     </div>
-
-                    {/* Bottom Security & Banner Area */}
-                    <div>
-                        <div className="pricing-shield-banner">
-                            <Shield size={16} color="#E9B856" />
-                            <span>All plans include regular updates, secure cloud storage and dedicated data protection.</span>
-                        </div>
-
-                        <div className="pricing-security-bar">
-                            <div className="security-item">
-                                <div className="sec-icon-box"><Shield size={16} /></div>
-                                <div>
-                                    <div className="sec-title">Secure Payment</div>
-                                    <div className="sec-desc">Powered by Razorpay 100% secure transactions</div>
-                                </div>
-                            </div>
-
-                            <div className="security-item">
-                                <div className="sec-icon-box"><Lock size={16} /></div>
-                                <div>
-                                    <div className="sec-title">Data Protection</div>
-                                    <div className="sec-desc">Enterprise-grade security Your data is always safe</div>
-                                </div>
-                            </div>
-
-                            <div className="security-item">
-                                <div className="sec-icon-box"><Clock size={16} /></div>
-                                <div>
-                                    <div className="sec-title">Cancel Anytime</div>
-                                    <div className="sec-desc">No lock-ins. Cancel or upgrade anytime</div>
-                                </div>
-                            </div>
-
-                            <div className="security-item">
-                                <div className="sec-icon-box"><Zap size={16} /></div>
-                                <div>
-                                    <div className="sec-title">Instant Activation</div>
-                                    <div className="sec-desc">Get immediate access after successful payment</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="pricing-contact-link">
-                            Need help choosing a plan? <button type="button" onClick={() => alert('Support team: support@vizhabook.com')}>Contact us</button>
+                    <div className="pp-trust-item">
+                        <div className="pp-trust-icon"><Lock size={15} /></div>
+                        <div>
+                            <div className="pp-trust-title">Data Protection</div>
+                            <div className="pp-trust-desc">Enterprise-grade security<br />Your data is always safe</div>
                         </div>
                     </div>
+                    <div className="pp-trust-item">
+                        <div className="pp-trust-icon"><Clock size={15} /></div>
+                        <div>
+                            <div className="pp-trust-title">Cancel Anytime</div>
+                            <div className="pp-trust-desc">No lock-ins. Cancel or<br />upgrade anytime</div>
+                        </div>
+                    </div>
+                    <div className="pp-trust-item">
+                        <div className="pp-trust-icon"><Zap size={15} /></div>
+                        <div>
+                            <div className="pp-trust-title">Instant Activation</div>
+                            <div className="pp-trust-desc">Get immediate access<br />after successful payment</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer contact */}
+                <div className="pp-contact-footer">
+                    Need help choosing a plan?{' '}
+                    <button
+                        type="button"
+                        onClick={() => alert('Support: support@vizhabook.com')}
+                        id="pricing-contact-us"
+                    >
+                        Contact us
+                    </button>
                 </div>
             </div>
         </div>
