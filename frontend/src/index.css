@@ -10,9 +10,9 @@
   /* Classic Professional Palette */
   --primary-color: #1E3A8A; /* Deep Sapphire (Tailwind Blue-900) */
   --primary-hover: #1e40af;  /* Bright Navy (Tailwind Blue-800) */
-  --bg-primary: #F8FAFC;     /* Slate-50 - Clean, airy, professional background */
-  --bg-card: rgba(255, 255, 255, 0.75); /* High-translucency Glassmorphic base */
-  --bg-nested: #F1F5F9;      /* For row backgrounds, etc. */
+  --bg-primary: #FAF2E6;     /* Sandal Cream Parchment background (matches reference image) */
+  --bg-card: #FFFFFF;        /* Crisp clean white card surface */
+  --bg-nested: #F2E8D8;      /* Warm nested container background */
   --bg-input: #FFFFFF;
   --text-primary: #0F172A;   /* Slate-900 */
   --text-secondary: #475569; /* Slate-600 */

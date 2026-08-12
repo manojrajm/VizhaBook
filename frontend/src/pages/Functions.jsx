@@ -2,34 +2,49 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Plus, Search, ArrowUpDown, Calendar, Eye, Pencil, Trash2,
-    AlertTriangle, Zap, CheckCircle2, AlertCircle, X, Loader2,
-    Sparkles, TrendingUp, LayoutGrid, PartyPopper
+    Zap, CheckCircle2, AlertCircle, X, Loader2,
+    MapPin, LayoutGrid, ListFilter, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import useFunctions from '../hooks/useFunctions';
 import { functionSchema } from '../schemas/function.schema';
 import './Functions.css';
 
-/* ─── Event type registry ─────────────────────────────────────────────────────
-   Maps function name keywords → emoji, stripe colour class, label
-   ─────────────────────────────────────────────────────────────────────────── */
+/* ─── Event type registry (Matching reference design color & icons) ─────────── */
 const detectType = (name = '') => {
     const n = name.toLowerCase();
     if (n.includes('wedding') || n.includes('marriage') || n.includes('kalyanam') || n.includes('திருமணம்'))
-        return { emoji: '🏮', stripe: 'wedding',     label: 'Wedding' };
-    if (n.includes('birthday') || n.includes('bday') || n.includes('பிறந்தநாள்'))
-        return { emoji: '🎂', stripe: 'birthday',    label: 'Birthday' };
-    if (n.includes('house') || n.includes('gruh') || n.includes('housewarming') || n.includes('griha'))
-        return { emoji: '🏠', stripe: 'house',       label: 'House Warming' };
-    if (n.includes('baby') || n.includes('shower') || n.includes('valaikaapu') || n.includes('seemantham'))
-        return { emoji: '🍼', stripe: 'baby',        label: 'Baby Shower' };
-    if (n.includes('anniv'))
-        return { emoji: '💑', stripe: 'anniversary', label: 'Anniversary' };
-    if (n.includes('engag') || n.includes('nischay'))
-        return { emoji: '💍', stripe: 'wedding',     label: 'Engagement' };
+        return { emoji: '🪔', themeClass: 'type-marriage', label: 'Marriage' };
     if (n.includes('reception'))
-        return { emoji: '🎊', stripe: 'wedding',     label: 'Reception' };
-    return { emoji: '✨', stripe: 'default', label: 'Celebration' };
+        return { emoji: '💍', themeClass: 'type-reception', label: 'Reception' };
+    if (n.includes('engag') || n.includes('nischay'))
+        return { emoji: '🎁', themeClass: 'type-engagement', label: 'Engagement' };
+    if (n.includes('house') || n.includes('gruh') || n.includes('housewarming') || n.includes('griha'))
+        return { emoji: '🏠', themeClass: 'type-housewarming', label: 'Housewarming' };
+    if (n.includes('birthday') || n.includes('bday') || n.includes('பிறந்தநாள்'))
+        return { emoji: '🎂', themeClass: 'type-birthday', label: 'Birthday' };
+    if (n.includes('anniv'))
+        return { emoji: '💑', themeClass: 'type-anniversary', label: 'Anniversary' };
+    if (n.includes('baby') || n.includes('shower') || n.includes('valaikaapu'))
+        return { emoji: '🍼', themeClass: 'type-babyshower', label: 'Baby Shower' };
+    if (n.includes('seemantham'))
+        return { emoji: '🏛️', themeClass: 'type-seemantham', label: 'Seemantham' };
+    return { emoji: '✨', themeClass: 'type-default', label: 'Celebration' };
 };
+
+/* ─── Date Formatter with Weekday (e.g. 20 Aug 2026 • Thu) ──────────────────── */
+const fmtWithDay = (d) => {
+    if (!d) return '—';
+    try {
+        const dateObj = new Date(d);
+        const dayStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const weekdayStr = dateObj.toLocaleDateString('en-IN', { weekday: 'short' });
+        return `${dayStr} • ${weekdayStr}`;
+    } catch {
+        return d;
+    }
+};
+
+const fmtMoney = (n) => `₹${(Number(n) || 0).toLocaleString('en-IN')}`;
 
 /* ─── Toast ───────────────────────────────────────────────────────────────── */
 const Toast = ({ message, type, onClose }) => {
@@ -45,11 +60,11 @@ const Toast = ({ message, type, onClose }) => {
 /* ─── Function Form ───────────────────────────────────────────────────────── */
 const FunctionForm = ({ initial, onSubmit, onClose, title, submitting }) => {
     const [form, setForm] = useState({
-        name:        initial?.name        || '',
-        event_date:  initial?.event_date  ? initial.event_date.split('T')[0] : '',
-        location:    initial?.location    || '',
+        name: initial?.name || '',
+        event_date: initial?.event_date ? initial.event_date.split('T')[0] : '',
+        location: initial?.location || '',
         description: initial?.description || '',
-        status:      initial?.status      || 'ACTIVE'
+        status: initial?.status || 'ACTIVE'
     });
     const [errors, setErrors] = useState({});
 
@@ -74,7 +89,6 @@ const FunctionForm = ({ initial, onSubmit, onClose, title, submitting }) => {
     return (
         <div className="fn-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div className="fn-modal" role="dialog" aria-modal="true" aria-labelledby="fn-modal-title-id">
-
                 {/* Gradient header */}
                 <div className="fn-modal-top">
                     <h2 className="fn-modal-title" id="fn-modal-title-id">
@@ -88,7 +102,6 @@ const FunctionForm = ({ initial, onSubmit, onClose, title, submitting }) => {
                 {/* Form body */}
                 <div className="fn-modal-body">
                     <form className="fn-form" onSubmit={handleSubmit} noValidate id="fn-form">
-
                         <div className="fn-field">
                             <label htmlFor="fn-name">Function Name <span className="required">*</span></label>
                             <input
@@ -96,7 +109,7 @@ const FunctionForm = ({ initial, onSubmit, onClose, title, submitting }) => {
                                 className={`fn-input ${errors.name ? 'error' : ''}`}
                                 type="text"
                                 name="name"
-                                placeholder="e.g. Arjun's Wedding, Meena Birthday…"
+                                placeholder="e.g. Manoj Marriage, Meena Engagement…"
                                 value={form.name}
                                 onChange={set}
                                 maxLength={150}
@@ -125,7 +138,7 @@ const FunctionForm = ({ initial, onSubmit, onClose, title, submitting }) => {
                                 className={`fn-input ${errors.location ? 'error' : ''}`}
                                 type="text"
                                 name="location"
-                                placeholder="e.g. Rajapalaiyam, Tamil Nadu"
+                                placeholder="e.g. Rajapalayam, Tamil Nadu"
                                 value={form.location}
                                 onChange={set}
                                 maxLength={255}
@@ -153,7 +166,6 @@ const FunctionForm = ({ initial, onSubmit, onClose, title, submitting }) => {
                                 onChange={set}
                             />
                         </div>
-
                     </form>
                 </div>
 
@@ -229,16 +241,17 @@ const Functions = () => {
 
     useEffect(() => { refetch(); }, [refetch]);
 
-    const [search,       setSearch]       = useState('');
+    const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
-    const [sortAsc,      setSortAsc]      = useState(false);
-    const [showCreate,   setShowCreate]   = useState(false);
-    const [editTarget,   setEditTarget]   = useState(null);
+    const [sortAsc, setSortAsc] = useState(false);
+    const [showCreate, setShowCreate] = useState(false);
+    const [editTarget, setEditTarget] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
-    const [limitInfo,    setLimitInfo]    = useState(null);
-    const [submitting,   setSubmitting]   = useState(false);
-    const [deleting,     setDeleting]     = useState(false);
-    const [toast,        setToast]        = useState(null);
+    const [limitInfo, setLimitInfo] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [toast, setToast] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const showToast = (message, type = 'success') => setToast({ message, type });
 
@@ -259,11 +272,6 @@ const Functions = () => {
         });
         return list;
     }, [functions, search, statusFilter, sortAsc]);
-
-    /* Aggregate hero stats */
-    const totalMoi  = functions.reduce((s, f) => s + (Number(f.total_moi_amount) || 0), 0);
-    const activeCount    = functions.filter(f => f.status === 'ACTIVE').length;
-    const completedCount = functions.filter(f => f.status === 'COMPLETED').length;
 
     /* CRUD handlers */
     const handleCreate = async (data) => {
@@ -292,101 +300,64 @@ const Functions = () => {
         else showToast(res.error || 'Failed to delete.', 'error');
     };
 
-    const fmt      = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '—';
-    const fmtMoney = (n) => `₹${(Number(n)||0).toLocaleString('en-IN')}`;
-
     return (
-        <div className="fn-page">
-            {/* ═══════════ HERO BANNER ═══════════ */}
-            <div className="fn-hero">
-                <div className="fn-hero-orb fn-hero-orb-1" />
-                <div className="fn-hero-orb fn-hero-orb-2" />
-
-                <div className="fn-hero-content">
-                    <div className="fn-hero-left">
-                        <div className="fn-hero-eyebrow">
-                            <PartyPopper size={12} /> Celebration Management
-                        </div>
-                        <h1 className="fn-hero-title">
-                            Your <span>Functions</span>
-                        </h1>
-                        <p className="fn-hero-sub">
-                            Manage weddings, birthdays &amp; family celebrations — all in one place
-                        </p>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1rem' }}>
-                        <button
-                            id="btn-create-function"
-                            className="fn-create-btn"
-                            onClick={() => setShowCreate(true)}
-                        >
-                            <Plus size={17} />
-                            Create Function
-                        </button>
-
-                        {/* Hero Stats */}
-                        <div className="fn-hero-stats">
-                            <div className="fn-hero-stat">
-                                <div className="fn-hero-stat-value">{functions.length}</div>
-                                <div className="fn-hero-stat-label">Total</div>
-                            </div>
-                            <div className="fn-hero-stat">
-                                <div className="fn-hero-stat-value">{activeCount}</div>
-                                <div className="fn-hero-stat-label">Active</div>
-                            </div>
-                            <div className="fn-hero-stat">
-                                <div className="fn-hero-stat-value">{completedCount}</div>
-                                <div className="fn-hero-stat-label">Done</div>
-                            </div>
-                            <div className="fn-hero-stat">
-                                <div className="fn-hero-stat-value" style={{ fontSize: '1.1rem' }}>{fmtMoney(totalMoi)}</div>
-                                <div className="fn-hero-stat-label">Total Moi</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ═══════════ TOOLBAR ═══════════ */}
-            <div className="fn-toolbar">
-                <div className="fn-search-box">
-                    <Search className="search-icon" size={15} />
+        <div className="fn-page-container">
+            {/* ═══════════ TOOLBAR HEADER ═══════════ */}
+            <div className="fn-ref-toolbar">
+                <div className="fn-ref-search">
+                    <Search className="search-icon" size={16} />
                     <input
                         id="fn-search"
-                        className="fn-search-input"
+                        className="fn-ref-search-input"
                         type="text"
-                        placeholder="Search by name or venue…"
+                        placeholder="Search functions by name or location..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <select
-                    id="fn-status-filter"
-                    className="fn-filter-select"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                    <option value="ALL">All Statuses</option>
-                    <option value="ACTIVE">Active</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="ARCHIVED">Archived</option>
-                </select>
-                <button className="fn-sort-btn" onClick={() => setSortAsc(p => !p)} title="Toggle date sort">
-                    <ArrowUpDown size={14} />
-                    Date {sortAsc ? '↑ Oldest' : '↓ Newest'}
-                </button>
-                {!loading && (
-                    <span className="fn-result-count">
-                        {displayFunctions.length} function{displayFunctions.length !== 1 ? 's' : ''}
-                    </span>
-                )}
+
+                <div className="fn-ref-actions">
+                    <select
+                        id="fn-status-filter"
+                        className="fn-ref-select"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="ALL">All Statuses</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="ARCHIVED">Archived</option>
+                    </select>
+
+                    <button className="fn-ref-sort-btn" onClick={() => setSortAsc(p => !p)}>
+                        <Calendar size={15} />
+                        Date {sortAsc ? '↑ Oldest' : '↓ Newest'}
+                    </button>
+
+                    <div className="fn-ref-view-toggles">
+                        <button className="fn-ref-view-btn active" title="Grid View">
+                            <LayoutGrid size={16} />
+                        </button>
+                        <button className="fn-ref-view-btn" title="List View">
+                            <ListFilter size={16} />
+                        </button>
+                    </div>
+
+                    <button
+                        id="btn-create-function"
+                        className="fn-ref-create-btn"
+                        onClick={() => setShowCreate(true)}
+                    >
+                        <Plus size={16} />
+                        Create Function
+                    </button>
+                </div>
             </div>
 
             {/* ═══════════ STATES ═══════════ */}
             {loading && (
-                <div className="fn-skeleton-grid">
-                    {[1, 2, 3, 4].map(i => <div key={i} className="fn-skeleton-card" style={{ animationDelay: `${i * 0.12}s` }} />)}
+                <div className="fn-ref-grid">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <div key={i} className="fn-ref-skeleton-card" />)}
                 </div>
             )}
 
@@ -395,7 +366,7 @@ const Functions = () => {
                     <div className="fn-state-emoji">😕</div>
                     <h3 className="fn-state-title">Unable to load functions</h3>
                     <p className="fn-state-desc">{error}</p>
-                    <button className="fn-create-btn" style={{ marginTop: '0.5rem' }} onClick={refetch}>
+                    <button className="fn-ref-create-btn" onClick={refetch}>
                         Try Again
                     </button>
                 </div>
@@ -404,7 +375,7 @@ const Functions = () => {
             {!loading && !error && displayFunctions.length === 0 && (
                 <div className="fn-state-box">
                     <div className="fn-state-emoji">
-                        {functions.length === 0 ? '🏮' : '🔍'}
+                        {functions.length === 0 ? '🪔' : '🔍'}
                     </div>
                     <h3 className="fn-state-title">
                         {functions.length === 0 ? 'No functions yet' : 'No results found'}
@@ -416,97 +387,112 @@ const Functions = () => {
                         }
                     </p>
                     {functions.length === 0 && (
-                        <button className="fn-create-btn" style={{ marginTop: '0.5rem' }} onClick={() => setShowCreate(true)}>
-                            <Plus size={15} /> Create First Function
+                        <button className="fn-ref-create-btn" style={{ marginTop: '0.5rem' }} onClick={() => setShowCreate(true)}>
+                            <Plus size={15} /> Create Function
                         </button>
                     )}
                 </div>
             )}
 
-            {/* ═══════════ CARDS GRID ═══════════ */}
+            {/* ═══════════ EXACT REFERENCE CARDS GRID ═══════════ */}
             {!loading && !error && displayFunctions.length > 0 && (
-                <div className="fn-grid">
-                    {displayFunctions.map((fn, idx) => {
-                        const { emoji, stripe } = detectType(fn.name);
+                <div className="fn-ref-grid">
+                    {displayFunctions.map((fn) => {
+                        const { emoji, themeClass } = detectType(fn.name);
                         return (
-                            <div
-                                key={fn.id}
-                                className="fn-card"
-                                style={{ animationDelay: `${idx * 0.06}s` }}
-                            >
-                                {/* Coloured top stripe based on event type */}
-                                <div className={`fn-card-stripe ${stripe}`} />
-
-                                {/* Card Body */}
-                                <div className="fn-card-body">
-                                    <div className="fn-card-header">
-                                        <div className={`fn-event-badge ${stripe}`}>
-                                            {emoji}
-                                        </div>
-
-                                        <div className="fn-card-title-group">
-                                            <h3 className="fn-card-name" title={fn.name}>{fn.name}</h3>
-                                            <div className="fn-card-meta">
-                                                <p className="fn-card-date">
-                                                    <Calendar size={12} />
-                                                    {fmt(fn.event_date)}
-                                                </p>
-                                                {fn.location && (
-                                                    <p className="fn-card-location">
-                                                        📍 {fn.location}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <span className={`fn-status-badge ${fn.status}`}>
-                                            {fn.status === 'ACTIVE' ? 'Active'
-                                                : fn.status === 'COMPLETED' ? 'Completed'
-                                                : 'Archived'}
-                                        </span>
+                            <div key={fn.id} className={`fn-ref-card ${themeClass}`}>
+                                {/* Top Header Info */}
+                                <div className="fn-ref-card-header">
+                                    <div className="fn-ref-card-avatar">
+                                        <span>{emoji}</span>
                                     </div>
 
-                                    {/* Stats chips */}
-                                    <div className="fn-card-stats">
-                                        <div className="fn-stat-chip">
-                                            <span className="fn-stat-label">Moi Entries</span>
-                                            <span className="fn-stat-value">{fn.moi_entry_count || 0}</span>
+                                    <div className="fn-ref-card-main">
+                                        <h3 className="fn-ref-card-name" title={fn.name}>{fn.name}</h3>
+                                        <div className="fn-ref-card-date">
+                                            <Calendar size={12} />
+                                            <span>{fmtWithDay(fn.event_date)}</span>
                                         </div>
-                                        <div className="fn-stat-chip">
-                                            <span className="fn-stat-label">Total Moi</span>
-                                            <span className="fn-stat-value">{fmtMoney(fn.total_moi_amount)}</span>
-                                        </div>
+                                        {fn.location && (
+                                            <div className="fn-ref-card-location">
+                                                <MapPin size={12} />
+                                                <span>{fn.location}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <span className={`fn-ref-status-badge ${fn.status}`}>
+                                        {fn.status === 'ACTIVE' ? 'ACTIVE'
+                                            : fn.status === 'COMPLETED' ? 'COMPLETED'
+                                                : 'ARCHIVED'}
+                                    </span>
+                                </div>
+
+                                {/* Gold Accent Divider Line */}
+                                <div className="fn-ref-divider">
+                                    <span className="fn-ref-divider-dot">◆</span>
+                                </div>
+
+                                {/* Stats Section */}
+                                <div className="fn-ref-stats">
+                                    <div className="fn-ref-stat-block">
+                                        <span className="fn-ref-stat-label">Moi Entries</span>
+                                        <span className="fn-ref-stat-value">{fn.moi_entry_count || 0}</span>
+                                    </div>
+                                    <div className="fn-ref-stat-block">
+                                        <span className="fn-ref-stat-label">Total Moi Amount</span>
+                                        <span className="fn-ref-stat-value">{fmtMoney(fn.total_moi_amount)}</span>
                                     </div>
                                 </div>
 
-                                {/* Footer actions */}
-                                <div className="fn-card-footer">
+                                {/* Actions Row */}
+                                <div className="fn-ref-actions-row">
                                     <button
                                         id={`btn-view-${fn.id}`}
-                                        className="fn-action-btn view"
+                                        className="fn-ref-btn-view"
                                         onClick={() => navigate(`/functions/${fn.id}`)}
                                     >
-                                        <Eye size={13} /> View Details
+                                        <Eye size={16} /> View Details
                                     </button>
                                     <button
                                         id={`btn-edit-${fn.id}`}
-                                        className="fn-action-btn"
+                                        className="fn-ref-btn-icon edit"
                                         onClick={() => setEditTarget(fn)}
+                                        title="Edit function"
                                     >
-                                        <Pencil size={12} /> Edit
+                                        <Pencil size={16} />
                                     </button>
                                     <button
                                         id={`btn-delete-${fn.id}`}
-                                        className="fn-action-btn delete"
+                                        className="fn-ref-btn-icon delete"
                                         onClick={() => setDeleteTarget(fn)}
-                                        aria-label={`Delete ${fn.name}`}
+                                        title="Delete function"
                                     >
-                                        <Trash2 size={13} />
+                                        <Trash2 size={16} />
                                     </button>
                                 </div>
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* ═══════════ PAGINATION FOOTER BAR ═══════════ */}
+            {!loading && !error && displayFunctions.length > 0 && (
+                <div className="fn-ref-pagination">
+                    <span className="fn-ref-pagination-info">
+                        Showing 1 to {displayFunctions.length} of {functions.length} functions
+                    </span>
+
+                    <div className="fn-ref-pagination-controls">
+                        <button className="fn-ref-page-btn arrow" disabled>
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button className="fn-ref-page-btn active">1</button>
+                        <button className="fn-ref-page-btn arrow" disabled>
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
                 </div>
             )}
 
