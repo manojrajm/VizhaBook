@@ -12,6 +12,7 @@ import GreetingCard from '../components/ui/GreetingCard';
 import { sendWhatsAppMessage, sendSMSMessage } from '../utils/communication';
 import paymentMethodService from '../services/paymentMethodService';
 import moiService from '../services/moiService';
+import functionService from '../services/functionService';
 
 const MoiEntry = () => {
     const navigate = useNavigate();
@@ -23,6 +24,7 @@ const MoiEntry = () => {
     const [submitting, setSubmitting] = useState(false);
     const [availablePaymentMethods, setAvailablePaymentMethods] = useState([]);
     const [entrySource, setEntrySource] = useState('manual');
+    const [realFunctions, setRealFunctions] = useState([]);
 
     const [formData, setFormData] = useState({
         guestName: '',
@@ -41,7 +43,20 @@ const MoiEntry = () => {
     const [lastAdded, setLastAdded] = useState(null);
     const [isListening, setIsListening] = useState(false);
 
-    const displayFunctions = functions.length ? functions : MOCK_FUNCTIONS;
+    // Fetch user functions from PostgreSQL backend
+    useEffect(() => {
+        const fetchUserFunctions = async () => {
+            const res = await functionService.getFunctions();
+            if (res.success && res.functions && res.functions.length > 0) {
+                setRealFunctions(res.functions);
+            } else if (functions && functions.length > 0) {
+                setRealFunctions(functions);
+            }
+        };
+        fetchUserFunctions();
+    }, [functions]);
+
+    const displayFunctions = realFunctions.length ? realFunctions : (functions.length ? functions : MOCK_FUNCTIONS);
 
     // Auto-select first function if none selected
     useEffect(() => {

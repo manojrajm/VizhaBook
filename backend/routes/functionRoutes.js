@@ -6,11 +6,30 @@ import {
     updateFunction,
     deleteFunction
 } from '../controllers/functionController.js';
+import {
+    getPaymentMethodsByFunction,
+    createPaymentMethod,
+    updatePaymentMethod,
+    togglePaymentMethodStatus,
+    deletePaymentMethod
+} from '../controllers/paymentMethodController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// All function routes require authentication
+// Nested Payment Methods Routes for /api/functions/:functionId/payment-methods
+router.route('/:functionId/payment-methods')
+    .get(protect, getPaymentMethodsByFunction)
+    .post(protect, createPaymentMethod);
+
+router.route('/:functionId/payment-methods/:id')
+    .put(protect, updatePaymentMethod)
+    .delete(protect, deletePaymentMethod);
+
+router.route('/:functionId/payment-methods/:id/status')
+    .patch(protect, togglePaymentMethodStatus);
+
+// Function routes
 router.route('/')
     .get(protect, getFunctions)
     .post(protect, createFunction);

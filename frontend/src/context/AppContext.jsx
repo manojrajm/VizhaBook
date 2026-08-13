@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import functionService from '../services/functionService';
 
 const AppContext = createContext();
 
@@ -7,6 +8,21 @@ export const AppProvider = ({ children }) => {
         const saved = localStorage.getItem('moi_functions');
         return saved ? JSON.parse(saved) : [];
     });
+
+    // Auto-sync functions from PostgreSQL on mount
+    useEffect(() => {
+        const syncFunctionsWithDb = async () => {
+            try {
+                const res = await functionService.getFunctions();
+                if (res.success && res.functions && res.functions.length > 0) {
+                    setFunctions(res.functions);
+                }
+            } catch (e) {
+                console.warn('AppContext DB functions sync:', e.message);
+            }
+        };
+        syncFunctionsWithDb();
+    }, []);
 
     const [guests, setGuests] = useState(() => {
         const saved = localStorage.getItem('moi_guests');

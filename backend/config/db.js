@@ -123,19 +123,28 @@ const initTables = async () => {
             CREATE TABLE IF NOT EXISTS function_payment_methods (
                 id VARCHAR(100) PRIMARY KEY,
                 function_id VARCHAR(255) NOT NULL REFERENCES functions(id) ON DELETE CASCADE,
-                name VARCHAR(100) NOT NULL,
-                method_type VARCHAR(30) NOT NULL,
+                name VARCHAR(100),
+                display_name VARCHAR(100),
+                account_name VARCHAR(150),
+                method_type VARCHAR(30) NOT NULL DEFAULT 'upi',
                 upi_id VARCHAR(255),
                 provider VARCHAR(50),
                 qr_data TEXT,
                 qr_image_url TEXT,
                 is_active BOOLEAN NOT NULL DEFAULT TRUE,
                 is_default BOOLEAN NOT NULL DEFAULT FALSE,
+                priority INTEGER DEFAULT 0,
                 display_order INTEGER DEFAULT 0,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
         `);
+
+        // Add missing columns safely if function_payment_methods already existed
+        await pool.query(`ALTER TABLE function_payment_methods ADD COLUMN IF NOT EXISTS display_name VARCHAR(100);`);
+        await pool.query(`ALTER TABLE function_payment_methods ADD COLUMN IF NOT EXISTS account_name VARCHAR(150);`);
+        await pool.query(`ALTER TABLE function_payment_methods ADD COLUMN IF NOT EXISTS qr_image_url TEXT;`);
+        await pool.query(`ALTER TABLE function_payment_methods ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;`);
 
         // 9. Create moi_entries table
         await pool.query(`

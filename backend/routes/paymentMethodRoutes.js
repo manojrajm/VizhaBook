@@ -11,12 +11,19 @@ import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router({ mergeParams: true });
 
-// Routes nested under /api/functions/:functionId/payment-methods
+// Function nested routes
 router.route('/functions/:functionId/payment-methods')
     .get(protect, getPaymentMethodsByFunction)
     .post(protect, createPaymentMethod);
 
-// Routes under /api/payment-methods/:id
+router.route('/functions/:functionId/payment-methods/:id')
+    .put(protect, updatePaymentMethod)
+    .delete(protect, deletePaymentMethod);
+
+router.route('/functions/:functionId/payment-methods/:id/status')
+    .patch(protect, togglePaymentMethodStatus);
+
+// Standalone routes
 router.route('/payment-methods/:id')
     .put(protect, updatePaymentMethod)
     .delete(protect, deletePaymentMethod);

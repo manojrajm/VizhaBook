@@ -22,12 +22,12 @@ app.use(express.json());
 // API ROUTES
 // ===============================
 app.use("/api/auth", authRoutes);
+app.use("/api", paymentMethodRoutes);
 app.use("/api/functions", functionRoutes);
 app.use("/api/moi", moiRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api", subscriptionRoutes);
-app.use("/api", paymentMethodRoutes);
 
 // ===============================
 // ROOT ROUTE
