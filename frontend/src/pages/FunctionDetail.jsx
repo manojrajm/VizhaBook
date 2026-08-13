@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Calendar, MapPin, FileText, Gift, IndianRupee,
-    TrendingUp, Layers, Plus, Pencil, Clock, Hash, CheckCircle2, AlertCircle
+    TrendingUp, Layers, Plus, Pencil, Clock, Hash, CheckCircle2, AlertCircle, CreditCard
 } from 'lucide-react';
 import functionService from '../services/functionService';
+import paymentMethodService from '../services/paymentMethodService';
 import './FunctionDetail.css';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
@@ -61,6 +62,8 @@ const FunctionDetail = () => {
     const [loading,    setLoading]    = useState(true);
     const [error,      setError]      = useState(null);
 
+    const [configuredPaymentMethods, setConfiguredPaymentMethods] = useState([]);
+
     useEffect(() => {
         const load = async () => {
             setLoading(true);
@@ -72,6 +75,13 @@ const FunctionDetail = () => {
             } else {
                 setError(res.error || 'Failed to load function details.');
             }
+
+            // Fetch payment methods for this function
+            try {
+                const pmRes = await paymentMethodService.getPaymentMethodsByFunction(functionId);
+                if (pmRes.success) setConfiguredPaymentMethods(pmRes.paymentMethods || []);
+            } catch (e) { console.warn(e); }
+
             setLoading(false);
         };
         load();

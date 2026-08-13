@@ -19,6 +19,7 @@ import PendingApprovals from './pages/PendingApprovals';
 import Expenses from './pages/Expenses';
 import SettingsPage from './pages/SettingsPage';
 import FunctionDetail from './pages/FunctionDetail';
+import PaymentMethodsPage from './pages/PaymentMethodsPage';
 
 import PricingPage from './pages/subscription/PricingPage';
 import SubscriptionPage from './pages/subscription/SubscriptionPage';
@@ -54,6 +55,8 @@ function Layout() {
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/settings/subscription" element={<SettingsPage />} />
+            <Route path="/settings/payment-methods" element={<SettingsPage />} />
+            <Route path="/payment-methods" element={<PaymentMethodsPage />} />
 
             {/* Subscription Lifecycle Routes */}
             <Route path="/pricing" element={<PricingPage />} />

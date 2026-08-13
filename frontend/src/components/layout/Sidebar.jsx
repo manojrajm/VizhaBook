@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Heart, Gift, ClipboardList, IndianRupee, BarChart3,
-    QrCode, CheckSquare, ShieldCheck, Zap, Settings, LogOut,
+    QrCode, CheckSquare, ShieldCheck, Zap, Settings, LogOut, CreditCard,
     ChevronsLeft, ChevronsRight, ChevronDown, X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -55,6 +55,7 @@ const Sidebar = ({ isOpen, onClose, onCollapseChange }) => {
         {
             title: t.toolsSection,
             items: [
+                { path: '/settings/payment-methods', label: lang === 'ta' ? 'பணம் பெறும் முறைகள்' : 'Payment Methods', icon: CreditCard },
                 { path: '/qr-display', label: t.qrCheckIn, icon: QrCode },
                 { path: '/approvals', label: t.approvals, icon: CheckSquare, badge: pendingCount > 0 ? pendingCount : null }
             ]

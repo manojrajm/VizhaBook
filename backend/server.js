@@ -9,6 +9,7 @@ import moiRoutes from "./routes/moiRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import paymentMethodRoutes from "./routes/paymentMethodRoutes.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use("/api/moi", moiRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api", subscriptionRoutes);
+app.use("/api", paymentMethodRoutes);
 
 // ===============================
 // ROOT ROUTE

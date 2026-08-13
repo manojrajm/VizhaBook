@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { User, Shield, Bell, Globe, CreditCard } from 'lucide-react';
+import { User, Shield, Bell, Globe, CreditCard, QrCode } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import SubscriptionSettingsPage from './subscription/SubscriptionSettingsPage';
+import PaymentMethodsPage from './PaymentMethodsPage';
 import './SettingsPage.css';
 
 const SettingsPage = () => {
@@ -12,7 +13,8 @@ const SettingsPage = () => {
     const { lang, toggleLang } = useApp();
 
     const isSubInitial = location.pathname.includes('/subscription');
-    const [activeTab, setActiveTab] = useState(isSubInitial ? 'billing' : 'profile');
+    const isPmInitial = location.pathname.includes('/payment-methods');
+    const [activeTab, setActiveTab] = useState(isPmInitial ? 'payment-methods' : (isSubInitial ? 'billing' : 'profile'));
 
     return (
         <div className="settings-container">
@@ -53,6 +55,14 @@ const SettingsPage = () => {
                 >
                     <Globe size={18} />
                     <span>Language & Region</span>
+                </button>
+
+                <button
+                    className={`settings-tab-btn ${activeTab === 'payment-methods' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('payment-methods')}
+                >
+                    <QrCode size={18} />
+                    <span>Function Payment Methods</span>
                 </button>
 
                 <button
@@ -147,6 +157,10 @@ const SettingsPage = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {activeTab === 'payment-methods' && (
+                <PaymentMethodsPage />
             )}
 
             {activeTab === 'billing' && (

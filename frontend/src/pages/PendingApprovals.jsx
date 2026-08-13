@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Edit3, Clock, User, Gift, IndianRupee, AlertCircle, QrCode } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
+import moiService from '../services/moiService';
+
 const PendingApprovals = () => {
     const { pendingEntries, approvePendingEntry, rejectPendingEntry, lang } = useApp();
     const [editId, setEditId] = useState(null);
@@ -15,12 +17,34 @@ const PendingApprovals = () => {
         setEditDescription(entry.description || '');
     };
 
-    const handleApprove = (entry) => {
+    const handleApprove = async (entry) => {
         const editedData = {
             amount: editId === entry.id ? parseFloat(editAmount) || entry.amount : entry.amount,
             description: editId === entry.id ? editDescription || entry.description : entry.description,
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
+            entrySource: 'qr_checkin',
+            transactionReference: entry.utr || entry.transactionReference || null
         };
+
+        if (entry.functionId) {
+            try {
+                await moiService.createMoiEntry({
+                    functionId: entry.functionId,
+                    guestName: entry.guestName,
+                    phone: entry.phone,
+                    amount: editedData.amount,
+                    giftType: entry.giftType || 'Cash',
+                    giftItem: editedData.description,
+                    paymentMode: entry.paymentMode || 'Cash',
+                    relation: entry.relation || 'Relative',
+                    entrySource: 'qr_checkin',
+                    transactionReference: editedData.transactionReference
+                });
+            } catch (e) {
+                console.warn('PostgreSQL Moi entry save on approval:', e.message);
+            }
+        }
+
         approvePendingEntry(entry.id, editedData);
         setEditId(null);
     };

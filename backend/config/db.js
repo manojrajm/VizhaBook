@@ -117,6 +117,81 @@ const initTables = async () => {
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_functions_account_status ON functions(account_id, status);`);
 
         console.log("✅ PostgreSQL 'functions' table and indexes ready");
+
+        // 8. Create function_payment_methods table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS function_payment_methods (
+                id VARCHAR(100) PRIMARY KEY,
+                function_id VARCHAR(255) NOT NULL REFERENCES functions(id) ON DELETE CASCADE,
+                name VARCHAR(100) NOT NULL,
+                method_type VARCHAR(30) NOT NULL,
+                upi_id VARCHAR(255),
+                provider VARCHAR(50),
+                qr_data TEXT,
+                qr_image_url TEXT,
+                is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                is_default BOOLEAN NOT NULL DEFAULT FALSE,
+                display_order INTEGER DEFAULT 0,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // 9. Create moi_entries table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS moi_entries (
+                id VARCHAR(100) PRIMARY KEY,
+                function_id VARCHAR(255) NOT NULL REFERENCES functions(id) ON DELETE CASCADE,
+                user_id VARCHAR(100) REFERENCES users(id) ON DELETE SET NULL,
+                guest_name VARCHAR(255) NOT NULL,
+                village_city VARCHAR(255),
+                phone VARCHAR(50),
+                amount NUMERIC(12,2) DEFAULT 0,
+                gift_item VARCHAR(255),
+                payment_mode VARCHAR(50) DEFAULT 'Cash',
+                relation VARCHAR(100) DEFAULT 'Guest',
+                payment_method_id VARCHAR(100) REFERENCES function_payment_methods(id) ON DELETE SET NULL,
+                entry_source VARCHAR(30) DEFAULT 'manual',
+                transaction_reference VARCHAR(255),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // 10. Add missing columns safely if moi_entries already existed
+        await pool.query(`
+            ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS payment_method_id VARCHAR(100) REFERENCES function_payment_methods(id) ON DELETE SET NULL;
+        `);
+        await pool.query(`
+            ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS entry_source VARCHAR(30) DEFAULT 'manual';
+        `);
+        await pool.query(`
+            ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS transaction_reference VARCHAR(255);
+        `);
+
+        // 11. Create required indexes safely
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_functions_account_id ON functions(account_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_moi_entries_function_id ON moi_entries(function_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_moi_entries_payment_method ON moi_entries(payment_method_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_moi_entries_entry_date ON moi_entries(created_at);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_function_payment_methods_function_id ON function_payment_methods(function_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_account_id ON users(account_id);`);
+
+        // Create subscription & payment indexes safely if those tables exist
+        await pool.query(`
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'subscriptions') THEN
+                    CREATE INDEX IF NOT EXISTS idx_subscriptions_account_id ON subscriptions(account_id);
+                END IF;
+                IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'payments') THEN
+                    CREATE INDEX IF NOT EXISTS idx_payments_account_id ON payments(account_id);
+                    CREATE INDEX IF NOT EXISTS idx_payments_subscription_id ON payments(subscription_id);
+                END IF;
+            END $$;
+        `);
+
+        console.log("✅ PostgreSQL 'function_payment_methods' & 'moi_entries' tables and indexes ready");
     } catch (e) {
         console.error("❌ Table initialization error:", e.message);
     }

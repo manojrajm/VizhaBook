@@ -48,6 +48,8 @@ const GuestCheckin = () => {
             functionName: fnName,
             paymentMode: formData.giftType === 'Cash' ? formData.paymentMode : null,
             utr: formData.paymentMode === 'UPI' ? formData.utr : null,
+            transactionReference: formData.paymentMode === 'UPI' ? formData.utr : null,
+            entrySource: 'qr_checkin',
             amount: formData.giftType === 'Cash' ? parseFloat(formData.amount) : 0
         });
 
