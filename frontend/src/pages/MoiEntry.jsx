@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gift, Wallet, Send, User, Calendar, MessageCircle, CheckCircle2, MessageSquare, Mic, MicOff, AlertTriangle, Zap, CreditCard, Hash, QrCode } from 'lucide-react';
+import {
+    Gift, Wallet, Send, User, Calendar, MessageCircle, CheckCircle2,
+    MessageSquare, Mic, MicOff, AlertTriangle, Zap, CreditCard, Hash,
+    QrCode, DollarSign, Clock, Sparkles, X, Check, Loader2
+} from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { QRCodeSVG } from 'qrcode.react';
 import { useApp } from '../context/AppContext';
 import useSubscription from '../hooks/useSubscription';
 import Card from '../components/ui/Card';
@@ -26,6 +31,10 @@ const MoiEntry = () => {
     const [entrySource, setEntrySource] = useState('manual');
     const [realFunctions, setRealFunctions] = useState([]);
 
+    // Live Payment QR Modal State
+    const [showQrModal, setShowQrModal] = useState(false);
+    const [pendingQrPayload, setPendingQrPayload] = useState(null);
+
     const [formData, setFormData] = useState({
         guestName: '',
         phone: '',
@@ -34,7 +43,7 @@ const MoiEntry = () => {
         amount: '',
         giftType: 'Cash',
         description: '',
-        paymentMethodId: '',
+        paymentMethodId: '', // '' = Physical Hard Cash, or specific pm_id for UPI
         paymentMode: 'Cash',
         transactionReference: ''
     });
@@ -76,14 +85,6 @@ const MoiEntry = () => {
             if (res.success && res.paymentMethods) {
                 const activeOnly = res.paymentMethods.filter(pm => pm.is_active);
                 setAvailablePaymentMethods(activeOnly);
-                const defaultPm = activeOnly.find(pm => pm.is_default) || activeOnly[0];
-                if (defaultPm) {
-                    setFormData(prev => ({
-                        ...prev,
-                        paymentMethodId: defaultPm.id,
-                        paymentMode: defaultPm.method_type === 'UPI' ? 'UPI' : (defaultPm.method_type === 'CASH' ? 'Cash' : defaultPm.method_type)
-                    }));
-                }
             }
         };
         fetchMethods();
@@ -122,10 +123,9 @@ const MoiEntry = () => {
         let matchedPmId = formData.paymentMethodId;
         let matchedMode = formData.paymentMode;
 
-        // Set entry source to voice
         setEntrySource('voice');
 
-        // Extract amount (numbers)
+        // Extract amount
         const amountMatch = text.match(/\d+/);
         if (amountMatch) {
             newAmount = amountMatch[0];
@@ -137,19 +137,19 @@ const MoiEntry = () => {
             else if (text.includes('ten thousand') || text.includes('பத்தாயிரம்')) newAmount = '10000';
         }
 
-        // Detect payment methods from speech
-        if (text.includes('gpay') || text.includes('google pay') || text.includes('ஜிபே') || text.includes('ஜி பே')) {
-            const pm = availablePaymentMethods.find(m => (m.provider || '').toLowerCase().includes('gpay') || m.name.toLowerCase().includes('gpay'));
+        // Detect payment method / Hard Cash from speech
+        if (text.includes('hard cash') || text.includes('physical cash') || text.includes('கையில காசு') || text.includes('நேரடி பணம்') || text.includes('பணம்') || text.includes('ரொக்கம்')) {
+            matchedPmId = '';
+            matchedMode = 'Cash';
+            text = text.replace(/hard cash|physical cash|கையில காசு|நேரடி பணம்|பணம்|ரொக்கம்/gi, '').trim();
+        } else if (text.includes('gpay') || text.includes('google pay') || text.includes('ஜிபே') || text.includes('ஜி பே')) {
+            const pm = availablePaymentMethods.find(m => (m.provider || '').toLowerCase().includes('gpay') || (m.display_name || m.name || '').toLowerCase().includes('gpay'));
             if (pm) { matchedPmId = pm.id; matchedMode = 'UPI'; }
             text = text.replace(/gpay|google pay|ஜிபே|ஜி பே/gi, '').trim();
         } else if (text.includes('phonepe') || text.includes('போன்பே') || text.includes('போன் பே')) {
-            const pm = availablePaymentMethods.find(m => (m.provider || '').toLowerCase().includes('phonepe') || m.name.toLowerCase().includes('phonepe'));
+            const pm = availablePaymentMethods.find(m => (m.provider || '').toLowerCase().includes('phonepe') || (m.display_name || m.name || '').toLowerCase().includes('phonepe'));
             if (pm) { matchedPmId = pm.id; matchedMode = 'UPI'; }
             text = text.replace(/phonepe|போன்பே|போன் பே/gi, '').trim();
-        } else if (text.includes('cash') || text.includes('கேஷ்') || text.includes('பணம்') || text.includes('ரொக்கம்')) {
-            const pm = availablePaymentMethods.find(m => m.method_type === 'CASH');
-            if (pm) { matchedPmId = pm.id; matchedMode = 'Cash'; }
-            text = text.replace(/cash|கேஷ்|பணம்|ரொக்கம்/gi, '').trim();
         }
 
         // Detect relation
@@ -184,6 +184,59 @@ const MoiEntry = () => {
         }));
     };
 
+    // Helper: Execute backend save API
+    const saveEntryToBackend = async (payload, isPending = false) => {
+        setSubmitting(true);
+        const finalPayload = {
+            ...payload,
+            status: isPending ? 'PENDING_APPROVAL' : 'CONFIRMED'
+        };
+
+        const res = await moiService.createMoiEntry(finalPayload);
+        setSubmitting(false);
+
+        if (res.success) {
+            const func = displayFunctions.find(f => String(f.id) === String(formData.functionId));
+            const entryForCard = {
+                ...res.entry,
+                guestName: formData.guestName,
+                functionName: func ? func.name : 'Unknown',
+                phone: formData.phone,
+                amount: finalPayload.amount,
+                description: formData.description || formData.giftType
+            };
+
+            addEntry(entryForCard);
+            setLastAdded(entryForCard);
+
+            if (!isPending) {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#F59E0B', '#10B981', '#3B82F6']
+                });
+            }
+
+            setSuccess(true);
+            setShowQrModal(false);
+            setFormData(prev => ({
+                ...prev,
+                guestName: '',
+                phone: '',
+                amount: '',
+                description: '',
+                transactionReference: ''
+            }));
+            setEntrySource('manual');
+        } else if (res.limitReached) {
+            setShowQrModal(false);
+            setShowLimitModal(true);
+        } else {
+            alert(res.error || 'Failed to save Moi entry.');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -196,10 +249,9 @@ const MoiEntry = () => {
             return;
         }
 
-        setSubmitting(true);
-
         const selectedPm = availablePaymentMethods.find(pm => pm.id === formData.paymentMethodId);
-        const resolvedMode = selectedPm ? (selectedPm.method_type === 'UPI' ? 'UPI' : (selectedPm.method_type === 'CASH' ? 'Cash' : selectedPm.method_type)) : formData.paymentMode;
+        const isUpiPayment = formData.giftType === 'Cash' && selectedPm && selectedPm.method_type === 'UPI';
+        const numAmount = parseFloat(formData.amount) || 0;
 
         const payload = {
             functionId: formData.functionId,
@@ -207,57 +259,28 @@ const MoiEntry = () => {
             villageCity: '',
             phone: formData.phone,
             relation: formData.relation,
-            amount: formData.giftType === 'Cash' ? (parseFloat(formData.amount) || 0) : 0,
+            amount: formData.giftType === 'Cash' ? numAmount : 0,
             giftItem: formData.giftType,
             giftType: formData.giftType,
-            paymentMode: resolvedMode,
+            paymentMode: isUpiPayment ? 'UPI' : 'Cash',
             paymentMethodId: formData.paymentMethodId || null,
             entrySource: entrySource || 'manual',
             transactionReference: formData.transactionReference || null
         };
 
-        const res = await moiService.createMoiEntry(payload);
-        setSubmitting(false);
-
-        if (res.success) {
-            const func = displayFunctions.find(f => String(f.id) === String(formData.functionId));
-            const entryForCard = {
-                ...res.entry,
-                guestName: formData.guestName,
-                functionName: func ? func.name : 'Unknown',
-                phone: formData.phone,
-                amount: payload.amount,
-                description: formData.description || formData.giftType
-            };
-
-            addEntry(entryForCard);
-            setLastAdded(entryForCard);
-
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#F59E0B', '#10B981', '#3B82F6']
-            });
-
-            setSuccess(true);
-            setFormData(prev => ({
-                ...prev,
-                guestName: '',
-                phone: '',
-                amount: '',
-                description: '',
-                transactionReference: ''
-            }));
-            setEntrySource('manual');
-        } else if (res.limitReached) {
-            setShowLimitModal(true);
+        // If guest pays via UPI and amount > 0, trigger Live Dynamic QR Modal!
+        if (isUpiPayment && numAmount > 0) {
+            setPendingQrPayload(payload);
+            setShowQrModal(true);
         } else {
-            alert(res.error || 'Failed to save Moi entry.');
+            // Direct save for Hard Cash or Gift Items
+            await saveEntryToBackend(payload, false);
         }
     };
 
     const isTa = lang === 'ta';
+    const activeQrPm = availablePaymentMethods.find(pm => pm.id === formData.paymentMethodId);
+    const qrString = activeQrPm ? `upi://pay?pa=${activeQrPm.upi_id}&pn=${encodeURIComponent(activeQrPm.display_name || activeQrPm.name || 'VizhaBook')}&am=${formData.amount}&cu=INR` : '';
 
     return (
         <div className="animate-fade" style={{ maxWidth: '640px', margin: '0 auto', padding: '1rem 0 3rem' }}>
@@ -440,17 +463,47 @@ const MoiEntry = () => {
                                 </div>
                             )}
 
-                            {/* PAYMENT METHOD SELECTION */}
-                            {formData.giftType === 'Cash' && availablePaymentMethods.length > 0 && (
+                            {/* HOW DID THEY PAY? (PHYSICAL CASH vs. CONFIGURED UPI ACCOUNTS) */}
+                            {formData.giftType === 'Cash' && (
                                 <div className="form-group">
                                     <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <span>{isTa ? 'பணம் பெற்ற முறை' : 'How did they pay?'}</span>
                                         <span style={{ fontSize: '0.75rem', color: '#D97706', fontWeight: 700 }}>
-                                            {isTa ? 'கட்டண கணக்கு' : 'Payment Account'}
+                                            {isTa ? 'கட்டண முறை' : 'Payment Mode'}
                                         </span>
                                     </label>
 
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.65rem' }}>
+                                        {/* Option 1: Physical Hard Cash Pill */}
+                                        <div
+                                            onClick={() => setFormData({
+                                                ...formData,
+                                                paymentMethodId: '',
+                                                paymentMode: 'Cash'
+                                            })}
+                                            style={{
+                                                padding: '0.75rem',
+                                                borderRadius: '0.75rem',
+                                                border: formData.paymentMethodId === '' ? '2px solid #059669' : '1px solid #E2E8F0',
+                                                background: formData.paymentMethodId === '' ? '#ECFDF5' : '#FFFFFF',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '2px',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: formData.paymentMethodId === '' ? '#047857' : '#0F172A', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    💵 {isTa ? 'நேரடி ரொக்கம்' : 'Physical Cash'}
+                                                </span>
+                                            </div>
+                                            <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>
+                                                {isTa ? 'கையிலக் கொடுத்த பணம்' : 'Hand-to-Hand Cash'}
+                                            </span>
+                                        </div>
+
+                                        {/* Option 2...N: Configured UPI Account Pills */}
                                         {availablePaymentMethods.map(pm => {
                                             const isSelected = formData.paymentMethodId === pm.id;
                                             return (
@@ -474,11 +527,13 @@ const MoiEntry = () => {
                                                     }}
                                                 >
                                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A' }}>{pm.name}</span>
+                                                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                            📱 {pm.display_name || pm.name}
+                                                        </span>
                                                         {pm.is_default && <span style={{ fontSize: '0.6rem', color: '#B45309', fontWeight: 800 }}>★</span>}
                                                     </div>
                                                     {pm.upi_id && (
-                                                        <span style={{ fontSize: '0.7rem', color: '#1E3A8A', fontFamily: 'monospace' }}>{pm.upi_id}</span>
+                                                        <span style={{ fontSize: '0.7rem', color: '#1E3A8A', fontFamily: 'monospace', fontWeight: 600 }}>{pm.upi_id}</span>
                                                     )}
                                                 </div>
                                             );
@@ -488,7 +543,7 @@ const MoiEntry = () => {
                             )}
 
                             {/* TRANSACTION REFERENCE / UTR */}
-                            {formData.giftType === 'Cash' && (
+                            {formData.giftType === 'Cash' && formData.paymentMethodId !== '' && (
                                 <div className="form-group">
                                     <label className="form-label">{isTa ? 'பரிவர்த்தனை எண் / UTR (விருப்பம்)' : 'Transaction Reference / UTR (Optional)'}</label>
                                     <input
@@ -527,6 +582,100 @@ const MoiEntry = () => {
                             </button>
                         </form>
                     </Card>
+                </div>
+            )}
+
+            {/* ═══════════════ LIVE DYNAMIC UPI QR PAYMENT MODAL ═══════════════ */}
+            {showQrModal && activeQrPm && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 1000,
+                    background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(10px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+                }}>
+                    <div style={{
+                        background: '#FFFFFF', borderRadius: '24px', width: '100%', maxWidth: '440px',
+                        padding: '2rem', border: '2px solid #F59E0B', boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.35)',
+                        display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'center', position: 'relative'
+                    }}>
+                        <button
+                            onClick={() => setShowQrModal(false)}
+                            style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: '#F1F5F9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                            <X size={18} color="#64748B" />
+                        </button>
+
+                        <div>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#FEF3C7', padding: '4px 12px', borderRadius: '100px' }}>
+                                📱 Live UPI Payment QR
+                            </span>
+                            <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0F172A', margin: '0.5rem 0 0.2rem', fontFamily: "'Playfair Display', serif" }}>
+                                {formData.guestName}
+                            </h3>
+                            <p style={{ fontSize: '2.25rem', fontWeight: 900, color: '#059669', margin: 0 }}>
+                                ₹{Number(formData.amount).toLocaleString('en-IN')}
+                            </p>
+                        </div>
+
+                        {/* High Resolution Dynamic QR */}
+                        <div style={{ background: '#F8FAFC', border: '2px dashed #CBD5E1', borderRadius: '20px', padding: '1.25rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                            <QRCodeSVG
+                                value={qrString}
+                                size={190}
+                                level="H"
+                                includeMargin={true}
+                            />
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1E3A8A' }}>
+                                    {activeQrPm.display_name || activeQrPm.name}
+                                </div>
+                                <div style={{ fontSize: '0.78rem', color: '#64748B', fontFamily: 'monospace', fontWeight: 600 }}>
+                                    {activeQrPm.upi_id}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Operator Action Buttons */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                            <button
+                                type="button"
+                                disabled={submitting}
+                                onClick={() => saveEntryToBackend(pendingQrPayload, false)}
+                                style={{
+                                    width: '100%', padding: '0.9rem', borderRadius: '12px', background: 'linear-gradient(135deg, #059669, #10B981)',
+                                    color: 'white', border: 'none', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)'
+                                }}
+                            >
+                                {submitting ? <Loader2 size={18} className="pm-spin" /> : <CheckCircle2 size={18} />}
+                                {isTa ? '✅ பணம் பெறப்பட்டது (உறுதி செய்)' : '✅ Payment Received & Confirmed'}
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={submitting}
+                                onClick={() => saveEntryToBackend(pendingQrPayload, true)}
+                                style={{
+                                    width: '100%', padding: '0.8rem', borderRadius: '12px', background: '#FEF3C7',
+                                    color: '#B45309', border: '1px solid #FCD34D', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                                }}
+                            >
+                                <Clock size={16} />
+                                {isTa ? '⏳ சரிபார்க்க சேமி (நிலுவையில் வைக்க)' : '⏳ Save as Pending Verification'}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowQrModal(false)}
+                                style={{
+                                    width: '100%', padding: '0.65rem', borderRadius: '12px', background: 'transparent',
+                                    color: '#64748B', border: 'none', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer'
+                                }}
+                            >
+                                {isTa ? 'திருத்து / ரத்து செய்' : '✏ Edit / Cancel'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

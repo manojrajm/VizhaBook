@@ -167,7 +167,32 @@ const initTables = async () => {
             );
         `);
 
-        // 10. Add missing columns safely if moi_entries already existed
+        // 10. Add missing columns safely and drop strict legacy constraints if moi_entries already existed
+        await pool.query(`ALTER TABLE moi_entries DROP CONSTRAINT IF EXISTS chk_moi_gift_type;`);
+        await pool.query(`ALTER TABLE moi_entries DROP CONSTRAINT IF EXISTS chk_moi_payment_mode;`);
+        await pool.query(`ALTER TABLE moi_entries DROP CONSTRAINT IF EXISTS chk_moi_entry_source;`);
+        
+        await pool.query(`
+            ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS user_id VARCHAR(100) REFERENCES users(id) ON DELETE SET NULL;
+        `);
+        await pool.query(`
+            ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS guest_name VARCHAR(255);
+        `);
+        await pool.query(`
+            ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+        `);
+        await pool.query(`
+            ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS village_city VARCHAR(255);
+        `);
+        await pool.query(`
+            ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS gift_item VARCHAR(255);
+        `);
+        await pool.query(`
+            ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS gift_type VARCHAR(255);
+        `);
+        await pool.query(`
+            ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS relation VARCHAR(100) DEFAULT 'Guest';
+        `);
         await pool.query(`
             ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS payment_method_id VARCHAR(100) REFERENCES function_payment_methods(id) ON DELETE SET NULL;
         `);

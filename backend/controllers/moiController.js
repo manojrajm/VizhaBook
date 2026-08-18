@@ -240,14 +240,14 @@ export const createMoiEntry = async (req, res) => {
 
         const insertRes = await pool.query(
             `INSERT INTO moi_entries (
-                id, function_id, user_id, guest_name, village_city, phone,
-                amount, gift_item, payment_mode, relation,
+                id, function_id, user_id, name, guest_name, village_city, phone,
+                amount, gift_type, gift_item, payment_mode, relation,
                 payment_method_id, entry_source, transaction_reference,
                 created_at, updated_at
             ) VALUES (
-                $1, $2, $3, $4, $5, $6,
-                $7, $8, $9, $10,
-                $11, $12, $13,
+                $1, $2, $3, $4, $5, $6, $7,
+                $8, $9, $10, $11, $12,
+                $13, $14, $15,
                 NOW(), NOW()
             ) RETURNING *;`,
             [
@@ -255,9 +255,11 @@ export const createMoiEntry = async (req, res) => {
                 functionId,
                 req.user.id,
                 guestName.trim(),
+                guestName.trim(),
                 villageCity?.trim() || null,
                 phone?.trim() || null,
                 finalAmount,
+                finalGiftItem,
                 finalGiftItem,
                 paymentMode || 'Cash',
                 relation || 'Relative',
