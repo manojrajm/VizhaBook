@@ -125,16 +125,20 @@ const MoiEntry = () => {
 
         setEntrySource('voice');
 
-        // Extract amount
+        // Extract amount (Numeric or Tamil words)
         const amountMatch = text.match(/\d+/);
         if (amountMatch) {
             newAmount = amountMatch[0];
             text = text.replace(newAmount, '').trim();
         } else {
-            if (text.includes('thousand') || text.includes('ஆயிரம்')) newAmount = '1000';
-            else if (text.includes('five hundred') || text.includes('ஐநூறு')) newAmount = '500';
-            else if (text.includes('two thousand') || text.includes('இரண்டாயிரம்')) newAmount = '2000';
+            if (text.includes('lakh') || text.includes('லட்சம்')) newAmount = '100000';
+            else if (text.includes('fifty thousand') || text.includes('ஐம்பதாயிரம்') || text.includes('அம்பதாயிரம்')) newAmount = '50000';
+            else if (text.includes('twenty thousand') || text.includes('இருபதாயிரம்')) newAmount = '20000';
             else if (text.includes('ten thousand') || text.includes('பத்தாயிரம்')) newAmount = '10000';
+            else if (text.includes('five thousand') || text.includes('ஐயாயிரம்')) newAmount = '5000';
+            else if (text.includes('two thousand') || text.includes('இரண்டாயிரம்')) newAmount = '2000';
+            else if (text.includes('thousand') || text.includes('ஆயிரம்')) newAmount = '1000';
+            else if (text.includes('five hundred') || text.includes('ஐநூறு')) newAmount = '500';
         }
 
         // Detect payment method / Hard Cash from speech
