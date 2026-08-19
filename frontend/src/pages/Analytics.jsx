@@ -8,24 +8,30 @@ import { Trophy, Medal, TrendingUp, Users, Gift, Clock, Filter, Layers, CreditCa
 import { useApp } from '../context/AppContext';
 import moiService from '../services/moiService';
 import paymentMethodService from '../services/paymentMethodService';
+import expenseService from '../services/expenseService';
 
 const SAPPHIRE_COLORS = ['#1E3A8A', '#059669', '#D97706', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1'];
 
 const Analytics = () => {
-    const { entries: localEntries, expenses, functions, lang } = useApp();
+    const { entries: localEntries, expenses: localExpenses, functions, lang } = useApp();
     const isTa = lang === 'ta';
     const [selectedFunction, setSelectedFunction] = useState('all');
     const [dbEntries, setDbEntries] = useState([]);
+    const [dbExpenses, setDbExpenses] = useState([]);
     const [paymentMethods, setPaymentMethods] = useState([]);
 
     useEffect(() => {
-        const fetchEntries = async () => {
+        const fetchAnalyticsData = async () => {
             const res = await moiService.getMoiEntries();
             if (res.success && res.entries) {
                 setDbEntries(res.entries);
             }
+            const expRes = await expenseService.getExpenses();
+            if (expRes.success && expRes.expenses) {
+                setDbExpenses(expRes.expenses);
+            }
         };
-        fetchEntries();
+        fetchAnalyticsData();
     }, []);
 
     // Load payment methods when selectedFunction changes
@@ -38,6 +44,7 @@ const Analytics = () => {
     }, [selectedFunction]);
 
     const allEntries = dbEntries.length ? dbEntries : localEntries;
+    const allExpenses = dbExpenses.length ? dbExpenses : localExpenses;
 
     // --- Strict Function Filtering ---
     const filteredEntries = useMemo(() => {
@@ -46,9 +53,9 @@ const Analytics = () => {
     }, [allEntries, selectedFunction]);
 
     const filteredExpenses = useMemo(() => {
-        if (selectedFunction === 'all') return expenses;
-        return expenses.filter(e => String(e.functionId) === String(selectedFunction));
-    }, [expenses, selectedFunction]);
+        if (selectedFunction === 'all') return allExpenses;
+        return allExpenses.filter(e => String(e.functionId) === String(selectedFunction));
+    }, [allExpenses, selectedFunction]);
 
     // --- Data Scientist Computed Visualizations ---
 

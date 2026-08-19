@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import functionService from '../services/functionService';
+import expenseService from '../services/expenseService';
 
 const AppContext = createContext();
 
@@ -9,9 +10,9 @@ export const AppProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : [];
     });
 
-    // Auto-sync functions from PostgreSQL on mount
+    // Auto-sync functions and expenses from PostgreSQL on mount
     useEffect(() => {
-        const syncFunctionsWithDb = async () => {
+        const syncDbOnMount = async () => {
             try {
                 const res = await functionService.getFunctions();
                 if (res.success && res.functions && res.functions.length > 0) {
@@ -20,8 +21,16 @@ export const AppProvider = ({ children }) => {
             } catch (e) {
                 console.warn('AppContext DB functions sync:', e.message);
             }
+            try {
+                const expRes = await expenseService.getExpenses();
+                if (expRes.success && expRes.expenses) {
+                    setExpenses(expRes.expenses);
+                }
+            } catch (e) {
+                console.warn('AppContext DB expenses sync:', e.message);
+            }
         };
-        syncFunctionsWithDb();
+        syncDbOnMount();
     }, []);
 
     const [guests, setGuests] = useState(() => {
