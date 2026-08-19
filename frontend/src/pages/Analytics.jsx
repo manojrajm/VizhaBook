@@ -4,7 +4,11 @@ import {
     PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
     ResponsiveContainer, Legend, AreaChart, Area, CartesianGrid
 } from 'recharts';
-import { Trophy, Medal, TrendingUp, Users, Gift, Clock, Filter, Layers, CreditCard, PieChart as PieIcon, BarChart3, Activity } from 'lucide-react';
+import {
+    Trophy, Medal, TrendingUp, Users, Gift, Clock, Filter, Layers,
+    CreditCard, PieChart as PieIcon, BarChart3, Activity, ShieldCheck,
+    AlertTriangle, Sparkles, DollarSign
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import moiService from '../services/moiService';
 import paymentMethodService from '../services/paymentMethodService';
@@ -57,13 +61,32 @@ const Analytics = () => {
         return allExpenses.filter(e => String(e.functionId) === String(selectedFunction));
     }, [allExpenses, selectedFunction]);
 
-    // --- Data Scientist Computed Visualizations ---
+    // --- DATA SCIENTIST COMPUTED METRICS & CHARTS ---
 
-    // 1. Payment Method Breakdown (Cash vs. Dynamic UPI Accounts)
+    // 1. Per-Function Revenue vs Expense Comparison Data
+    const functionComparisonData = useMemo(() => {
+        const map = {};
+        functions.forEach(f => {
+            map[f.id] = { name: f.name, collection: 0, expense: 0 };
+        });
+
+        allEntries.forEach(e => {
+            const fId = e.functionId;
+            if (map[fId]) map[fId].collection += Number(e.amount) || 0;
+        });
+
+        allExpenses.forEach(exp => {
+            const fId = exp.functionId;
+            if (map[fId]) map[fId].expense += Number(exp.amount) || 0;
+        });
+
+        return Object.values(map).filter(f => f.collection > 0 || f.expense > 0);
+    }, [functions, allEntries, allExpenses]);
+
+    // 2. Payment Method Breakdown (Cash vs. Dynamic UPI Accounts)
     const paymentMethodData = useMemo(() => {
         const map = {};
 
-        // Pre-fill configured payment methods for active function
         paymentMethods.forEach(pm => {
             if (pm.is_active) {
                 map[pm.id] = {
@@ -74,7 +97,6 @@ const Analytics = () => {
             }
         });
 
-        // Add Physical Cash default
         map['CASH_DEFAULT'] = { name: isTa ? 'நேரடி ரொக்கம்' : 'Physical Cash', amount: 0, count: 0 };
 
         filteredEntries.forEach(e => {
@@ -96,7 +118,7 @@ const Analytics = () => {
         return Object.values(map).filter(item => item.amount > 0 || item.count > 0);
     }, [paymentMethods, filteredEntries, isTa]);
 
-    // 2. Collection Timeline & Cumulative Velocity Area Chart
+    // 3. Collection Timeline Velocity Area Chart
     const velocityData = useMemo(() => {
         const map = {};
         const sorted = [...filteredEntries].sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date));
@@ -118,31 +140,32 @@ const Analytics = () => {
         return Object.values(map);
     }, [filteredEntries]);
 
-    // 3. Guest Relation Distribution
+    // 4. Guest Relation Demographics Breakdown
     const relationData = useMemo(() => {
         const map = {};
         filteredEntries.forEach(e => {
-            const key = e.relation || 'Relative';
+            const key = e.relation || (isTa ? 'உறவினர்' : 'Relative');
             map[key] = (map[key] || 0) + (Number(e.amount) || 0);
         });
         return Object.entries(map).map(([name, value]) => ({ name, value }));
+    }, [filteredEntries, isTa]);
+
+    // 5. Non-Cash Gifts Count & Breakdown (Jewels & Physical Gift Items only)
+    const nonCashGiftsCount = useMemo(() => {
+        return filteredEntries.filter(e => {
+            const giftType = (e.giftType || '').toLowerCase();
+            const giftItem = (e.giftItem || '').toLowerCase();
+            const isJewel = giftType === 'jewel' || giftType.includes('jewel') || giftItem.includes('gold') || giftItem.includes('silver') || giftItem.includes('jewel');
+            const isGiftItem = giftType === 'gift item' || giftType === 'gift' || (giftItem && giftItem !== 'cash' && !isJewel);
+            return isJewel || isGiftItem;
+        }).length;
     }, [filteredEntries]);
 
-    // 4. Gift Type Distribution Donut Chart
-    const giftTypeData = useMemo(() => {
-        const map = { Cash: 0, Jewel: 0, 'Gift Item': 0 };
-        filteredEntries.forEach(e => {
-            const key = e.giftType || e.giftItem || 'Cash';
-            map[key] = (map[key] || 0) + 1;
-        });
-        return Object.entries(map).map(([name, count]) => ({ name, count }));
-    }, [filteredEntries]);
-
-    // 5. Top Contributor Donors
+    // 6. Top Contributor Donors Leaderboard
     const topDonors = useMemo(() => {
         const map = {};
         filteredEntries.forEach(e => {
-            const name = e.guestName || 'Unknown';
+            const name = e.guestName || 'Guest';
             map[name] = (map[name] || 0) + (Number(e.amount) || 0);
         });
         return Object.entries(map)
@@ -154,6 +177,9 @@ const Analytics = () => {
     const totalAmount = filteredEntries.reduce((s, e) => s + (Number(e.amount) || 0), 0);
     const totalExpenses = filteredExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
     const netBalance = totalAmount - totalExpenses;
+    const avgMoiPerGuest = filteredEntries.length > 0 ? Math.round(totalAmount / filteredEntries.length) : 0;
+    const expenseRatio = totalAmount > 0 ? Math.round((totalExpenses / totalAmount) * 100) : 0;
+
     const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
 
     const noDataMsg = (
@@ -163,27 +189,25 @@ const Analytics = () => {
     );
 
     return (
-        <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '3rem' }}>
+        <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '4rem' }}>
+            
             {/* Header & Function Filter */}
             <div className="flex-between" style={{ flexWrap: 'wrap', gap: '1.5rem', alignItems: 'flex-start' }}>
                 <div>
                     <h1 style={{
                         fontSize: '2.5rem', fontWeight: 900, fontFamily: "'Playfair Display', serif",
-                        color: '#0F172A',
-                        marginBottom: '0.25rem'
+                        color: '#0F172A', marginBottom: '0.25rem'
                     }}>
-                        {isTa ? '📊 மொய் பகுப்பாய்வு மையம்' : '📊 Data Insights & Analytics'}
+                        {isTa ? '📊 நிதி & மொய் பகுப்பாய்வு மையம்' : '📊 Executive Financial Intelligence'}
                     </h1>
-                    <p style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
-                        {isTa ? 'நேரடி ரொக்கம் மற்றும் UPI கட்டண முறைகளின் முழுமையான பகுப்பாய்வு' : 'Data scientist level collection insights and dynamic payment method analytics'}
+                    <p style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.95rem', margin: 0 }}>
+                        {isTa ? 'வரவு-செலவு கணக்குகள், வசூல் முறைகள் மற்றும் விருந்தினர் பங்களிப்புகளின் முழுமையான வரைகலை பகுப்பாய்வு.' : 'Data Scientist level analytics on income, expenses, dynamic UPI accounts, and guest demographics.'}
                     </p>
                 </div>
 
                 <div style={{
-                    display: 'flex', alignItems: 'center', gap: '0.75rem',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '1rem', border: '1px solid #E2E8F0',
-                    background: '#FFFFFF', boxShadow: '0 4px 12px rgba(15,23,42,0.03)'
+                    display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1.25rem',
+                    borderRadius: '1rem', border: '1px solid #E2E8F0', background: '#FFFFFF', boxShadow: '0 4px 12px rgba(15,23,42,0.03)'
                 }}>
                     <Filter size={18} color="#D97706" />
                     <select
@@ -194,61 +218,110 @@ const Analytics = () => {
                             fontWeight: 800, fontSize: '0.95rem', outline: 'none', cursor: 'pointer'
                         }}
                     >
-                        <option value="all">{isTa ? 'அனைத்து விசேஷங்களும்' : 'All Functions'}</option>
+                        <option value="all">{isTa ? 'அனைத்து விழாக்கள்' : 'All Functions'}</option>
                         {functions.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                     </select>
                 </div>
             </div>
 
-            {/* KPI Executive Summary Grid */}
+            {/* 4 EXECUTIVE FINANCIAL KPI CARDS */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+                
+                {/* 1. Total Moi Received */}
                 <div style={{ background: '#FFFFFF', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid #E2E8F0', borderLeft: '5px solid #1E3A8A', boxShadow: '0 4px 14px rgba(15,23,42,0.03)' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isTa ? 'மொத்த மொய் வசூல்' : 'Total Moi Received'}</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#0F172A', marginTop: '6px' }}>₹{totalAmount.toLocaleString('en-IN')}</div>
-                    <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '4px', fontWeight: 600 }}>{filteredEntries.length} {isTa ? 'பதிவுகள்' : 'gifts'}</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        {isTa ? 'மொத்த மொய் வரவு' : 'Total Moi Received'}
+                    </div>
+                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#0F172A', marginTop: '4px' }}>₹{totalAmount.toLocaleString('en-IN')}</div>
+                    <div style={{ fontSize: '0.78rem', color: '#1E3A8A', marginTop: '4px', fontWeight: 700 }}>
+                        {filteredEntries.length} {isTa ? 'விருந்தினர்கள்' : 'entries'} • (Avg ₹{avgMoiPerGuest.toLocaleString('en-IN')})
+                    </div>
                 </div>
 
-                <div style={{ background: '#FFFFFF', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid #E2E8F0', borderLeft: '5px solid #EF4444', boxShadow: '0 4px 14px rgba(15,23,42,0.03)' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isTa ? 'மொத்த செலவு' : 'Total Expenses'}</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#DC2626', marginTop: '6px' }}>₹{totalExpenses.toLocaleString('en-IN')}</div>
-                    <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '4px', fontWeight: 600 }}>{filteredExpenses.length} {isTa ? 'செலவுப் பதிவுகள்' : 'expense records'}</div>
+                {/* 2. Total Outflow Expenses */}
+                <div style={{ background: '#FFFFFF', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid #E2E8F0', borderLeft: '5px solid #DC2626', boxShadow: '0 4px 14px rgba(15,23,42,0.03)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        {isTa ? 'மொத்த செலவுகள்' : 'Total Outflow Expenses'}
+                    </div>
+                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#DC2626', marginTop: '4px' }}>₹{totalExpenses.toLocaleString('en-IN')}</div>
+                    <div style={{ fontSize: '0.78rem', color: '#DC2626', marginTop: '4px', fontWeight: 700 }}>
+                        {filteredExpenses.length} {isTa ? 'செலவு பதிவுகள்' : 'expenses'} ({expenseRatio}% of Income)
+                    </div>
                 </div>
 
-                <div style={{ background: '#FFFFFF', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid #E2E8F0', borderLeft: '5px solid #10B981', boxShadow: '0 4px 14px rgba(15,23,42,0.03)' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isTa ? 'மீதி இருப்பு' : 'Net Balance'}</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#059669', marginTop: '6px' }}>₹{netBalance.toLocaleString('en-IN')}</div>
-                    <div style={{ fontSize: '0.78rem', color: '#059669', marginTop: '4px', fontWeight: 700 }}>Surplus Balance</div>
+                {/* 3. Net Surplus Balance */}
+                <div style={{ background: '#FFFFFF', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid #E2E8F0', borderLeft: `5px solid ${netBalance >= 0 ? '#059669' : '#DC2626'}`, boxShadow: '0 4px 14px rgba(15,23,42,0.03)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        {isTa ? 'நிகர சேமிப்பு இருப்பு' : 'Net Surplus Balance'}
+                    </div>
+                    <div style={{ fontSize: '2rem', fontWeight: 900, color: netBalance >= 0 ? '#059669' : '#DC2626', marginTop: '4px' }}>
+                        ₹{netBalance.toLocaleString('en-IN')}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: netBalance >= 0 ? '#059669' : '#DC2626', marginTop: '4px', fontWeight: 700 }}>
+                        {netBalance >= 0 ? (isTa ? '✓ இலாபகரமான சேமிப்பு' : '✓ Capital Retained') : (isTa ? '⚠️ பற்றாக்குறை' : '⚠️ Deficit Outflow')}
+                    </div>
+                </div>
+
+                {/* 4. Non-Cash Gift Contributions */}
+                <div style={{ background: '#FFFFFF', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid #E2E8F0', borderLeft: '5px solid #D97706', boxShadow: '0 4px 14px rgba(15,23,42,0.03)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        {isTa ? 'பொருட்கள் / நகை பரிசுகள்' : 'Jewels & Gift Items'}
+                    </div>
+                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#D97706', marginTop: '4px' }}>
+                        {nonCashGiftsCount} {isTa ? 'பரிசுகள்' : 'items'}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#D97706', marginTop: '4px', fontWeight: 700 }}>
+                        🎁 Physical Gift Contributions
+                    </div>
                 </div>
             </div>
 
-            {/* VISUALIZATION GRID 1: PAYMENT METHOD BREAKDOWN BAR CHART & CUMULATIVE VELOCITY */}
+            {/* AI AUDIT & BUDGET HEALTH INDICATOR */}
+            {totalAmount > 0 && (
+                <div style={{
+                    background: expenseRatio > 60 ? '#FEF2F2' : '#F0FDF4',
+                    border: `1.5px solid ${expenseRatio > 60 ? '#FECACA' : '#BBF7D0'}`,
+                    padding: '1.25rem 1.5rem', borderRadius: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {expenseRatio > 60 ? <AlertTriangle size={24} color="#DC2626" /> : <ShieldCheck size={24} color="#059669" />}
+                        <div>
+                            <div style={{ fontWeight: 900, fontSize: '1rem', color: expenseRatio > 60 ? '#991B1B' : '#065F46' }}>
+                                {expenseRatio > 60 
+                                    ? (isTa ? '⚠️ எச்சரிக்கை: செலவுகள் வரவில் 60%-க்கு மேல் உயர்ந்துள்ளது!' : '⚠️ Warning: Expenditure exceeds 60% of total collections!')
+                                    : (isTa ? '🛡 நிதி நிலைமை ஆரோக்கியமாக உள்ளது!' : '🛡 Healthy Financial Status — Budget is well-controlled.')}
+                            </div>
+                            <div style={{ fontSize: '0.82rem', color: expenseRatio > 60 ? '#B91C1C' : '#047857' }}>
+                                {isTa ? `வரவு: ₹${totalAmount.toLocaleString('en-IN')} | செலவு: ₹${totalExpenses.toLocaleString('en-IN')} (${expenseRatio}%)` : `Total Collection: ₹${totalAmount.toLocaleString('en-IN')} | Expenses: ₹${totalExpenses.toLocaleString('en-IN')} (${expenseRatio}%)`}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* VISUALIZATION GRID 1: PER-FUNCTION COMPARISON & COLLECTION VELOCITY */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
 
-                {/* 📊 CHART 1: PAYMENT METHOD BREAKDOWN (CASH vs INDIVIDUAL UPIs) */}
+                {/* 📊 CHART 1: PER-FUNCTION REVENUE VS EXPENSE COMPARISON BAR CHART */}
                 <div style={{ background: '#FFFFFF', padding: '1.75rem', borderRadius: '1.5rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(15,23,42,0.04)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                         <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                            <CreditCard size={20} color="#D97706" />
-                            {isTa ? 'கட்டண கணக்குகள் ஒப்பீடு (Collection Breakdown)' : 'Payment Account Collection'}
+                            <BarChart3 size={20} color="#1E3A8A" />
+                            {isTa ? 'விழாக்கள் வரவு vs செலவு ஒப்பீடு' : 'Function Revenue vs Expense Comparison'}
                         </h3>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 800, background: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: '100px' }}>
-                            Per-UPI / Cash
-                        </span>
                     </div>
 
-                    {paymentMethodData.length === 0 ? noDataMsg : (
+                    {functionComparisonData.length === 0 ? noDataMsg : (
                         <div style={{ height: 280 }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={paymentMethodData}>
+                                <BarChart data={functionComparisonData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                                    <XAxis dataKey="name" stroke="#64748B" fontSize={11} fontWeight={600} />
+                                    <XAxis dataKey="name" stroke="#64748B" fontSize={11} fontWeight={700} />
                                     <YAxis stroke="#64748B" fontSize={11} tickFormatter={(val) => `₹${val}`} />
-                                    <Tooltip formatter={(value) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Collection']} />
-                                    <Bar dataKey="amount" radius={[10, 10, 0, 0]} barSize={40}>
-                                        {paymentMethodData.map((_, i) => (
-                                            <Cell key={i} fill={SAPPHIRE_COLORS[i % SAPPHIRE_COLORS.length]} />
-                                        ))}
-                                    </Bar>
+                                    <Tooltip formatter={(val) => [`₹${Number(val).toLocaleString('en-IN')}`]} />
+                                    <Legend />
+                                    <Bar dataKey="collection" name={isTa ? 'மொய் வரவு (Income)' : 'Moi Collection'} fill="#1E3A8A" radius={[8, 8, 0, 0]} />
+                                    <Bar dataKey="expense" name={isTa ? 'செலவு (Outflow)' : 'Expense Outflow'} fill="#DC2626" radius={[8, 8, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -260,11 +333,8 @@ const Analytics = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                         <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                             <Activity size={20} color="#3B82F6" />
-                            {isTa ? 'வசூல் வேக வரைபடம் (Cumulative Growth)' : 'Cumulative Collection Velocity'}
+                            {isTa ? 'வசூல் நேரடி வளர்ச்சி வரைபடம்' : 'Cumulative Collection Velocity'}
                         </h3>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 800, background: '#EFF6FF', color: '#1D4ED8', padding: '4px 10px', borderRadius: '100px' }}>
-                            Timeline Trend
-                        </span>
                     </div>
 
                     {velocityData.length === 0 ? noDataMsg : (
@@ -289,14 +359,40 @@ const Analytics = () => {
                 </div>
             </div>
 
-            {/* VISUALIZATION GRID 2: RELATION DEMOGRAPHICS & GIFT TYPES DONUT */}
+            {/* VISUALIZATION GRID 2: PAYMENT METHOD BREAKDOWN & RELATION DEMOGRAPHICS */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
 
-                {/* 🏛 CHART 3: GUEST RELATION DEMOGRAPHICS STACKED BAR CHART */}
+                {/* 💳 CHART 3: PAYMENT METHOD BREAKDOWN (CASH vs PER-UPI) */}
+                <div style={{ background: '#FFFFFF', padding: '1.75rem', borderRadius: '1.5rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(15,23,42,0.04)' }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 1.25rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <CreditCard size={20} color="#D97706" />
+                        {isTa ? 'கட்டண கணக்குகள் வசூல் (UPI & Cash Split)' : 'Payment Account Breakdown'}
+                    </h3>
+
+                    {paymentMethodData.length === 0 ? noDataMsg : (
+                        <div style={{ height: 260 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={paymentMethodData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                                    <XAxis dataKey="name" stroke="#64748B" fontSize={11} fontWeight={600} />
+                                    <YAxis stroke="#64748B" fontSize={11} tickFormatter={(val) => `₹${val}`} />
+                                    <Tooltip formatter={(value) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Collection']} />
+                                    <Bar dataKey="amount" radius={[8, 8, 0, 0]} barSize={36}>
+                                        {paymentMethodData.map((_, i) => (
+                                            <Cell key={i} fill={SAPPHIRE_COLORS[i % SAPPHIRE_COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
+                </div>
+
+                {/* 👥 CHART 4: GUEST RELATION DEMOGRAPHICS */}
                 <div style={{ background: '#FFFFFF', padding: '1.75rem', borderRadius: '1.5rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(15,23,42,0.04)' }}>
                     <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 1.25rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Users size={20} color="#10B981" />
-                        {isTa ? 'உறவு முறை வசூல் பங்களிப்பு (Relation Share)' : 'Relationship Collection Share'}
+                        {isTa ? 'உறவுமுறை நிதி பங்களிப்பு' : 'Relationship Demographics'}
                     </h3>
                     {relationData.length === 0 ? noDataMsg : (
                         <div style={{ height: 260 }}>
@@ -316,37 +412,16 @@ const Analytics = () => {
                         </div>
                     )}
                 </div>
-
-                {/* 🍩 CHART 4: GIFT TYPE DISTRIBUTION DONUT CHART */}
-                <div style={{ background: '#FFFFFF', padding: '1.75rem', borderRadius: '1.5rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(15,23,42,0.04)' }}>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 1.25rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <PieIcon size={20} color="#8B5CF6" />
-                        {isTa ? 'பரிசு வகை பகுப்பாய்வு (Gifts Split)' : 'Gift Type Breakdown'}
-                    </h3>
-                    {giftTypeData.length === 0 ? noDataMsg : (
-                        <div style={{ height: 260 }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie data={giftTypeData} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={5}>
-                                        {giftTypeData.map((_, i) => <Cell key={i} fill={SAPPHIRE_COLORS[i % SAPPHIRE_COLORS.length]} />)}
-                                    </Pie>
-                                    <Tooltip formatter={(val) => [`${val} entries`, 'Count']} />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    )}
-                </div>
             </div>
 
-            {/* TOP CONTRIBUTOR LEADERBOARD MATRIX */}
+            {/* TOP GIFT CONTRIBUTOR LEADERBOARD MATRIX */}
             <div style={{ background: '#FFFFFF', padding: '1.75rem', borderRadius: '1.5rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(15,23,42,0.04)' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 1.25rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Trophy size={22} color="#D97706" />
                     {isTa ? 'உயர்ந்த மொய் வழங்கி விருந்தினர்கள்' : 'Top Gift Contributors Leaderboard'}
                 </h3>
                 {topDonors.length === 0 ? noDataMsg : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
                         {topDonors.map((d, i) => (
                             <div key={d.name} style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: '16px', padding: '1.2rem', textAlign: 'center', boxShadow: '0 2px 8px rgba(15,23,42,0.02)' }}>
                                 <div style={{ fontSize: '1.75rem' }}>{medals[i]}</div>
