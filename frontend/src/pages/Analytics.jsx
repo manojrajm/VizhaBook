@@ -161,17 +161,34 @@ const Analytics = () => {
         }).length;
     }, [filteredEntries]);
 
-    // 6. Top Contributor Donors Leaderboard
+    // 6. Top Contributor Donors Leaderboard (Cash & Physical Gifts)
     const topDonors = useMemo(() => {
         const map = {};
         filteredEntries.forEach(e => {
-            const name = e.guestName || 'Guest';
-            map[name] = (map[name] || 0) + (Number(e.amount) || 0);
+            const name = e.guestName || e.name || 'Guest';
+            if (!map[name]) {
+                map[name] = {
+                    name,
+                    totalCash: 0,
+                    gifts: []
+                };
+            }
+            const amt = Number(e.amount) || 0;
+            map[name].totalCash += amt;
+
+            // Collect gift item or jewel name if presented
+            const giftText = e.giftItem || (e.giftType !== 'Cash' ? e.giftType : null);
+            if (giftText && giftText.toLowerCase() !== 'cash') {
+                map[name].gifts.push(giftText);
+            }
         });
-        return Object.entries(map)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(([name, total], i) => ({ name, total, rank: i + 1 }));
+
+        return Object.values(map)
+            .sort((a, b) => {
+                if (b.totalCash !== a.totalCash) return b.totalCash - a.totalCash;
+                return b.gifts.length - a.gifts.length;
+            })
+            .slice(0, 5);
     }, [filteredEntries]);
 
     const totalAmount = filteredEntries.reduce((s, e) => s + (Number(e.amount) || 0), 0);
@@ -426,7 +443,26 @@ const Analytics = () => {
                             <div key={d.name} style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: '16px', padding: '1.2rem', textAlign: 'center', boxShadow: '0 2px 8px rgba(15,23,42,0.02)' }}>
                                 <div style={{ fontSize: '1.75rem' }}>{medals[i]}</div>
                                 <div style={{ fontWeight: 800, color: '#0F172A', margin: '6px 0 2px', fontSize: '1.05rem' }}>{d.name}</div>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#059669' }}>₹{d.total.toLocaleString('en-IN')}</div>
+                                
+                                {d.totalCash > 0 && (
+                                    <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#059669' }}>
+                                        ₹{d.totalCash.toLocaleString('en-IN')}
+                                    </div>
+                                )}
+
+                                {d.gifts.length > 0 ? (
+                                    <div style={{
+                                        fontSize: '0.82rem', fontWeight: 800, color: '#B45309', background: '#FEF3C7',
+                                        border: '1px solid #FCD34D', padding: '4px 10px', borderRadius: '8px', marginTop: '6px',
+                                        display: 'inline-block'
+                                    }}>
+                                        🎁 {d.gifts.join(', ')}
+                                    </div>
+                                ) : d.totalCash === 0 ? (
+                                    <div style={{ fontSize: '0.82rem', color: '#D97706', fontWeight: 700, marginTop: '4px' }}>
+                                        🎁 {isTa ? 'அன்பளிப்பு பரிசு' : 'Gift Item'}
+                                    </div>
+                                ) : null}
                             </div>
                         ))}
                     </div>
