@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
     Send, Users, MapPin, CheckCircle, Search, UserPlus, FileSpreadsheet,
-    Plus, Sparkles, Filter, CheckCircle2, MessageCircle, ExternalLink, ShieldCheck, Heart
+    Plus, Sparkles, Filter, CheckCircle2, MessageCircle, ExternalLink, ShieldCheck, Heart, Play, Pause, FastForward, X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { TRANSLATIONS } from '../utils/translations';
@@ -20,6 +20,11 @@ const InvitationsPage = () => {
     const [sentStatus, setSentStatus] = useState({});
     const [showAddModal, setShowAddModal] = useState(false);
     const [newGuestForm, setNewGuestForm] = useState({ name: '', phone: '', relation: 'Relative' });
+
+    // Sequence Dispatcher State
+    const [isBroadcasting, setIsBroadcasting] = useState(false);
+    const [broadcastIndex, setBroadcastIndex] = useState(0);
+    const [broadcastQueue, setBroadcastQueue] = useState([]);
 
     const [venueLocation, setVenueLocation] = useState('https://maps.google.com/?q=Wedding+Hall');
     const [customMessage, setCustomMessage] = useState(
@@ -137,6 +142,43 @@ const InvitationsPage = () => {
         setSentStatus(prev => ({ ...prev, [guest.id || guest.phone]: true }));
     };
 
+    // Start 1-Click Automated Sequence Broadcast
+    const handleStartBulkBroadcast = () => {
+        const queue = filteredGuests.filter(g => {
+            const phone = (g.phone || '').replace(/\D/g, '');
+            return phone.length >= 10;
+        });
+
+        if (queue.length === 0) {
+            alert(isTa ? 'அழைப்பிதழ் அனுப்பத் தகுதியான எண்கள் எதுவும் இல்லை.' : 'No guests with valid phone numbers to broadcast.');
+            return;
+        }
+
+        setBroadcastQueue(queue);
+        setBroadcastIndex(0);
+        setIsBroadcasting(true);
+    };
+
+    // Advance Next Guest in Sequence
+    const handleDispatchNextGuest = () => {
+        if (broadcastIndex >= broadcastQueue.length) {
+            setIsBroadcasting(false);
+            return;
+        }
+
+        const currentGuest = broadcastQueue[broadcastIndex];
+        handleSendWhatsAppInvite(currentGuest);
+
+        if (broadcastIndex + 1 >= broadcastQueue.length) {
+            setTimeout(() => {
+                setIsBroadcasting(false);
+                alert(isTa ? '🎉 அனைத்து அழைப்பிதழ்களும் வெற்றிகரமாக அனுப்பப்பட்டன!' : '🎉 All invitations broadcasted successfully!');
+            }, 600);
+        } else {
+            setBroadcastIndex(prev => prev + 1);
+        }
+    };
+
     const sentCount = Object.keys(sentStatus).length;
 
     return (
@@ -158,8 +200,24 @@ const InvitationsPage = () => {
                     </p>
                 </div>
 
-                {/* IMPORTER BUTTON TOOLBAR */}
+                {/* IMPORTER & BULK BROADCAST TOOLBAR */}
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    
+                    {/* PRIMARY 1-CLICK AUTOMATED BROADCAST BUTTON */}
+                    <button
+                        onClick={handleStartBulkBroadcast}
+                        style={{
+                            padding: '0.85rem 1.35rem', borderRadius: '14px',
+                            background: 'linear-gradient(135deg, #25D366 0%, #16A34A 100%)',
+                            color: '#FFFFFF', border: 'none', fontWeight: 900, fontSize: '0.92rem',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+                            boxShadow: '0 4px 16px rgba(37, 211, 102, 0.35)'
+                        }}
+                    >
+                        <Send size={18} />
+                        {isTa ? `🚀 அனைவருக்கும் ஒரே கிளிக் பரப்புரை (${filteredGuests.length})` : `🚀 Broadcast to All (${filteredGuests.length} Guests)`}
+                    </button>
+
                     <button
                         onClick={handleImportMobileContacts}
                         style={{
@@ -392,6 +450,105 @@ const InvitationsPage = () => {
                     </table>
                 </div>
             </div>
+
+            {/* AUTOMATED SEQUENCE DISPATCHER OVERLAY */}
+            {isBroadcasting && broadcastQueue.length > 0 && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 2000,
+                    background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(10px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+                }}>
+                    <div style={{
+                        background: '#FFFFFF', borderRadius: '24px', width: '100%', maxWidth: '520px',
+                        padding: '2rem', border: '2px solid #F59E0B', boxShadow: '0 25px 60px -15px rgba(15,23,42,0.4)',
+                        textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative'
+                    }}>
+                        <button
+                            onClick={() => setIsBroadcasting(false)}
+                            style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: '#F1F5F9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                            <X size={18} color="#64748B" />
+                        </button>
+
+                        <div>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#D97706', textTransform: 'uppercase', background: '#FEF3C7', padding: '4px 12px', borderRadius: '100px' }}>
+                                🚀 Automated WhatsApp Dispatcher
+                            </span>
+                            <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0F172A', margin: '0.5rem 0 0.2rem', fontFamily: "'Playfair Display', serif" }}>
+                                {isTa ? 'தானியங்கி அழைப்பிதழ் பரப்புரை' : '1-Click Invitation Dispatcher'}
+                            </h3>
+                            <p style={{ fontSize: '0.88rem', color: '#64748B', margin: 0 }}>
+                                {isTa ? 'ஒவ்வொரு விருந்தினருக்கும் வரிசையாக வாட்ஸ்அப் அரட்டைத் திறக்கும்' : 'Sequentially dispatches WhatsApp invite to each guest'}
+                            </p>
+                        </div>
+
+                        {/* LIVE PROGRESS BAR */}
+                        <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
+                                <span>{isTa ? 'அனுப்பப்படும் நிலை:' : 'Progress:'} {broadcastIndex + 1} / {broadcastQueue.length}</span>
+                                <span style={{ color: '#D97706' }}>{Math.round(((broadcastIndex + 1) / broadcastQueue.length) * 100)}%</span>
+                            </div>
+
+                            <div style={{ width: '100%', height: '10px', background: '#E2E8F0', borderRadius: '100px', overflow: 'hidden' }}>
+                                <div style={{
+                                    width: `${((broadcastIndex + 1) / broadcastQueue.length) * 100}%`,
+                                    height: '100%', background: 'linear-gradient(90deg, #F59E0B, #10B981)',
+                                    transition: 'width 0.3s ease'
+                                }} />
+                            </div>
+                        </div>
+
+                        {/* CURRENT TARGET GUEST CARD */}
+                        {broadcastQueue[broadcastIndex] && (
+                            <div style={{ background: '#EFF6FF', border: '1.5px solid #BFDBFE', borderRadius: '16px', padding: '1.25rem', textAlign: 'left' }}>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1D4ED8', textTransform: 'uppercase' }}>
+                                    {isTa ? 'இப்போது அனுப்பப்படும் விருந்தினர்:' : 'Current Target Guest:'}
+                                </div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', marginTop: '4px' }}>
+                                    {broadcastQueue[broadcastIndex].guestName || broadcastQueue[broadcastIndex].name}
+                                </div>
+                                <div style={{ fontSize: '0.88rem', color: '#334155', fontFamily: 'monospace', fontWeight: 700, marginTop: '2px' }}>
+                                    📱 +{(broadcastQueue[broadcastIndex].phone || '').replace(/\D/g, '')} ({broadcastQueue[broadcastIndex].relation || 'Guest'})
+                                </div>
+                            </div>
+                        )}
+
+                        {/* DISPATCH CONTROLS */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <button
+                                onClick={handleDispatchNextGuest}
+                                style={{
+                                    width: '100%', padding: '1.1rem', borderRadius: '14px',
+                                    background: 'linear-gradient(135deg, #25D366 0%, #16A34A 100%)',
+                                    color: '#FFFFFF', border: 'none', fontWeight: 900, fontSize: '1.05rem',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    gap: '8px', boxShadow: '0 4px 15px rgba(37, 211, 102, 0.35)'
+                                }}
+                            >
+                                <Send size={20} />
+                                {isTa ? `▶ வாட்ஸ்அப் திறந்து அடுத்தவருக்கு அனுப்பு (${broadcastIndex + 1}/${broadcastQueue.length})` : `▶ Open WhatsApp & Send (${broadcastIndex + 1}/${broadcastQueue.length})`}
+                            </button>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <button
+                                    onClick={() => {
+                                        if (broadcastIndex + 1 < broadcastQueue.length) setBroadcastIndex(prev => prev + 1);
+                                    }}
+                                    style={{ padding: '0.75rem', borderRadius: '10px', background: '#F8FAFC', border: '1px solid #CBD5E1', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                                >
+                                    ⏭ {isTa ? 'இவரைத் தவிர் (Skip)' : 'Skip Guest'}
+                                </button>
+                                <button
+                                    onClick={() => setIsBroadcasting(false)}
+                                    style={{ padding: '0.75rem', borderRadius: '10px', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                                >
+                                    🛑 {isTa ? 'பரப்புரையை நிறுத்து' : 'Stop Broadcast'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ADD MANUAL GUEST MODAL */}
             {showAddModal && (
