@@ -307,19 +307,12 @@ const MoiEntry = () => {
                         phone={lastAdded.phone}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', width: '100%', marginTop: '1rem' }}>
-                        <button
-                            onClick={() => sendWhatsAppMessage(lastAdded, lang)}
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '1rem', borderRadius: '0.75rem', background: '#25D366', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 10px rgba(37, 211, 102, 0.3)' }}
-                        >
-                            <MessageCircle size={20} />
-                            WhatsApp
-                        </button>
+                    <div style={{ width: '100%', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         <button
                             onClick={() => sendSMSMessage(lastAdded, lang)}
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '1rem', borderRadius: '0.75rem', background: '#8B5CF6', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 10px rgba(139, 92, 246, 0.3)' }}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.9rem', borderRadius: '0.75rem', background: '#8B5CF6', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 10px rgba(139, 92, 246, 0.3)' }}
                         >
-                            <MessageSquare size={20} />
+                            <MessageSquare size={18} />
                             SMS Auto-Send
                         </button>
                     </div>
