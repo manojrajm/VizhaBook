@@ -14,18 +14,21 @@ import Button from '../components/ui/Button';
 import { MOCK_FUNCTIONS } from '../utils/mockData';
 import { TRANSLATIONS } from '../utils/translations';
 import GreetingCard from '../components/ui/GreetingCard';
+import InviteBroadcastModal from '../components/ui/InviteBroadcastModal';
 import { sendWhatsAppMessage, sendSMSMessage } from '../utils/communication';
+import { saveOfflineEntry, validateOfflinePlanLimit } from '../utils/offlineStorage';
 import paymentMethodService from '../services/paymentMethodService';
 import moiService from '../services/moiService';
 import functionService from '../services/functionService';
 
 const MoiEntry = () => {
     const navigate = useNavigate();
-    const { functions, addEntry, addGuest, lang } = useApp();
+    const { functions, moiEntries, addEntry, addGuest, lang } = useApp();
     const { canCreateEntry, isExpired, entryLimit } = useSubscription();
     const t = TRANSLATIONS[lang];
 
     const [showLimitModal, setShowLimitModal] = useState(false);
+    const [showInviteModal, setShowInviteModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [availablePaymentMethods, setAvailablePaymentMethods] = useState([]);
     const [entrySource, setEntrySource] = useState('manual');
@@ -34,6 +37,97 @@ const MoiEntry = () => {
     // Live Payment QR Modal State
     const [showQrModal, setShowQrModal] = useState(false);
     const [pendingQrPayload, setPendingQrPayload] = useState(null);
+
+    // Helper: Execute backend save API with Offline IndexedDB Fallback
+    const saveEntryToBackend = async (payload, isPending = false) => {
+        setSubmitting(true);
+        const finalPayload = {
+            ...payload,
+            status: isPending ? 'PENDING_APPROVAL' : 'CONFIRMED'
+        };
+
+        // Offline Network Check: Queue locally if internet drops in wedding hall
+        if (!navigator.onLine) {
+            setSubmitting(false);
+            const planCheck = validateOfflinePlanLimit(moiEntries ? moiEntries.length : 0);
+            if (!planCheck.isAllowed) {
+                setShowQrModal(false);
+                setShowLimitModal(true);
+                return;
+            }
+            const offlineSaved = saveOfflineEntry(finalPayload);
+            if (offlineSaved) {
+                const func = displayFunctions.find(f => String(f.id) === String(formData.functionId));
+                const entryForCard = {
+                    ...finalPayload,
+                    guestName: formData.guestName,
+                    functionName: func ? func.name : 'Event',
+                    phone: formData.phone,
+                    amount: finalPayload.amount,
+                    description: formData.description || formData.giftType,
+                    isOffline: true
+                };
+                addEntry(entryForCard);
+                setLastAdded(entryForCard);
+                setSuccess(true);
+                setShowQrModal(false);
+                setFormData(prev => ({
+                    ...prev,
+                    guestName: '',
+                    phone: '',
+                    amount: '',
+                    description: '',
+                    transactionReference: ''
+                }));
+                setEntrySource('manual');
+                return;
+            }
+        }
+
+        const res = await moiService.createMoiEntry(finalPayload);
+        setSubmitting(false);
+
+        if (res.success) {
+            const func = displayFunctions.find(f => String(f.id) === String(formData.functionId));
+            const entryForCard = {
+                ...res.entry,
+                guestName: formData.guestName,
+                functionName: func ? func.name : 'Unknown',
+                phone: formData.phone,
+                amount: finalPayload.amount,
+                description: formData.description || formData.giftType
+            };
+
+            addEntry(entryForCard);
+            setLastAdded(entryForCard);
+
+            if (!isPending) {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#F59E0B', '#10B981', '#3B82F6']
+                });
+            }
+
+            setSuccess(true);
+            setShowQrModal(false);
+            setFormData(prev => ({
+                ...prev,
+                guestName: '',
+                phone: '',
+                amount: '',
+                description: '',
+                transactionReference: ''
+            }));
+            setEntrySource('manual');
+        } else if (res.limitReached) {
+            setShowQrModal(false);
+            setShowLimitModal(true);
+        } else {
+            alert(res.error || 'Failed to save Moi entry.');
+        }
+    };
 
     const [formData, setFormData] = useState({
         guestName: '',
@@ -188,58 +282,7 @@ const MoiEntry = () => {
         }));
     };
 
-    // Helper: Execute backend save API
-    const saveEntryToBackend = async (payload, isPending = false) => {
-        setSubmitting(true);
-        const finalPayload = {
-            ...payload,
-            status: isPending ? 'PENDING_APPROVAL' : 'CONFIRMED'
-        };
 
-        const res = await moiService.createMoiEntry(finalPayload);
-        setSubmitting(false);
-
-        if (res.success) {
-            const func = displayFunctions.find(f => String(f.id) === String(formData.functionId));
-            const entryForCard = {
-                ...res.entry,
-                guestName: formData.guestName,
-                functionName: func ? func.name : 'Unknown',
-                phone: formData.phone,
-                amount: finalPayload.amount,
-                description: formData.description || formData.giftType
-            };
-
-            addEntry(entryForCard);
-            setLastAdded(entryForCard);
-
-            if (!isPending) {
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#F59E0B', '#10B981', '#3B82F6']
-                });
-            }
-
-            setSuccess(true);
-            setShowQrModal(false);
-            setFormData(prev => ({
-                ...prev,
-                guestName: '',
-                phone: '',
-                amount: '',
-                description: '',
-                transactionReference: ''
-            }));
-            setEntrySource('manual');
-        } else if (res.limitReached) {
-            setShowQrModal(false);
-            setShowLimitModal(true);
-        } else {
-            alert(res.error || 'Failed to save Moi entry.');
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -334,6 +377,21 @@ const MoiEntry = () => {
                             {isTa ? 'மொய் பதிவு' : 'Moi Entry'}
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{isTa ? 'விழாவில் பெறப்பட்ட பணம் மற்றும் பரிசுகளைப் பதிவு செய்யவும்' : 'Record gifts and money presented by your guests'}</p>
+                    
+                        {/* BULK WHATSAPP INVITATION BROADCAST BUTTON */}
+                        <button
+                            type="button"
+                            onClick={() => setShowInviteModal(true)}
+                            style={{
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                padding: '10px 20px', borderRadius: '100px', background: '#FEF3C7', color: '#B45309',
+                                border: '1.5px solid #FCD34D', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer',
+                                marginTop: '10px', boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)'
+                            }}
+                        >
+                            <Send size={16} />
+                            {isTa ? '📲 வாட்ஸ்அப் அழைப்பிதழ் அனுப்புக (Bulk Invites)' : '📲 Send WhatsApp Invitations (Bulk Broadcast)'}
+                        </button>
                     </header>
 
                     <Card glass={true} style={{
@@ -709,6 +767,15 @@ const MoiEntry = () => {
                     </div>
                 </div>
             )}
+
+            {/* BULK WHATSAPP INVITATION BROADCAST MODAL */}
+            <InviteBroadcastModal
+                isOpen={showInviteModal}
+                onClose={() => setShowInviteModal(false)}
+                functionDetail={displayFunctions.find(f => String(f.id) === String(formData.functionId)) || displayFunctions[0]}
+                guests={moiEntries}
+                lang={lang}
+            />
         </div>
     );
 };

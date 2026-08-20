@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Heart, Gift, ClipboardList, IndianRupee, BarChart3,
     QrCode, CheckSquare, ShieldCheck, Zap, Settings, LogOut, CreditCard,
-    ChevronsLeft, ChevronsRight, ChevronDown, X
+    ChevronsLeft, ChevronsRight, ChevronDown, X, Send
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
@@ -46,6 +46,7 @@ const Sidebar = ({ isOpen, onClose, onCollapseChange }) => {
             items: [
                 { path: '/', label: t.dashboard, icon: LayoutDashboard },
                 { path: '/functions', label: t.functions, icon: Heart },
+                { path: '/invitations', label: lang === 'ta' ? 'அழைப்பிதழ்கள்' : 'Invitations', icon: Send },
                 { path: '/entry', label: t.moiEntry, icon: Gift },
                 { path: '/ledger', label: t.ledger, icon: ClipboardList },
                 { path: '/expenses', label: t.expenses, icon: IndianRupee },

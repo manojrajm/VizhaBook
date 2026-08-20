@@ -1,0 +1,17 @@
+{
+  "short_name": "VizhaBook",
+  "name": "VizhaBook — Digital Event & Moi Management SaaS",
+  "description": "Smart Bilingual Event & Moi Management Platform for Weddings and Celebrations",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0F172A",
+  "background_color": "#0F172A",
+  "orientation": "portrait"
+}
