@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext';
 import moiService from '../services/moiService';
 
 const PendingApprovals = () => {
-    const { pendingEntries: localPending, approvePendingEntry, rejectPendingEntry, lang } = useApp();
+    const { pendingEntries: localPending, approvePendingEntry, rejectPendingEntry, refetchMoiEntries, lang } = useApp();
     const [dbPending, setDbPending] = useState([]);
     const [loading, setLoading] = useState(false);
     const [editId, setEditId] = useState(null);
@@ -51,6 +51,11 @@ const PendingApprovals = () => {
     };
 
     const handleApprove = async (entry) => {
+        // Optimistic removal from UI so item disappears instantly and cannot be re-clicked
+        setDbPending(prev => prev.filter(p => String(p.id) !== String(entry.id)));
+        approvePendingEntry(entry.id);
+        if (editId === entry.id) setEditId(null);
+
         const editedData = {
             amount: editId === entry.id ? parseFloat(editAmount) || entry.amount : entry.amount,
             description: editId === entry.id ? editDescription || entry.description : entry.description,
@@ -62,26 +67,22 @@ const PendingApprovals = () => {
         // Approve in PostgreSQL Backend Database
         try {
             await moiService.approvePendingCheckin(entry.id, editedData);
+            if (refetchMoiEntries) await refetchMoiEntries();
         } catch (e) {
             console.warn('PostgreSQL approve pending fallback:', e.message);
         }
-
-        // Remove from local state
-        approvePendingEntry(entry.id, editedData);
-        setDbPending(prev => prev.filter(p => String(p.id) !== String(entry.id)));
-        setEditId(null);
     };
 
     const handleReject = async (id) => {
+        setDbPending(prev => prev.filter(p => String(p.id) !== String(id)));
+        rejectPendingEntry(id);
+        if (editId === id) setEditId(null);
+
         try {
             await moiService.rejectPendingCheckin(id);
         } catch (e) {
             console.warn('PostgreSQL reject pending fallback:', e.message);
         }
-
-        rejectPendingEntry(id);
-        setDbPending(prev => prev.filter(p => String(p.id) !== String(id)));
-        if (editId === id) setEditId(null);
     };
 
     const timeSince = (iso) => {

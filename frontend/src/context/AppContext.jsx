@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import functionService from '../services/functionService';
 import expenseService from '../services/expenseService';
+import moiService from '../services/moiService';
 
 const AppContext = createContext();
 
@@ -29,9 +30,28 @@ export const AppProvider = ({ children }) => {
             } catch (e) {
                 console.warn('AppContext DB expenses sync:', e.message);
             }
+            try {
+                const moiRes = await moiService.getMoiEntries();
+                if (moiRes.success && moiRes.entries) {
+                    setEntries(moiRes.entries);
+                }
+            } catch (e) {
+                console.warn('AppContext DB moi entries sync:', e.message);
+            }
         };
         syncDbOnMount();
     }, []);
+
+    const refetchMoiEntries = async () => {
+        try {
+            const res = await moiService.getMoiEntries();
+            if (res.success && res.entries) {
+                setEntries(res.entries);
+            }
+        } catch (e) {
+            console.warn('refetchMoiEntries error:', e.message);
+        }
+    };
 
     const [guests, setGuests] = useState(() => {
         const saved = localStorage.getItem('moi_guests');
@@ -214,7 +234,7 @@ export const AppProvider = ({ children }) => {
     return (
         <AppContext.Provider value={{
             functions, guests, entries, pendingEntries, expenses,
-            addFunction, addGuest, addEntry, addExpense,
+            addFunction, addGuest, addEntry, addExpense, refetchMoiEntries,
             addPendingEntry, approvePendingEntry, rejectPendingEntry,
             removeFunction, removeGuest, removeEntry, removeExpense: (id) => setExpenses(prev => prev.filter(e => e.id !== id)),
             theme, toggleTheme,

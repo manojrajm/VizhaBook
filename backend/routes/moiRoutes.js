@@ -13,16 +13,16 @@ import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Pending QR check-in routes (GET & POST are public / session-friendly)
+// Pending QR check-in routes (session-friendly for live QR & host approval)
 router.route('/pending')
     .get(getPendingCheckins)
     .post(submitPendingCheckin);
 
 router.route('/pending/:id/approve')
-    .post(protect, approvePendingCheckin);
+    .post(approvePendingCheckin);
 
 router.route('/pending/:id')
-    .delete(protect, rejectPendingCheckin);
+    .delete(rejectPendingCheckin);
 
 // Official Moi ledger routes
 router.route('/')

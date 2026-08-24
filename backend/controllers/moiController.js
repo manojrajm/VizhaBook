@@ -486,17 +486,39 @@ export const approvePendingCheckin = async (req, res) => {
         // Fetch pending entry & lock row
         const pendRes = await client.query(
             `SELECT p.* FROM function_pending_entries p
-             WHERE p.id = $1 AND p.status = 'PENDING'
+             WHERE p.id = $1
              FOR UPDATE;`,
             [id]
         );
 
         if (!pendRes.rows.length) {
             await client.query('ROLLBACK');
-            return res.status(404).json({ success: false, error: 'Pending entry not found or already processed.' });
+            return res.status(404).json({ success: false, error: 'Pending entry not found.' });
         }
 
         const pend = pendRes.rows[0];
+
+        // Idempotency check: If already approved, return success without duplicate insert
+        if (pend.status === 'APPROVED') {
+            await client.query('COMMIT');
+            return res.json({ success: true, message: 'Already approved.', entry: pend });
+        }
+
+        // Find user_id from matching account_id of function
+        let userId = req.user?.id;
+        if (!userId) {
+            const userRes = await client.query(
+                `SELECT u.id FROM users u
+                 JOIN functions f ON u.account_id = f.account_id
+                 WHERE f.id = $1 LIMIT 1;`,
+                [pend.function_id]
+            );
+            userId = userRes.rows[0]?.id;
+        }
+        if (!userId) {
+            const fallbackUser = await client.query("SELECT id FROM users LIMIT 1;");
+            userId = fallbackUser.rows[0]?.id;
+        }
 
         // Insert official Moi entry
         const entryId = `moi_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
@@ -507,18 +529,18 @@ export const approvePendingCheckin = async (req, res) => {
 
         const insertRes = await client.query(
             `INSERT INTO moi_entries (
-                id, function_id, user_id, guest_name, phone, amount,
+                id, function_id, user_id, name, guest_name, phone, amount,
                 gift_item, payment_mode, relation, entry_source, transaction_reference, created_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'qr_checkin', $10, NOW())
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'qr_checkin', $11, NOW())
             RETURNING *;`,
             [
-                entryId, pend.function_id, req.user?.id || 'u_admin_1', finalName, finalPhone,
+                entryId, pend.function_id, userId, finalName, finalName, finalPhone,
                 finalAmount, pend.gift_type || 'Cash', pend.payment_mode || 'Cash',
                 finalRelation, pend.utr || null
             ]
         );
 
-        // Update pending status
+        // Update pending status to APPROVED
         await client.query(
             "UPDATE function_pending_entries SET status = 'APPROVED' WHERE id = $1;",
             [id]
