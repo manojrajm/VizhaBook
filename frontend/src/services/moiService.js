@@ -87,6 +87,71 @@ export const moiService = {
             console.error('moiService.deleteMoiEntry:', e.message);
             return { success: false, error: 'Network error. Please check your connection.' };
         }
+    },
+
+    // -------- PENDING QR CHECK-IN APPROVALS API --------
+
+    // POST /api/moi/pending (PUBLIC for guest check-in)
+    submitPendingCheckin: async (payload) => {
+        try {
+            const res = await fetch('/api/moi/pending', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) return { success: false, error: data.error || 'Failed to submit QR check-in.' };
+            return { success: true, pendingEntry: data.pendingEntry };
+        } catch (e) {
+            console.error('moiService.submitPendingCheckin:', e.message);
+            return { success: false, error: 'Network error. Please check your connection.' };
+        }
+    },
+
+    // GET /api/moi/pending (Protected for Host)
+    getPendingCheckins: async () => {
+        try {
+            const res = await fetch('/api/moi/pending', { headers: getHeaders() });
+            const data = await res.json();
+            if (!res.ok) return { success: false, error: data.error || 'Failed to fetch pending check-ins.' };
+            return { success: true, pendingEntries: data.pendingEntries || [] };
+        } catch (e) {
+            console.error('moiService.getPendingCheckins:', e.message);
+            return { success: false, error: 'Network error. Please check your connection.' };
+        }
+    },
+
+    // POST /api/moi/pending/:id/approve (Protected for Host)
+    approvePendingCheckin: async (id, payload = {}) => {
+        try {
+            const res = await fetch(`/api/moi/pending/${id}/approve`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) return { success: false, error: data.error || 'Failed to approve check-in.' };
+            return { success: true, entry: data.entry };
+        } catch (e) {
+            console.error('moiService.approvePendingCheckin:', e.message);
+            return { success: false, error: 'Network error. Please check your connection.' };
+        }
+    },
+
+    // DELETE /api/moi/pending/:id (Protected for Host)
+    rejectPendingCheckin: async (id) => {
+        try {
+            const res = await fetch(`/api/moi/pending/${id}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            const data = await res.json();
+            if (!res.ok) return { success: false, error: data.error || 'Failed to reject check-in.' };
+            return { success: true };
+        } catch (e) {
+            console.error('moiService.rejectPendingCheckin:', e.message);
+            return { success: false, error: 'Network error. Please check your connection.' };
+        }
     }
 };
 

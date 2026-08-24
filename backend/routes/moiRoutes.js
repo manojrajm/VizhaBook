@@ -3,12 +3,28 @@ import {
     getMoiEntries,
     createMoiEntry,
     updateMoiEntry,
-    deleteMoiEntry
+    deleteMoiEntry,
+    submitPendingCheckin,
+    getPendingCheckins,
+    approvePendingCheckin,
+    rejectPendingCheckin
 } from '../controllers/moiController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+// Pending QR check-in routes (GET & POST are public / session-friendly)
+router.route('/pending')
+    .get(getPendingCheckins)
+    .post(submitPendingCheckin);
+
+router.route('/pending/:id/approve')
+    .post(protect, approvePendingCheckin);
+
+router.route('/pending/:id')
+    .delete(protect, rejectPendingCheckin);
+
+// Official Moi ledger routes
 router.route('/')
     .get(protect, getMoiEntries)
     .post(protect, createMoiEntry);

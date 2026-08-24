@@ -70,13 +70,13 @@ const GuestCheckin = () => {
         return e;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const errs = validate();
         if (Object.keys(errs).length > 0) { setErrors(errs); return; }
         setSubmitting(true);
 
-        addPendingEntry({
+        const payload = {
             ...formData,
             functionId: fnId,
             functionName: fnName,
@@ -86,9 +86,20 @@ const GuestCheckin = () => {
             transactionReference: formData.paymentMode === 'UPI' ? formData.utr : null,
             entrySource: 'qr_checkin',
             amount: formData.giftType === 'Cash' ? parseFloat(formData.amount) : 0
-        });
+        };
 
-        setTimeout(() => { setSubmitting(false); setSubmitted(true); }, 800);
+        // Submit to PostgreSQL Database API
+        try {
+            await moiService.submitPendingCheckin(payload);
+        } catch (err) {
+            console.warn('PostgreSQL pending submission fallback:', err.message);
+        }
+
+        // Also add to local AppContext state
+        addPendingEntry(payload);
+
+        setSubmitting(false);
+        setSubmitted(true);
     };
 
     const inputStyle = (err) => ({
