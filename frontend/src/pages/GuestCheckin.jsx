@@ -3,12 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, User, Phone, Heart, IndianRupee, CheckCircle2, ChevronDown, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useApp } from '../context/AppContext';
+import { paymentMethodService } from '../services/paymentMethodService';
 
 const GuestCheckin = () => {
-    const { hostSettings, addPendingEntry, functions } = useApp();
+    const { hostSettings, addPendingEntry } = useApp();
     const params = new URLSearchParams(window.location.search);
     const fnId = params.get('fnId');
-    const fnName = decodeURIComponent(params.get('fnName') || 'Your Function');
+    const fnName = decodeURIComponent(params.get('fnName') || 'VizhaBook Event');
+
+    const [activePaymentMethods, setActivePaymentMethods] = useState([]);
+    const [selectedUpiId, setSelectedUpiId] = useState('');
 
     const [formData, setFormData] = useState({
         guestName: '',
@@ -23,6 +27,36 @@ const GuestCheckin = () => {
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
+
+    // Fetch live function payment methods from PostgreSQL database API
+    useEffect(() => {
+        if (!fnId) return;
+        const fetchFunctionPaymentMethods = async () => {
+            try {
+                const res = await paymentMethodService.getPaymentMethodsByFunction(fnId);
+                if (res.success && res.paymentMethods && res.paymentMethods.length > 0) {
+                    const activeOnly = res.paymentMethods.filter(pm => pm.is_active);
+                    setActivePaymentMethods(activeOnly);
+                    const firstUpi = activeOnly.find(pm => pm.upi_id || pm.details?.upi_id);
+                    if (firstUpi) {
+                        setSelectedUpiId((firstUpi.upi_id || firstUpi.details?.upi_id || '').trim());
+                    }
+                }
+            } catch (err) {
+                console.warn('GuestCheckin payment methods sync error:', err.message);
+            }
+        };
+        fetchFunctionPaymentMethods();
+    }, [fnId]);
+
+    // Sanitize Payee Name and VPA Handle according to NPCI URI specs
+    const cleanPn = fnName.replace(/['"&%#]/g, '').trim() || 'VizhaBook Host';
+    const rawVpa = selectedUpiId || (activePaymentMethods[0] && activePaymentMethods[0].upi_id) || hostSettings?.upiId || '';
+    const cleanVpa = (rawVpa && rawVpa !== 'vizhabook@okhdfcbank' ? rawVpa : 'gauthamtamizha007-1@oksbi').trim();
+    const formattedAmount = Number(formData.amount || 0);
+
+    // Standard Universal NPCI UPI URI
+    const upiString = `upi://pay?pa=${cleanVpa}&pn=${encodeURIComponent(cleanPn)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent('VizhaBook Moi Gift')}`;
 
     const validate = () => {
         const e = {};
@@ -46,6 +80,7 @@ const GuestCheckin = () => {
             ...formData,
             functionId: fnId,
             functionName: fnName,
+            upiId: formData.paymentMode === 'UPI' ? cleanVpa : null,
             paymentMode: formData.giftType === 'Cash' ? formData.paymentMode : null,
             utr: formData.paymentMode === 'UPI' ? formData.utr : null,
             transactionReference: formData.paymentMode === 'UPI' ? formData.utr : null,
@@ -142,7 +177,7 @@ const GuestCheckin = () => {
                     backdropFilter: 'blur(25px)',
                     border: '1px solid rgba(255,255,255,0.12)',
                     borderRadius: '2rem',
-                    padding: '2.5rem 1.5rem', // Slightly smaller padding for mobile
+                    padding: '2.5rem 1.5rem',
                     width: '100%',
                     maxWidth: '420px',
                     margin: 'auto'
@@ -292,37 +327,89 @@ const GuestCheckin = () => {
                                         style={{ marginTop: '1.25rem', overflow: 'hidden' }}
                                     >
                                         <div style={{ background: 'white', padding: '1.5rem', borderRadius: '1.5rem', textAlign: 'center', marginBottom: '1rem', border: '2px solid #E5E7EB' }}>
-                                            <p style={{ color: '#4B5563', fontSize: '0.85rem', fontWeight: 800, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Scan to Pay with GPay</p>
-                                            <div style={{ display: 'inline-block', padding: '1rem', background: 'white', border: '1px solid #E5E7EB', borderRadius: '1rem', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
-                                                <QRCodeSVG 
-                                                    value={`upi://pay?pa=${(functions || []).find(f => f.id == fnId)?.upiId || hostSettings.upiId}&pn=${encodeURIComponent(fnName)}&am=${formData.amount}&cu=INR`} 
-                                                    size={180} 
-                                                    level="H"
-                                                    imageSettings={{
-                                                        src: "https://www.gstatic.com/images/branding/product/1x/gpay_64dp.png",
-                                                        x: undefined,
-                                                        y: undefined,
-                                                        height: 30,
-                                                        width: 30,
-                                                        excavate: true,
-                                                    }}
-                                                />
-                                            </div>
-                                            <div style={{ marginTop: '1.5rem' }}>
+                                            
+                                            {/* Function UPI Selector */}
+                                            {activePaymentMethods.length > 1 && (
+                                                <div style={{ marginBottom: '1rem' }}>
+                                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>Select Host UPI Account</label>
+                                                    <select
+                                                        value={selectedUpiId}
+                                                        onChange={(e) => setSelectedUpiId(e.target.value)}
+                                                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.85rem', marginTop: '4px', fontWeight: 700 }}
+                                                    >
+                                                        {activePaymentMethods.map((pm, idx) => (
+                                                            <option key={idx} value={pm.upi_id}>{pm.display_name || pm.name} ({pm.upi_id})</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            <p style={{ color: '#4B5563', fontSize: '0.85rem', fontWeight: 800, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                                1-Click Direct Mobile Pay ₹{Number(formData.amount).toLocaleString('en-IN')}
+                                            </p>
+
+                                            {/* DIRECT 1-CLICK UPI APP LAUNCH BUTTONS */}
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                                                 <a 
-                                                    href={`upi://pay?pa=${(functions || []).find(f => f.id == fnId)?.upiId || hostSettings.upiId}&pn=${encodeURIComponent(fnName)}&am=${formData.amount}&cu=INR`}
+                                                    href={upiString}
                                                     style={{
-                                                        display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
-                                                        background: '#1a73e8', color: 'white', padding: '0.75rem 1.5rem',
-                                                        borderRadius: '3rem', fontWeight: 700, textDecoration: 'none',
-                                                        fontSize: '0.9rem', boxShadow: '0 4px 12px rgba(26, 115, 232, 0.3)'
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+                                                        background: 'linear-gradient(135deg, #1A73E8 0%, #1557B0 100%)', color: 'white',
+                                                        padding: '0.95rem 1.25rem', borderRadius: '1rem', fontWeight: 800,
+                                                        textDecoration: 'none', fontSize: '0.95rem', boxShadow: '0 4px 14px rgba(26, 115, 232, 0.35)'
                                                     }}
                                                 >
-                                                    <img src="https://www.gstatic.com/images/branding/product/1x/gpay_32dp.png" alt="GPay" style={{ height: '18px' }} />
-                                                    Pay with Google Pay
+                                                    <img src="https://www.gstatic.com/images/branding/product/1x/gpay_32dp.png" alt="GPay" style={{ height: '22px' }} />
+                                                    Pay ₹{Number(formData.amount).toLocaleString('en-IN')} with Google Pay
                                                 </a>
+
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                                    <a 
+                                                        href={upiString}
+                                                        style={{
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                                                            background: '#5F259F', color: 'white', padding: '0.75rem',
+                                                            borderRadius: '0.75rem', fontWeight: 800, textDecoration: 'none', fontSize: '0.85rem'
+                                                        }}
+                                                    >
+                                                        🟣 PhonePe
+                                                    </a>
+
+                                                    <a 
+                                                        href={upiString}
+                                                        style={{
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                                                            background: '#00BAF2', color: 'white', padding: '0.75rem',
+                                                            borderRadius: '0.75rem', fontWeight: 800, textDecoration: 'none', fontSize: '0.85rem'
+                                                        }}
+                                                    >
+                                                        🔷 Paytm
+                                                    </a>
+                                                </div>
                                             </div>
-                                            <p style={{ color: '#6B7280', fontSize: '0.75rem', marginTop: '1rem', fontWeight: 600 }}>UPI ID: {(functions || []).find(f => f.id == fnId)?.upiId || hostSettings.upiId}</p>
+
+                                            {/* High Res SVG QR Code for Desk Scans */}
+                                            <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px dashed #E2E8F0' }}>
+                                                <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', marginBottom: '8px' }}>Or scan QR code from another device:</p>
+                                                <div style={{ display: 'inline-block', padding: '0.75rem', background: 'white', border: '1px solid #E5E7EB', borderRadius: '1rem' }}>
+                                                    <QRCodeSVG 
+                                                        value={upiString} 
+                                                        size={150} 
+                                                        level="H"
+                                                        imageSettings={{
+                                                            src: "https://www.gstatic.com/images/branding/product/1x/gpay_64dp.png",
+                                                            x: undefined,
+                                                            y: undefined,
+                                                            height: 26,
+                                                            width: 26,
+                                                            excavate: true,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <p style={{ color: '#1E3A8A', fontSize: '0.78rem', fontWeight: 800, marginTop: '6px', fontFamily: 'monospace' }}>
+                                                    Payee UPI: {cleanVpa}
+                                                </p>
+                                            </div>
                                         </div>
 
                                         <div>
@@ -358,29 +445,28 @@ const GuestCheckin = () => {
                         </div>
                     )}
 
-                    {/* Submit */}
-                    <motion.button
+                    {/* Submit Button */}
+                    <button
                         type="submit"
                         disabled={submitting}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
                         style={{
                             width: '100%',
-                            padding: '1.125rem',
+                            padding: '1rem',
                             borderRadius: '1rem',
-                            background: submitting ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #10B981, #059669)',
-                            color: 'white',
                             border: 'none',
+                            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                            color: 'white',
                             fontSize: '1.1rem',
-                            fontWeight: 800,
-                            cursor: submitting ? 'not-allowed' : 'pointer',
-                            boxShadow: '0 8px 25px rgba(16,185,129,0.4)',
+                            fontWeight: 900,
+                            cursor: 'pointer',
                             marginTop: '0.5rem',
-                            transition: 'background 0.3s'
+                            boxShadow: '0 4px 20px rgba(16,185,129,0.4)',
+                            transition: 'all 0.2s',
+                            opacity: submitting ? 0.7 : 1
                         }}
                     >
-                        {submitting ? '⏳ Submitting...' : '✅ மொய் பதிவு செய் / Submit Gift'}
-                    </motion.button>
+                        {submitting ? 'சமர்ப்பிக்கிறது… / Submitting...' : '🎁 மொய் பதிவு செய் / SUBMIT MOI'}
+                    </button>
                 </form>
             </motion.div>
         </div>

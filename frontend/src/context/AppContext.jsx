@@ -60,7 +60,11 @@ export const AppProvider = ({ children }) => {
     const [isCloudEnabled, setIsCloudEnabled] = useState(localStorage.getItem('moi_cloud_enabled') === 'true');
     const [hostSettings, setHostSettings] = useState(() => {
         const saved = localStorage.getItem('moi_host_settings');
-        return saved ? JSON.parse(saved) : { upiId: 'vizhabook@okhdfcbank', hostName: 'Vizha Book' };
+        const parsed = saved ? JSON.parse(saved) : null;
+        if (parsed && parsed.upiId && parsed.upiId !== 'vizhabook@okhdfcbank') {
+            return parsed;
+        }
+        return { upiId: 'gauthamtamizha007-1@oksbi', hostName: 'Vizha Book' };
     });
 
     const channelRef = useRef(null);

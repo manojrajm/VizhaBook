@@ -689,6 +689,19 @@ const MoiEntry = () => {
                             </div>
                         </div>
 
+                        {/* Direct Mobile UPI Deep Link */}
+                        <a
+                            href={`upi://pay?pa=${activeQrPm.upi_id}&pn=${encodeURIComponent(activeQrPm.display_name || activeQrPm.name || 'VizhaBook Host')}&am=${formData.amount}&cu=INR&tn=${encodeURIComponent('VizhaBook Moi Gift')}`}
+                            style={{
+                                width: '100%', padding: '0.85rem', borderRadius: '12px', background: '#1D4ED8',
+                                color: 'white', fontWeight: 800, fontSize: '0.9rem', textDecoration: 'none',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                boxShadow: '0 4px 12px rgba(29, 78, 216, 0.3)'
+                            }}
+                        >
+                            📱 {isTa ? `GPay / PhonePe மூலம் ₹${Number(formData.amount).toLocaleString('en-IN')} செலுத்து` : `Pay ₹${Number(formData.amount).toLocaleString('en-IN')} via GPay / PhonePe`}
+                        </a>
+
                         {/* Operator Action Buttons */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                             <button

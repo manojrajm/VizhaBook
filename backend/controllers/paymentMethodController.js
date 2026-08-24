@@ -80,13 +80,6 @@ export const getPaymentMethodsByFunction = async (req, res) => {
             return res.status(400).json({ success: false, error: 'Function ID is required.' });
         }
 
-        const accountId = await getUserAccountId(req.user?.id, req.user?.email);
-
-        const isOwner = await verifyFunctionOwnership(functionId, accountId);
-        if (!isOwner) {
-            return res.status(404).json({ success: false, error: 'Function not found.' });
-        }
-
         const result = await pool.query(
             `SELECT *,
                     COALESCE(display_name, name) as display_name,

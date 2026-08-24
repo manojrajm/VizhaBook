@@ -1,22 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smartphone, Users, CheckCircle, Clock, Wifi } from 'lucide-react';
+import { Smartphone, Users, CheckCircle, Clock, Wifi, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { MOCK_FUNCTIONS } from '../utils/mockData';
+import useFunctions from '../hooks/useFunctions';
 
 const QRDisplay = () => {
-    const { functions, pendingEntries, lang } = useApp();
+    const { pendingEntries, lang } = useApp();
+    const { functions: dbFunctions, loading, refetch } = useFunctions();
     const [selectedFnId, setSelectedFnId] = useState('');
+    const [customHost, setCustomHost] = useState(() => {
+        return localStorage.getItem('vizhabook_custom_qr_host') || '';
+    });
 
-    const displayFunctions = functions.length ? functions : MOCK_FUNCTIONS;
-    const selectedFn = displayFunctions.find(f => String(f.id) === String(selectedFnId)) || displayFunctions[0];
+    useEffect(() => {
+        refetch();
+    }, [refetch]);
 
-    const baseUrl = window.location.origin;
-    const checkinUrl = `${baseUrl}/#/checkin?fnId=${selectedFn?.id}&fnName=${encodeURIComponent(selectedFn?.name)}`;
-     console.log(checkinUrl);
+    const displayFunctions = dbFunctions && dbFunctions.length > 0 ? dbFunctions : [];
+    const selectedFn = displayFunctions.find(f => String(f.id) === String(selectedFnId)) || displayFunctions[0] || { id: '', name: 'Select Function' };
+
+    const currentOrigin = window.location.origin;
+    const isLocalhost = currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1');
+
+    const effectiveBaseUrl = customHost.trim() || currentOrigin;
+    const checkinUrl = `${effectiveBaseUrl}/#/checkin?fnId=${selectedFn?.id}&fnName=${encodeURIComponent(selectedFn?.name || '')}`;
+
+    const handleHostChange = (e) => {
+        const val = e.target.value;
+        setCustomHost(val);
+        localStorage.setItem('vizhabook_custom_qr_host', val);
+    };
+
     return (
-        
         <div style={{
             minHeight: '100vh',
             background: 'var(--bg-primary)',
@@ -45,32 +61,83 @@ const QRDisplay = () => {
                     {lang === 'en' ? '📱 Guest QR Check-In' : '📱 விருந்தினர் QR பதிவு'}
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
-                    {lang === 'en' ? 'Show this QR to guests — they self-register on their phone' : 'இந்த QR-ஐ guests-கு காட்டுங்கள் — அவர்களே பதிவு செய்குவார்கள்'}
+                    {lang === 'en' ? 'Show this QR to guests — they self-register on their phone' : 'இந்த QR-ஐ guests-கு காட்டுங்கள் — அவர்களே பதிவு செய்வார்கள்'}
                 </p>
             </motion.div>
 
-            {/* Function Selector */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
-                <select
-                    value={selectedFnId}
-                    onChange={e => setSelectedFnId(e.target.value)}
-                    style={{
-                        padding: '0.75rem 1.5rem',
-                        borderRadius: '1rem',
-                        border: '1px solid var(--border-color)',
-                        background: 'var(--bg-card)',
-                        color: 'var(--text-primary)',
-                        fontSize: '1rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        backdropFilter: 'blur(10px)',
-                        minWidth: '280px'
-                    }}
-                >
-                    {displayFunctions.map(f => (
-                        <option key={f.id} value={f.id}>{f.name}</option>
-                    ))}
-                </select>
+            {/* Function Selector & Host IP Override */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', width: '100%', maxWidth: '460px' }}>
+                {loading ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>
+                        <Loader2 size={18} className="spin" /> {lang === 'en' ? 'Loading PostgreSQL Events…' : 'நிகழ்வுகள் ஏற்றப்படுகின்றன…'}
+                    </div>
+                ) : (
+                    <select
+                        value={selectedFnId || selectedFn?.id || ''}
+                        onChange={e => setSelectedFnId(e.target.value)}
+                        style={{
+                            width: '100%',
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '1rem',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-card)',
+                            color: 'var(--text-primary)',
+                            fontSize: '1rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            backdropFilter: 'blur(10px)'
+                        }}
+                    >
+                        {displayFunctions.length === 0 ? (
+                            <option value="">{lang === 'en' ? 'No Active Functions Found' : 'நிகழ்வுகள் எதுவும் இல்லை'}</option>
+                        ) : (
+                            displayFunctions.map(f => (
+                                <option key={f.id} value={f.id}>{f.name} ({f.status || 'ACTIVE'})</option>
+                            ))
+                        )}
+                    </select>
+                )}
+
+                {/* Local Network IP Banner & Input */}
+                <div style={{
+                    width: '100%',
+                    background: '#FEF3C7',
+                    border: '1.5px solid #FCD34D',
+                    borderRadius: '1rem',
+                    padding: '1rem',
+                    fontSize: '0.82rem',
+                    color: '#B45309'
+                }}>
+                    <div style={{ fontWeight: 800, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Wifi size={16} color="#D97706" />
+                        {lang === 'en' ? '📱 Mobile Scanning Network Setting' : '📱 மொபைல் ஸ்கேன் செய்யும் நெட்வொர்க் முகவரி'}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#92400E', marginBottom: '8px', lineHeight: 1.4 }}>
+                        {isLocalhost
+                            ? (lang === 'en'
+                                ? 'Note: Mobile phones cannot reach "localhost". Enter your computer\'s Wi-Fi IP (e.g. http://192.168.0.103:5174)'
+                                : 'குறிப்பு: மொபைல் போன்கள் "localhost"-ஐத் திறக்க முடியாது. கணினியின் Wi-Fi IP முகவரியை (எ.கா: http://192.168.0.103:5174) உள்ளிடவும்.')
+                            : (lang === 'en' ? 'Active Host URL:' : 'செயலில் உள்ள URL முகவரி:')
+                        }
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="http://192.168.0.103:5174"
+                        value={customHost}
+                        onChange={handleHostChange}
+                        style={{
+                            width: '100%',
+                            padding: '0.6rem 0.8rem',
+                            borderRadius: '0.6rem',
+                            border: '1px solid #F59E0B',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            color: '#0F172A',
+                            background: '#FFFFFF',
+                            fontFamily: 'monospace'
+                        }}
+                    />
+                </div>
             </motion.div>
 
             {/* QR Code Card */}
@@ -132,12 +199,11 @@ const QRDisplay = () => {
                             excavate: true
                         }}
                     />
-                    
                 </div>
 
                 <div style={{ textAlign: 'center', zIndex: 10 }}>
-                    <p style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-                        {selectedFn?.name}
+                    <p style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                        {selectedFn?.name || 'Manoj\'s mariage'}
                     </p>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                         {lang === 'en' ? 'Scan to register your gift' : 'உங்கள் மொய் பதிவு செய்ய scan செய்யுங்கள்'}
@@ -171,35 +237,6 @@ const QRDisplay = () => {
                     </div>
                 ))}
             </motion.div>
-
-            {/* Pending badge if > 0 */}
-            <AnimatePresence>
-                {pendingEntries.length > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        style={{
-                            background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-                            color: 'white',
-                            borderRadius: '1rem',
-                            padding: '1rem 2rem',
-                            fontWeight: 700,
-                            fontSize: '1rem',
-                            boxShadow: '0 8px 20px rgba(245, 158, 11, 0.4)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem'
-                        }}
-                    >
-                        <CheckCircle size={20} />
-                        {lang === 'en'
-                            ? `${pendingEntries.length} guest${pendingEntries.length > 1 ? 's' : ''} waiting for your approval!`
-                            : `${pendingEntries.length} guest-கள் உங்கள் ஒப்புதலுக்காக காத்திருக்கிறார்கள்!`}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-           
         </div>
     );
 };

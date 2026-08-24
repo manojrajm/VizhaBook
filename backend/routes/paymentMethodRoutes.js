@@ -11,9 +11,9 @@ import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router({ mergeParams: true });
 
-// Function nested routes
+// Function nested routes (GET is public for guest QR check-in)
 router.route('/functions/:functionId/payment-methods')
-    .get(protect, getPaymentMethodsByFunction)
+    .get(getPaymentMethodsByFunction)
     .post(protect, createPaymentMethod);
 
 router.route('/functions/:functionId/payment-methods/:id')
