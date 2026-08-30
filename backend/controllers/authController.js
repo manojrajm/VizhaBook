@@ -17,15 +17,38 @@ export const loginUser = async (req, res) => {
 
     // Instant demo login bypass
     if ((cleanEmail === 'admins' || cleanEmail === 'admin' || cleanEmail === 'admins@vizhabook.com' || cleanEmail === 'demo@vizhabook.com') && (password === 'password' || password === 'demo1234')) {
-        const token = generateToken('u_admin_1', 'admins@vizhabook.com');
+        const demoUserId = 'u_admin_1';
+        const demoAccId = 'acc_admin_1';
+        const demoEmail = 'admins@vizhabook.com';
+
+        try {
+            await pool.query(
+                "INSERT INTO accounts (id, name, status, created_at, updated_at) VALUES ($1, $2, 'ACTIVE', NOW(), NOW()) ON CONFLICT (id) DO NOTHING;",
+                [demoAccId, "VizhaBook Demo User's Account"]
+            );
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash('password', salt);
+            await pool.query(
+                `INSERT INTO users (id, name, email, phone, country_code, password, role, account_id, created_at)
+                 VALUES ($1, $2, $3, $4, '+91', $5, 'ADMIN', $6, NOW())
+                 ON CONFLICT (id) DO UPDATE SET account_id = $6;`,
+                [demoUserId, 'VizhaBook Demo User', demoEmail, '9876543210', hashedPassword, demoAccId]
+            );
+        } catch (e) {
+            console.warn("Demo user seed warning:", e.message);
+        }
+
+        const token = generateToken(demoUserId, demoEmail);
         return res.json({
             success: true,
             user: {
-                id: 'u_admin_1',
+                id: demoUserId,
                 name: 'VizhaBook Demo User',
-                email: cleanEmail,
+                email: demoEmail,
                 phone: '9876543210',
-                countryCode: '+91'
+                countryCode: '+91',
+                role: 'ADMIN',
+                accountId: demoAccId
             },
             token
         });
