@@ -339,10 +339,10 @@ const Ledger = () => {
                         value={sourceFilter}
                         onChange={(e) => setSourceFilter(e.target.value)}
                     >
-                        <option value="All">{isTa ? 'அனைத்து வாயில்கள்' : 'All Entry Sources'}</option>
-                        <option value="manual">⌨ Manual Typing</option>
-                        <option value="voice">🎙 Voice Speech</option>
-                        <option value="qr_checkin">📲 QR Guest Check-in</option>
+                        <option value="All">{isTa ? 'அனைத்து வாயில்கள்' : 'All Entry Locations'}</option>
+                        <option value="reception_counter">🏛️ {isTa ? 'வரவேற்புப் பிரிவு' : 'Reception Desk'}</option>
+                        <option value="stage_present">👑 {isTa ? 'மேடை மொய் (Stage Present)' : 'Stage Present'}</option>
+                        <option value="qr_checkin">📱 {isTa ? 'QR பதிவு' : 'QR Guest Check-in'}</option>
                     </select>
                 </div>
             </div>
@@ -372,7 +372,7 @@ const Ledger = () => {
                                     <th style={{ padding: '1rem 1.25rem' }}>Guest Name</th>
                                     <th style={{ padding: '1rem 1.25rem' }}>Gift & Amount</th>
                                     <th style={{ padding: '1rem 1.25rem' }}>Payment Source</th>
-                                    <th style={{ padding: '1rem 1.25rem' }}>Entry Source</th>
+                                    <th style={{ padding: '1rem 1.25rem' }}>Entry Location</th>
                                     <th style={{ padding: '1rem 1.25rem' }}>Transaction Ref</th>
                                     <th style={{ padding: '1rem 1.25rem' }}>Date</th>
                                     <th style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>Actions</th>
@@ -383,6 +383,15 @@ const Ledger = () => {
                                     const isUpi = entry.paymentMethodType === 'UPI' || entry.paymentMode === 'UPI';
                                     const pmLabel = entry.paymentMethodName || entry.paymentMode || 'Cash';
                                     const pmUpi = entry.upiId || entry.paymentMethodProvider || '';
+
+                                    // Location source formatting
+                                    const eSource = entry.entrySource || entry.entry_source || 'reception_counter';
+                                    let sourceBadge = { label: '🏛️ Reception Desk', bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' };
+                                    if (eSource === 'stage_present') {
+                                        sourceBadge = { label: '👑 Stage Present', bg: '#FEF3C7', color: '#B45309', border: '#FCD34D' };
+                                    } else if (eSource === 'qr_checkin') {
+                                        sourceBadge = { label: '📱 QR Check-In', bg: '#F3E8FF', color: '#6B21A8', border: '#E9D5FF' };
+                                    }
 
                                     return (
                                         <tr key={entry.id} style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.15s ease' }} className="ledger-tr">
@@ -421,8 +430,11 @@ const Ledger = () => {
                                             </td>
 
                                             <td style={{ padding: '1rem 1.25rem' }}>
-                                                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', background: '#F1F5F9', padding: '2px 8px', borderRadius: '6px' }}>
-                                                    {entry.entrySource === 'voice' ? '🎙 Voice' : entry.entrySource === 'qr_checkin' ? '📲 Check-in' : '⌨ Manual'}
+                                                <span style={{
+                                                    fontSize: '0.72rem', fontWeight: 800, padding: '3px 10px', borderRadius: '100px', width: 'fit-content',
+                                                    background: sourceBadge.bg, color: sourceBadge.color, border: `1px solid ${sourceBadge.border}`
+                                                }}>
+                                                    {sourceBadge.label}
                                                 </span>
                                             </td>
 

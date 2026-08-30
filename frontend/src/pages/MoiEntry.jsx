@@ -139,6 +139,7 @@ const MoiEntry = () => {
         description: '',
         paymentMethodId: '', // '' = Physical Hard Cash, or specific pm_id for UPI
         paymentMode: 'Cash',
+        entrySource: 'reception_counter',
         transactionReference: ''
     });
 
@@ -413,6 +414,39 @@ const MoiEntry = () => {
                                     <option value="">{isTa ? '-- விழாவைத் தேர்வு செய் --' : '-- Choose function --'}</option>
                                     {displayFunctions.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                                 </select>
+                            </div>
+
+                            {/* ENTRY SOURCE SELECTOR (RECEPTION DESK VS STAGE PRESENT) */}
+                            <div className="form-group">
+                                <label className="form-label">{isTa ? 'பதிவு இடம் (Entry Location)' : 'Entry Location'}</label>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, entrySource: 'reception_counter' })}
+                                        style={{
+                                            padding: '0.75rem 1rem', borderRadius: '0.875rem', cursor: 'pointer',
+                                            fontWeight: 800, fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                                            border: formData.entrySource === 'reception_counter' ? '2px solid #3B82F6' : '1px solid var(--border-color)',
+                                            background: formData.entrySource === 'reception_counter' ? 'rgba(59, 130, 246, 0.12)' : 'var(--bg-secondary)',
+                                            color: formData.entrySource === 'reception_counter' ? '#1D4ED8' : 'var(--text-secondary)'
+                                        }}
+                                    >
+                                        🏛️ {isTa ? 'வரவேற்புப் பிரிவு' : 'Reception Desk'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, entrySource: 'stage_present' })}
+                                        style={{
+                                            padding: '0.75rem 1rem', borderRadius: '0.875rem', cursor: 'pointer',
+                                            fontWeight: 800, fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                                            border: formData.entrySource === 'stage_present' ? '2px solid #F59E0B' : '1px solid var(--border-color)',
+                                            background: formData.entrySource === 'stage_present' ? 'rgba(245, 158, 11, 0.15)' : 'var(--bg-secondary)',
+                                            color: formData.entrySource === 'stage_present' ? '#B45309' : 'var(--text-secondary)'
+                                        }}
+                                    >
+                                        👑 {isTa ? 'மேடை மொய் (Stage)' : 'Stage Present'}
+                                    </button>
+                                </div>
                             </div>
 
                             {/* GUEST NAME WITH VOICE BUTTON */}

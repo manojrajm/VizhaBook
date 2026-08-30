@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
 import functionService from '../services/functionService';
 import expenseService from '../services/expenseService';
 import moiService from '../services/moiService';
@@ -11,7 +12,7 @@ export const AppProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : [];
     });
 
-    // Auto-sync functions and expenses from PostgreSQL on mount
+    // Auto-sync functions and expenses from PostgreSQL on mount & Socket.io WebSockets
     useEffect(() => {
         const syncDbOnMount = async () => {
             try {
@@ -40,6 +41,46 @@ export const AppProvider = ({ children }) => {
             }
         };
         syncDbOnMount();
+
+        // Connect Socket.io Client for 0ms instant multi-counter WebSockets sync
+        const host = window.location.hostname || 'localhost';
+        const socket = io(`http://${host}:5002`, { transports: ['websocket', 'polling'] });
+
+        socket.on('connect', () => {
+            console.log(`⚡ [Socket.io Client] Connected to real-time server (${socket.id})`);
+        });
+
+        socket.on('NEW_MOI_ENTRY', (newEntry) => {
+            console.log('📡 [Socket.io Client] Received NEW_MOI_ENTRY:', newEntry);
+            if (newEntry && newEntry.id) {
+                setEntries(prev => {
+                    if (prev.some(e => String(e.id) === String(newEntry.id))) return prev;
+                    return [newEntry, ...prev];
+                });
+            }
+        });
+
+        socket.on('NEW_PENDING_CHECKIN', (newPending) => {
+            console.log('📡 [Socket.io Client] Received NEW_PENDING_CHECKIN:', newPending);
+            if (newPending && newPending.id) {
+                setPendingEntries(prev => {
+                    if (prev.some(p => String(p.id) === String(newPending.id))) return prev;
+                    return [newPending, ...prev];
+                });
+            }
+        });
+
+        socket.on('PENDING_APPROVED', (data) => {
+            console.log('📡 [Socket.io Client] Received PENDING_APPROVED:', data);
+            const pId = data?.pendingId || data;
+            if (pId) {
+                setPendingEntries(prev => prev.filter(p => String(p.id) !== String(pId)));
+            }
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const refetchMoiEntries = async () => {

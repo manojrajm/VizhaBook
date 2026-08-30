@@ -1,4 +1,6 @@
 import pool from '../config/db.js';
+import { sendWhatsAppReceipt } from '../services/whatsappService.js';
+import { broadcastToRoom } from '../config/socket.js';
 
 // Helper: Ensure user has account_id
 const getUserAccountId = async (userId, userEmail) => {
@@ -234,7 +236,7 @@ export const createMoiEntry = async (req, res) => {
         }
 
         const id = `m_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
-        const validSource = ['manual', 'voice', 'qr_checkin', 'import'].includes(entrySource) ? entrySource : 'manual';
+        const validSource = ['manual', 'voice', 'qr_checkin', 'import', 'stage_present', 'reception_counter'].includes(entrySource) ? entrySource : 'reception_counter';
         const finalGiftItem = giftItem || giftType || 'Cash';
         const finalAmount = Number(amount) || 0;
 
@@ -288,6 +290,19 @@ export const createMoiEntry = async (req, res) => {
             createdAt: r.created_at,
             entryDate: r.created_at
         };
+
+        // Dispatch automated WhatsApp digital receipt (async)
+        sendWhatsAppReceipt({
+            phone: formattedEntry.phone,
+            guestName: formattedEntry.guestName,
+            amount: formattedEntry.amount,
+            functionName: fnRes.rows[0]?.name || 'VizhaBook Event',
+            giftType: formattedEntry.giftType,
+            entrySource: formattedEntry.entrySource
+        }).catch(err => console.warn('WhatsApp receipt background error:', err.message));
+
+        // Broadcast WebSockets event to all connected reception desks & dashboards
+        broadcastToRoom(formattedEntry.functionId, 'NEW_MOI_ENTRY', formattedEntry);
 
         return res.status(201).json({ success: true, entry: formattedEntry });
     } catch (e) {
@@ -430,6 +445,9 @@ export const submitPendingCheckin = async (req, res) => {
             ]
         );
 
+        // Broadcast WebSockets event for new pending checkin
+        broadcastToRoom(functionId, 'NEW_PENDING_CHECKIN', result.rows[0]);
+
         return res.status(201).json({
             success: true,
             pendingEntry: result.rows[0]
@@ -548,9 +566,25 @@ export const approvePendingCheckin = async (req, res) => {
 
         await client.query('COMMIT');
 
+        const approvedEntry = insertRes.rows[0];
+
+        // Broadcast WebSockets event for real-time live sync across devices
+        broadcastToRoom(pend.function_id, 'PENDING_APPROVED', { pendingId: id, entry: approvedEntry });
+        broadcastToRoom(pend.function_id, 'NEW_MOI_ENTRY', approvedEntry);
+
+        // Dispatch automated WhatsApp receipt
+        sendWhatsAppReceipt({
+            phone: approvedEntry.phone,
+            guestName: approvedEntry.guest_name || approvedEntry.name,
+            amount: approvedEntry.amount,
+            functionName: pend.function_name || 'VizhaBook Event',
+            giftType: approvedEntry.gift_item || 'Cash',
+            entrySource: 'qr_checkin'
+        }).catch(err => console.warn('WhatsApp receipt background error:', err.message));
+
         return res.json({
             success: true,
-            entry: insertRes.rows[0],
+            entry: approvedEntry,
             message: 'Pending entry approved successfully.'
         });
     } catch (e) {
