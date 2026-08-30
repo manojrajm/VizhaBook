@@ -1,4 +1,5 @@
 // VizhaBook Expense Service — API Abstraction for PostgreSQL public.expenses table
+import { API_BASE_URL } from '../config/api';
 
 const getHeaders = () => {
     const token = localStorage.getItem('vizhabook_token');
@@ -17,7 +18,7 @@ export const expenseService = {
             if (params.category && params.category !== 'all') queryParams.append('category', params.category);
 
             const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
-            const res = await fetch(`/api/expenses${queryString}`, { headers: getHeaders() });
+            const res = await fetch(`${API_BASE_URL}/api/expenses${queryString}`, { headers: getHeaders() });
             const data = await res.json();
             if (!res.ok) return { success: false, error: data.error || 'Failed to fetch expenses.' };
             return {
@@ -34,7 +35,7 @@ export const expenseService = {
     // POST /api/expenses
     createExpense: async (payload) => {
         try {
-            const res = await fetch('/api/expenses', {
+            const res = await fetch(`${API_BASE_URL}/api/expenses`, {
                 method: 'POST',
                 headers: getHeaders(),
                 body: JSON.stringify(payload)
@@ -51,7 +52,7 @@ export const expenseService = {
     // DELETE /api/expenses/:id
     deleteExpense: async (id) => {
         try {
-            const res = await fetch(`/api/expenses/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/expenses/${id}`, {
                 method: 'DELETE',
                 headers: getHeaders()
             });

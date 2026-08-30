@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import functionService from '../services/functionService';
 import expenseService from '../services/expenseService';
 import moiService from '../services/moiService';
+import { SOCKET_URL } from '../config/api';
 
 const AppContext = createContext();
 
@@ -42,9 +43,8 @@ export const AppProvider = ({ children }) => {
         };
         syncDbOnMount();
 
-        // Connect Socket.io Client for 0ms instant multi-counter WebSockets sync
-        const host = window.location.hostname || 'localhost';
-        const socket = io(`http://${host}:5002`, { transports: ['websocket', 'polling'] });
+        // Connect Socket.io Client for 0ms instant multi-counter WebSockets sync over WSS/HTTPS
+        const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
 
         socket.on('connect', () => {
             console.log(`⚡ [Socket.io Client] Connected to real-time server (${socket.id})`);

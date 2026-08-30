@@ -1,7 +1,8 @@
 // VizhaBook Function Service — REST API abstraction layer
 // All requests include Bearer token from localStorage
+import { API_BASE_URL } from '../config/api';
 
-const API_BASE = '/api/functions';
+const API_BASE = `${API_BASE_URL}/api/functions`;
 
 const getHeaders = () => {
     const token = localStorage.getItem('vizhabook_token');

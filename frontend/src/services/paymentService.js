@@ -1,10 +1,11 @@
 // VizhaBook Subscription & Payment Service Abstraction Layer
+import { API_BASE_URL } from '../config/api';
 
 export const paymentService = {
     // Fetch active subscription plans from backend
     getPlans: async () => {
         try {
-            const res = await fetch('/api/subscription-plans');
+            const res = await fetch(`${API_BASE_URL}/api/subscription-plans`);
             const data = await res.json();
             return data.success ? data.plans : [];
         } catch (e) {
@@ -18,7 +19,7 @@ export const paymentService = {
         const token = localStorage.getItem('vizhabook_token');
         if (!token) return null;
         try {
-            const res = await fetch('/api/subscriptions/current', {
+            const res = await fetch(`${API_BASE_URL}/api/subscriptions/current`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -34,7 +35,7 @@ export const paymentService = {
         const token = localStorage.getItem('vizhabook_token');
         if (!token) return null;
         try {
-            const res = await fetch('/api/subscriptions/usage', {
+            const res = await fetch(`${API_BASE_URL}/api/subscriptions/usage`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -50,7 +51,7 @@ export const paymentService = {
         const token = localStorage.getItem('vizhabook_token');
         if (!token) return { success: false, error: 'Authentication required' };
         try {
-            const res = await fetch('/api/subscriptions/select-plan', {
+            const res = await fetch(`${API_BASE_URL}/api/subscriptions/select-plan`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -71,7 +72,7 @@ export const paymentService = {
         const token = localStorage.getItem('vizhabook_token');
         if (!token) return { success: false, error: 'Authentication required' };
         try {
-            const res = await fetch('/api/subscriptions/cancel', {
+            const res = await fetch(`${API_BASE_URL}/api/subscriptions/cancel`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

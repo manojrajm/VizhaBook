@@ -1,4 +1,5 @@
 // VizhaBook Payment Method Service — API Abstraction Layer
+import { API_BASE_URL } from '../config/api';
 
 const getHeaders = () => {
     const token = localStorage.getItem('vizhabook_token');
@@ -12,7 +13,7 @@ export const paymentMethodService = {
     // GET /api/functions/:functionId/payment-methods
     getPaymentMethodsByFunction: async (functionId) => {
         try {
-            const res = await fetch(`/api/functions/${functionId}/payment-methods`, { headers: getHeaders() });
+            const res = await fetch(`${API_BASE_URL}/api/functions/${functionId}/payment-methods`, { headers: getHeaders() });
             const data = await res.json();
             if (!res.ok) return { success: false, error: data.error || 'Failed to fetch payment methods.' };
             return { success: true, paymentMethods: data.paymentMethods || [] };
@@ -25,7 +26,7 @@ export const paymentMethodService = {
     // POST /api/functions/:functionId/payment-methods
     createPaymentMethod: async (functionId, payload) => {
         try {
-            const res = await fetch(`/api/functions/${functionId}/payment-methods`, {
+            const res = await fetch(`${API_BASE_URL}/api/functions/${functionId}/payment-methods`, {
                 method: 'POST',
                 headers: getHeaders(),
                 body: JSON.stringify(payload)
@@ -42,7 +43,7 @@ export const paymentMethodService = {
     // PUT /api/payment-methods/:id
     updatePaymentMethod: async (id, payload) => {
         try {
-            const res = await fetch(`/api/payment-methods/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/payment-methods/${id}`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 body: JSON.stringify(payload)
@@ -59,7 +60,7 @@ export const paymentMethodService = {
     // PATCH /api/payment-methods/:id/status
     togglePaymentMethodStatus: async (id, is_active) => {
         try {
-            const res = await fetch(`/api/payment-methods/${id}/status`, {
+            const res = await fetch(`${API_BASE_URL}/api/payment-methods/${id}/status`, {
                 method: 'PATCH',
                 headers: getHeaders(),
                 body: JSON.stringify({ is_active })
@@ -76,7 +77,7 @@ export const paymentMethodService = {
     // PATCH /api/payment-methods/:id/default
     setDefaultPaymentMethod: async (id) => {
         try {
-            const res = await fetch(`/api/payment-methods/${id}/default`, {
+            const res = await fetch(`${API_BASE_URL}/api/payment-methods/${id}/default`, {
                 method: 'PATCH',
                 headers: getHeaders()
             });
@@ -92,7 +93,7 @@ export const paymentMethodService = {
     // DELETE /api/payment-methods/:id
     deletePaymentMethod: async (id) => {
         try {
-            const res = await fetch(`/api/payment-methods/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/payment-methods/${id}`, {
                 method: 'DELETE',
                 headers: getHeaders()
             });
