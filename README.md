@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://vizhabooks.onrender.com">
-    <img src="public/logo.png" alt="VizhaBook Enterprise Logo" width="160" />
+    <img src="https://raw.githubusercontent.com/manojrajm/VizhaBook/main/frontend/public/logo.png" alt="VizhaBook Enterprise Logo" width="160" />
   </a>
 </p>
 
@@ -9,7 +9,9 @@
 
 <p align="center">
   <a href="https://vizhabooks.onrender.com"><b>🌐 Live App Demo</b></a> •
-  <a href="https://vizhabooks-backend.onrender.com"><b>⚡ Live API Backend</b></a>
+  <a href="https://vizhabooks-backend.onrender.com"><b>⚡ Live API Backend</b></a> •
+  <a href="#-contributing--pull-request-pr-guide"><b>🤝 PR Guidelines</b></a> •
+  <a href="#-frequently-asked-questions-faq"><b>💬 FAQ</b></a>
 </p>
 
 <p align="center">
@@ -18,7 +20,8 @@
   <img src="https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
   <img src="https://img.shields.io/badge/Socket.io-0ms_Sync-010101?style=for-the-badge&logo=socket.io&logoColor=white" />
   <img src="https://img.shields.io/badge/Render-Deployed-46E3B7?style=for-the-badge&logo=render&logoColor=black" />
-  <img src="https://img.shields.io/badge/Bilingual-English_%7C_%E0%AE%A4%E0%AE%BF%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D-7C3AED?style=for-the-badge" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License" /></a>
+  <img src="https://img.shields.io/badge/Bilingual-English_%7C_%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D-7C3AED?style=for-the-badge" />
 </p>
 
 ---
@@ -88,6 +91,111 @@ Follow this step-by-step workflow to manage any celebration from start to finish
 
 ---
 
+## 🔒 Security & Data Privacy
+
+VizhaBook is built with enterprise security controls to protect financial records and personal data:
+
+- 🛡️ **Multi-Tenant Account Isolation**: Every user account is strictly isolated using PostgreSQL `account_id` foreign keys and Row-Level Security patterns.
+- 🔑 **Stateless JWT Authorization**: API routes are protected by JSON Web Tokens signed with `JWT_SECRET`. Unauthenticated requests are rejected with `401 Unauthorized`.
+- ⚡ **Atomic Concurrency Row Locks**: Host approval queries use `SELECT ... FOR UPDATE` row locks to prevent race conditions during high-volume simultaneous entries.
+- 🌐 **Strict CORS Production Security**: Backend API and Socket.io servers strictly whitelist allowed frontend origins (`https://vizhabooks.onrender.com`).
+
+---
+
+## 💬 Frequently Asked Questions (FAQ)
+
+<details>
+<summary><b>Q1: Can multiple users log in on different devices at the same time?</b></summary>
+<br />
+<b>YES! 100%.</b> VizhaBook uses stateless JWT tokens. Multiple staff members (e.g. 3 at Reception Desk, 2 on Stage) can log in concurrently on their mobile phones and laptops using the same account. All devices stay in <b>0ms real-time sync</b> via Socket.io WebSockets!
+</details>
+
+<details>
+<summary><b>Q2: Does VizhaBook work on Mobile Phones & Tablets?</b></summary>
+<br />
+<b>YES!</b> VizhaBook is a fully responsive Progressive Web App (PWA). It works seamlessly on iOS iPhones, Android smartphones, tablets, and desktop computers.
+</details>
+
+<details>
+<summary><b>Q3: How does direct UPI Payment Deep-Linking work?</b></summary>
+<br />
+When guests tap <b>Pay with Google Pay / PhonePe</b> on their mobile phones (`/checkin`), VizhaBook generates a native <code>upi://pay</code> URI containing the host's VPA handle (`@oksbi`) and gift amount. The guest's phone opens Google Pay directly with the transaction pre-filled.
+</details>
+
+<details>
+<summary><b>Q4: What happens if two guests submit entries at the exact same millisecond?</b></summary>
+<br />
+The Node.js event loop queues requests asynchronously, and PostgreSQL handles concurrent writes via Multi-Version Concurrency Control (MVCC). Every entry gets a collision-proof unique ID (`m_TIMESTAMP_RANDOM`). Neither entry will be lost or cause a server crash!
+</details>
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+To ensure code quality and build compliance before pushing to production:
+
+```bash
+# Frontend Vite Build Compliance Check
+cd frontend
+npm run build
+
+# Backend Database Health Verification
+curl https://vizhabooks-backend.onrender.com/api/test-db
+```
+
+---
+
+## 🤝 Contributing & Pull Request (PR) Guide
+
+We welcome contributions from developers to make VizhaBook even better! Follow these professional steps to fork, develop, and submit a Pull Request (PR):
+
+### 🍴 Step 1: Fork the Repository
+Click the **Fork** button at the top right of the repository page ([`manojrajm/VizhaBook`](https://github.com/manojrajm/VizhaBook)) to create your personal copy of the repository.
+
+### 📥 Step 2: Clone Your Fork Locally
+```bash
+git clone https://github.com/YOUR_GITHUB_USERNAME/VizhaBook.git
+cd VizhaBook
+```
+
+### 🌿 Step 3: Create a Feature Branch
+Create a descriptive branch for your new feature or bug fix:
+```bash
+git checkout -b feature/add-new-feature
+```
+
+### 🛠️ Step 4: Install Dependencies & Run Locally
+```bash
+# Terminal 1: Backend Setup
+cd backend
+npm install
+npm run dev
+
+# Terminal 2: Frontend Setup
+cd frontend
+npm install
+npm run dev
+```
+
+### 📝 Step 5: Commit & Push Your Changes
+Follow Conventional Commits format (`feat:`, `fix:`, `docs:`, `style:`):
+```bash
+git add .
+git commit -m "feat: add new feature description"
+git push origin feature/add-new-feature
+```
+
+### 🔀 Step 6: Create a Pull Request (PR)
+1. Navigate to the original repository [`manojrajm/VizhaBook`](https://github.com/manojrajm/VizhaBook).
+2. Click **New Pull Request** and select your branch `feature/add-new-feature`.
+3. Fill out the PR template description with:
+   - **Summary of Changes**: What feature/fix was added.
+   - **Screenshots / Recordings**: Visual proof of testing.
+   - **Verification**: Run `npm run build` in `frontend/` to confirm 0 build errors.
+4. Click **Create Pull Request** for review!
+
+---
+
 ## ⚡ Key Technical Innovations
 
 - **⚡ 0ms Socket.io WebSockets Sync**: Multi-counter real-time event broadcasting over WSS.
@@ -102,6 +210,12 @@ Follow this step-by-step workflow to manage any celebration from start to finish
 
 - **Frontend App**: [https://vizhabooks.onrender.com](https://vizhabooks.onrender.com)
 - **Backend API**: [https://vizhabooks-backend.onrender.com](https://vizhabooks-backend.onrender.com)
+
+---
+
+## 📜 License & Copyright
+
+Distributed under the **[MIT License](LICENSE)**. Copyright (c) 2026 **ManojRaj & VizhaBook Team**. See [`LICENSE`](LICENSE) for more information.
 
 ---
 
