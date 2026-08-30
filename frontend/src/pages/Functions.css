@@ -574,3 +574,161 @@
     0% { transform: scale(0.9); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MNC ENTERPRISE CREATE / EDIT FUNCTION MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fn-modal {
+    background: #FFFFFF;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.4);
+    overflow: hidden;
+    animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.fn-modal-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.75rem;
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    color: #FFFFFF;
+}
+
+.fn-modal-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #F8FAFC;
+    margin: 0;
+}
+
+.fn-modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    color: #F8FAFC;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.fn-modal-close:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: rotate(90deg);
+}
+
+.fn-modal-body {
+    padding: 1.75rem;
+}
+
+.fn-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.fn-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fn-field label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1E293B;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fn-field label .required {
+    color: #EF4444;
+}
+
+.fn-input, .fn-select, .fn-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1.5px solid #CBD5E1;
+    background: #F8FAFC;
+    color: #0F172A;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.fn-input:focus, .fn-select:focus, .fn-textarea:focus {
+    outline: none;
+    border-color: #2563EB;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.fn-input.error, .fn-select.error, .fn-textarea.error {
+    border-color: #EF4444;
+    background: #FEF2F2;
+}
+
+.fn-textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.fn-field-error {
+    font-size: 0.78rem;
+    color: #DC2626;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 2px 0 0;
+}
+
+.fn-modal-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 1.25rem 1.75rem;
+    background: #F8FAFC;
+    border-top: 1px solid #E2E8F0;
+}
+
+.fn-btn-submit {
+    flex: 1.5;
+    height: 46px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
+    color: #FFFFFF;
+    font-weight: 800;
+    font-size: 0.92rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(29, 78, 216, 0.3);
+    transition: all 0.2s ease;
+}
+
+.fn-btn-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(29, 78, 216, 0.4);
+}
+
+.fn-btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
