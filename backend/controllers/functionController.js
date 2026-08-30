@@ -5,16 +5,48 @@ import pool from '../config/db.js';
 // ─────────────────────────────────────────────────────────────────────────────
 const getAccountId = async (userId, userEmail) => {
     let res = await pool.query(
-        'SELECT account_id FROM users WHERE id = $1 LIMIT 1;',
+        'SELECT account_id, id, name FROM users WHERE id = $1 LIMIT 1;',
         [userId]
     );
     if (!res.rows.length && userEmail) {
         res = await pool.query(
-            'SELECT account_id FROM users WHERE LOWER(email) = $1 LIMIT 1;',
+            'SELECT account_id, id, name FROM users WHERE LOWER(email) = $1 LIMIT 1;',
             [userEmail.toLowerCase()]
         );
     }
-    return res.rows[0]?.account_id || null;
+    if (res.rows.length > 0) {
+        let accId = res.rows[0].account_id;
+        if (!accId) {
+            accId = `acc_${Date.now()}`;
+            await pool.query(
+                "INSERT INTO accounts (id, name, status, created_at, updated_at) VALUES ($1, $2, 'ACTIVE', NOW(), NOW()) ON CONFLICT (id) DO NOTHING;",
+                [accId, `${(res.rows[0].name || 'User').trim()}'s Account`]
+            );
+            await pool.query("UPDATE users SET account_id = $1 WHERE id = $2;", [accId, res.rows[0].id]);
+        }
+        return accId;
+    }
+    if (userId || userEmail) {
+        const fallbackAccId = `acc_${userId || Date.now()}`;
+        const fallbackUserId = userId || `u_${Date.now()}`;
+        const email = userEmail || `${fallbackUserId}@vizhabook.com`;
+        try {
+            await pool.query(
+                "INSERT INTO accounts (id, name, status, created_at, updated_at) VALUES ($1, $2, 'ACTIVE', NOW(), NOW()) ON CONFLICT (id) DO NOTHING;",
+                [fallbackAccId, "User's Account"]
+            );
+            await pool.query(
+                `INSERT INTO users (id, name, email, phone, password, role, account_id, created_at)
+                 VALUES ($1, 'User', $2, '', '', 'USER', $3, NOW())
+                 ON CONFLICT (id) DO UPDATE SET account_id = $3;`,
+                [fallbackUserId, email, fallbackAccId]
+            );
+            return fallbackAccId;
+        } catch (e) {
+            console.error("Auto-provision account error:", e.message);
+        }
+    }
+    return null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

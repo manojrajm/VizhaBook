@@ -12,17 +12,29 @@ const DB_FILE = path.join(__dirname, "../data/db.json");
 
 const { Pool } = pg;
 
-export const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+const poolConfig = process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.DATABASE_URL.includes("localhost") || process.env.DATABASE_URL.includes("127.0.0.1")
+            ? false
+            : { rejectUnauthorized: false },
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+    }
+    : {
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+    };
 
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
-});
+export const pool = new Pool(poolConfig);
 
 pool.on("connect", () => {
     console.log("✅ PostgreSQL client connected");
@@ -203,31 +215,92 @@ const initTables = async () => {
             ALTER TABLE moi_entries ADD COLUMN IF NOT EXISTS transaction_reference VARCHAR(255);
         `);
 
-        // 11. Create required indexes safely
+        // 11. Create expenses table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS expenses (
+                id VARCHAR(100) PRIMARY KEY,
+                account_id VARCHAR(100) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+                function_id VARCHAR(100) NOT NULL REFERENCES functions(id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                category VARCHAR(100) NOT NULL,
+                amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+                payment_mode VARCHAR(50) DEFAULT 'Cash',
+                expense_date DATE NOT NULL DEFAULT CURRENT_DATE,
+                notes TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // 12. Create subscription_plans table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS subscription_plans (
+                id VARCHAR(100) PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                price NUMERIC(10,2) NOT NULL DEFAULT 0,
+                function_limit INTEGER,
+                entry_limit INTEGER,
+                features JSONB,
+                status VARCHAR(50) DEFAULT 'ACTIVE',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // Seed default plans if not present
+        await pool.query(`
+            INSERT INTO subscription_plans (id, name, price, function_limit, entry_limit, status)
+            VALUES 
+                ('PLAN_BASIC', 'Trial / Free Plan', 0, 1, 300, 'ACTIVE'),
+                ('PLAN_PRO', 'Pro Celebration Plan', 999, 5, 2000, 'ACTIVE'),
+                ('PLAN_ENTERPRISE', 'Grand Enterprise Plan', 2499, NULL, NULL, 'ACTIVE')
+            ON CONFLICT (id) DO NOTHING;
+        `);
+
+        // 13. Create subscriptions table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                id VARCHAR(100) PRIMARY KEY,
+                account_id VARCHAR(100) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+                plan_id VARCHAR(100) REFERENCES subscription_plans(id),
+                status VARCHAR(50) NOT NULL DEFAULT 'TRIAL',
+                start_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                end_date TIMESTAMPTZ NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '14 days'),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // 14. Create payments table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS payments (
+                id VARCHAR(100) PRIMARY KEY,
+                account_id VARCHAR(100) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+                subscription_id VARCHAR(100) REFERENCES subscriptions(id) ON DELETE SET NULL,
+                amount NUMERIC(10,2) NOT NULL DEFAULT 0,
+                currency VARCHAR(10) DEFAULT 'INR',
+                status VARCHAR(50) DEFAULT 'SUCCESS',
+                payment_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // 15. Create required indexes safely
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_functions_account_id ON functions(account_id);`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_moi_entries_function_id ON moi_entries(function_id);`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_moi_entries_payment_method ON moi_entries(payment_method_id);`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_moi_entries_entry_date ON moi_entries(created_at);`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_function_payment_methods_function_id ON function_payment_methods(function_id);`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_account_id ON users(account_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_expenses_account_id ON expenses(account_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_expenses_function_id ON expenses(function_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_subscriptions_account_id ON subscriptions(account_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_account_id ON payments(account_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_subscription_id ON payments(subscription_id);`);
 
-        // Create subscription & payment indexes safely if those tables exist
-        await pool.query(`
-            DO $$
-            BEGIN
-                IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'subscriptions') THEN
-                    CREATE INDEX IF NOT EXISTS idx_subscriptions_account_id ON subscriptions(account_id);
-                END IF;
-                IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'payments') THEN
-                    CREATE INDEX IF NOT EXISTS idx_payments_account_id ON payments(account_id);
-                    CREATE INDEX IF NOT EXISTS idx_payments_subscription_id ON payments(subscription_id);
-                END IF;
-            END $$;
-        `);
-
-        console.log("✅ PostgreSQL 'function_payment_methods' & 'moi_entries' tables and indexes ready");
+        console.log("✅ PostgreSQL all tables (accounts, users, functions, moi_entries, expenses, subscriptions, payments) ready");
     } catch (e) {
-        console.error("❌ Table initialization error:", e.message);
+        console.error("❌ Table initialization error:", e.message || e);
     }
 };
 
