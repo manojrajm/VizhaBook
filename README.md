@@ -1,10 +1,10 @@
 <p align="center">
   <a href="https://vizhabooks.onrender.com">
-    <img src="https://raw.githubusercontent.com/manojrajm/VizhaBook/main/frontend/public/logo.png" alt="VizhaBook Enterprise Logo" width="160" />
+    <img src="./frontend/public/logo.png" alt="VizhaBook Enterprise Logo" width="160" />
   </a>
 </p>
 
-<h1 align="center">🪔 VizhaBook — விழா புக்</h1>
+<h1 align="center"> VizhaBook — விழா புக்</h1>
 <h3 align="center">Enterprise SaaS Event & Digital Moi Management Platform</h3>
 
 <p align="center">
