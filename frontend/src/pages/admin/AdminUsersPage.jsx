@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Filter, RefreshCw, CreditCard, Loader2, AlertCircle, UserCheck } from 'lucide-react';
+import { Search, Filter, RefreshCw, CreditCard, Loader2, AlertCircle, UserCheck, BarChart2 } from 'lucide-react';
 import { gsap } from 'gsap';
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import ManageSubscriptionModal from '../../components/admin/ManageSubscriptionModal';
+import UserAnalyticsDrawer from '../../components/admin/UserAnalyticsDrawer';
 import { adminService } from '../../services/adminService';
 import './AdminUsersPage.css';
 
@@ -16,6 +17,7 @@ const AdminUsersPage = () => {
     const [statusFilter, setStatusFilter] = useState('ALL');
 
     const [selectedUser, setSelectedUser] = useState(null);
+    const [analyticsUserId, setAnalyticsUserId] = useState(null);
     const tableRowsRef = useRef([]);
 
     const fetchUsers = async () => {
@@ -63,7 +65,7 @@ const AdminUsersPage = () => {
                 <header className="admin-page-header">
                     <div>
                         <h1 className="admin-page-title">User & Subscription Management</h1>
-                        <p className="admin-page-description">Manage all registered VizhaBook hosts and activate offline subscriptions</p>
+                        <p className="admin-page-description">Manage all registered VizhaBook hosts, view deep-dive analytics, and activate offline subscriptions</p>
                     </div>
 
                     <button 
@@ -156,11 +158,18 @@ const AdminUsersPage = () => {
                                     return (
                                         <tr key={user.id} ref={(el) => (tableRowsRef.current[idx] = el)}>
                                             <td>
-                                                <div className="user-name-cell">
+                                                <div 
+                                                    className="user-name-cell clickable"
+                                                    onClick={() => setAnalyticsUserId(user.id)}
+                                                    title="Click to view deep-dive user analytics"
+                                                >
                                                     <div className="user-avatar-sm">
                                                         {user.name ? user.name[0].toUpperCase() : 'U'}
                                                     </div>
-                                                    <span className="user-name-text">{user.name}</span>
+                                                    <div className="user-name-wrapper">
+                                                        <span className="user-name-text">{user.name}</span>
+                                                        <span className="view-analytics-link"><BarChart2 size={12} /> Analytics</span>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="text-secondary">{user.email}</td>
@@ -178,13 +187,24 @@ const AdminUsersPage = () => {
                                             <td className="text-secondary">{formatDate(sub.endDate)}</td>
                                             <td className="text-secondary">{formatDate(user.createdAt)}</td>
                                             <td className="text-right">
-                                                <button 
-                                                    className="btn-manage-sub"
-                                                    onClick={() => setSelectedUser(user)}
-                                                >
-                                                    <CreditCard size={14} />
-                                                    <span>Manage Sub</span>
-                                                </button>
+                                                <div className="action-btn-row">
+                                                    <button 
+                                                        className="btn-view-analytics"
+                                                        onClick={() => setAnalyticsUserId(user.id)}
+                                                        title="View host profile analytics drawer"
+                                                    >
+                                                        <BarChart2 size={14} />
+                                                        <span>Analytics</span>
+                                                    </button>
+
+                                                    <button 
+                                                        className="btn-manage-sub"
+                                                        onClick={() => setSelectedUser(user)}
+                                                    >
+                                                        <CreditCard size={14} />
+                                                        <span>Manage Sub</span>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -200,6 +220,16 @@ const AdminUsersPage = () => {
                         user={selectedUser} 
                         onClose={() => setSelectedUser(null)}
                         onSuccess={fetchUsers}
+                    />
+                )}
+
+                {/* USER DEEP-DIVE ANALYTICS DRAWER */}
+                {analyticsUserId && (
+                    <UserAnalyticsDrawer 
+                        userId={analyticsUserId}
+                        onClose={() => setAnalyticsUserId(null)}
+                        onOpenManageSub={(user) => setSelectedUser(user)}
+                        onStatusChange={fetchUsers}
                     />
                 )}
             </main>

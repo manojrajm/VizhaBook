@@ -485,3 +485,205 @@ export const updateUserSubscription = async (req, res) => {
         });
     }
 };
+
+// @desc Get Deep-Dive User Analytics & Profile Details
+// @route GET /api/admin/users/:userId/analytics
+export const getUserAnalytics = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // 1. Fetch User Profile & Linked Account Status
+        const userRes = await pool.query(`
+            SELECT 
+                u.id,
+                u.name,
+                u.email,
+                u.phone,
+                u.country_code,
+                u.role,
+                u.account_id,
+                u.created_at,
+                a.status AS account_status
+            FROM users u
+            LEFT JOIN accounts a ON u.account_id = a.id
+            WHERE u.id = $1
+            LIMIT 1;
+        `, [userId]);
+
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ success: false, error: "User not found." });
+        }
+
+        const user = userRes.rows[0];
+        const accountId = user.account_id;
+
+        // 2. Fetch Active Subscription & Plan Limits
+        const subRes = await pool.query(`
+            SELECT 
+                s.id AS subscription_id,
+                s.status,
+                s.start_date,
+                s.end_date,
+                p.id AS plan_id,
+                COALESCE(p.name, 'Free Plan') AS plan_name,
+                COALESCE(p.price, 0) AS plan_price,
+                p.function_limit,
+                p.entry_limit
+            FROM subscriptions s
+            LEFT JOIN subscription_plans p ON s.plan_id = p.id
+            WHERE s.account_id = $1
+            ORDER BY s.created_at DESC
+            LIMIT 1;
+        `, [accountId]);
+
+        const sub = subRes.rows[0] || {};
+        const now = new Date();
+        let subStatus = sub.status || 'TRIAL';
+        if (sub.end_date && new Date(sub.end_date) < now && subStatus !== 'CANCELLED') {
+            subStatus = 'EXPIRED';
+        }
+
+        // 3. Aggregate Functions Count & Total Moi / Expenses for User Account
+        const funcCountRes = await pool.query(`SELECT COUNT(*)::int AS count FROM functions WHERE account_id = $1;`, [accountId]);
+        const functionsUsed = funcCountRes.rows[0]?.count || 0;
+
+        const entryCountRes = await pool.query(`
+            SELECT 
+                COUNT(*)::int AS count,
+                COALESCE(SUM(amount), 0)::numeric AS total_moi
+            FROM moi_entries m
+            JOIN functions f ON m.function_id = f.id
+            WHERE f.account_id = $1;
+        `, [accountId]);
+        const entriesUsed = entryCountRes.rows[0]?.count || 0;
+        const totalMoiAmount = parseFloat(entryCountRes.rows[0]?.total_moi || 0);
+
+        const expRes = await pool.query(`
+            SELECT COALESCE(SUM(amount), 0)::numeric AS total_expense
+            FROM expenses
+            WHERE account_id = $1;
+        `, [accountId]);
+        const totalExpenseAmount = parseFloat(expRes.rows[0]?.total_expense || 0);
+
+        // 4. Fetch All Functions Belonging to User
+        const functionsListRes = await pool.query(`
+            SELECT 
+                f.id,
+                f.name,
+                f.event_date,
+                f.location,
+                f.description,
+                f.status,
+                f.created_at,
+                (SELECT COUNT(*)::int FROM moi_entries WHERE function_id = f.id) AS moi_count,
+                (SELECT COALESCE(SUM(amount), 0)::numeric FROM moi_entries WHERE function_id = f.id) AS moi_total,
+                (SELECT COALESCE(SUM(amount), 0)::numeric FROM expenses WHERE function_id = f.id) AS expense_total
+            FROM functions f
+            WHERE f.account_id = $1
+            ORDER BY f.event_date DESC;
+        `, [accountId]);
+
+        const functionsList = functionsListRes.rows.map(f => ({
+            id: f.id,
+            name: f.name,
+            eventDate: f.event_date,
+            location: f.location,
+            description: f.description,
+            status: f.status,
+            createdAt: f.created_at,
+            moiCount: f.moi_count || 0,
+            moiTotal: parseFloat(f.moi_total || 0),
+            expenseTotal: parseFloat(f.expense_total || 0),
+            netBalance: parseFloat(f.moi_total || 0) - parseFloat(f.expense_total || 0)
+        }));
+
+        // 5. Fetch Payment Logs for User
+        const paymentsRes = await pool.query(`
+            SELECT 
+                id,
+                amount,
+                currency,
+                status,
+                payment_date,
+                created_at
+            FROM payments
+            WHERE account_id = $1
+            ORDER BY created_at DESC;
+        `, [accountId]);
+
+        const payments = paymentsRes.rows.map(p => ({
+            id: p.id,
+            amount: parseFloat(p.amount || 0),
+            currency: p.currency || 'INR',
+            status: p.status,
+            paymentDate: p.payment_date || p.created_at
+        }));
+
+        return res.json({
+            success: true,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                countryCode: user.country_code,
+                role: user.role,
+                accountId: user.account_id,
+                accountStatus: user.account_status || 'ACTIVE',
+                createdAt: user.created_at
+            },
+            subscription: {
+                id: sub.subscription_id,
+                planId: sub.plan_id || 'PLAN_FREE',
+                planName: sub.plan_name,
+                planPrice: sub.plan_price,
+                status: subStatus,
+                startDate: sub.start_date,
+                endDate: sub.end_date,
+                functionLimit: sub.function_limit,
+                entryLimit: sub.entry_limit
+            },
+            usage: {
+                functionsUsed,
+                functionLimit: sub.function_limit,
+                entriesUsed,
+                entryLimit: sub.entry_limit,
+                totalMoiAmount,
+                totalExpenseAmount,
+                netVolume: totalMoiAmount - totalExpenseAmount
+            },
+            functions: functionsList,
+            payments
+        });
+    } catch (error) {
+        console.error("getUserAnalytics Error:", error);
+        return res.status(500).json({ success: false, error: "Failed to fetch user analytics details." });
+    }
+};
+
+// @desc Suspend or Activate User Account Status
+// @route PATCH /api/admin/users/:userId/status
+export const toggleUserStatus = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { status } = req.body;
+
+        const accountId = await getUserAccountId(userId);
+        if (!accountId) {
+            return res.status(404).json({ success: false, error: "User account not found." });
+        }
+
+        const newStatus = status === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE';
+
+        await pool.query("UPDATE accounts SET status = $1, updated_at = NOW() WHERE id = $2;", [newStatus, accountId]);
+
+        return res.json({
+            success: true,
+            message: `User account status updated to ${newStatus}.`,
+            accountStatus: newStatus
+        });
+    } catch (error) {
+        console.error("toggleUserStatus Error:", error);
+        return res.status(500).json({ success: false, error: "Failed to toggle user status." });
+    }
+};

@@ -3,7 +3,9 @@ import {
     adminLogin,
     getAdminDashboard,
     getAdminUsers,
-    updateUserSubscription
+    updateUserSubscription,
+    getUserAnalytics,
+    toggleUserStatus
 } from '../controllers/adminController.js';
 import { verifyAdmin } from '../middleware/adminMiddleware.js';
 import {
@@ -21,5 +23,9 @@ router.post('/login', validateAdminPayload(adminLoginSchema), adminLogin);
 router.get('/dashboard', verifyAdmin, getAdminDashboard);
 router.get('/users', verifyAdmin, getAdminUsers);
 router.patch('/users/:userId/subscription', verifyAdmin, validateAdminPayload(manualSubscriptionSchema), updateUserSubscription);
+
+// Deep-Dive User Analytics & Account Control Routes
+router.get('/users/:userId/analytics', verifyAdmin, getUserAnalytics);
+router.patch('/users/:userId/status', verifyAdmin, toggleUserStatus);
 
 export default router;

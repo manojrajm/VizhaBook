@@ -72,6 +72,33 @@ export const adminService = {
         return data;
     },
 
+    // Fetch Deep-Dive User Analytics & Profile Details
+    getUserAnalytics: async (userId) => {
+        const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/analytics`, {
+            method: 'GET',
+            headers: getAdminHeaders()
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to fetch user analytics.');
+        }
+        return data;
+    },
+
+    // Toggle User Account Status (SUSPENDED / ACTIVE)
+    toggleUserStatus: async (userId, status) => {
+        const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/status`, {
+            method: 'PATCH',
+            headers: getAdminHeaders(),
+            body: JSON.stringify({ status })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to update user status.');
+        }
+        return data;
+    },
+
     // Logout
     logout: () => {
         localStorage.removeItem('adminToken');
