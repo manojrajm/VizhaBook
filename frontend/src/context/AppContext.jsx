@@ -4,6 +4,7 @@ import functionService from '../services/functionService';
 import expenseService from '../services/expenseService';
 import moiService from '../services/moiService';
 import { SOCKET_URL } from '../config/api';
+import QRToastNotification from '../components/common/QRToastNotification';
 
 const AppContext = createContext();
 
@@ -12,6 +13,29 @@ export const AppProvider = ({ children }) => {
         const saved = localStorage.getItem('moi_functions');
         return saved ? JSON.parse(saved) : [];
     });
+
+    const [toasts, setToasts] = useState([]);
+
+    const playChimeSound = () => {
+        try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return;
+            const audioCtx = new AudioContextClass();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        } catch (e) {
+            // Audio context policy fallback
+        }
+    };
 
     // Auto-sync functions and expenses from PostgreSQL on mount & Socket.io WebSockets
     useEffect(() => {
@@ -61,11 +85,32 @@ export const AppProvider = ({ children }) => {
         });
 
         socket.on('NEW_PENDING_CHECKIN', (newPending) => {
-            console.log('📡 [Socket.io Client] Received NEW_PENDING_CHECKIN:', newPending);
+            console.log('📡 [Socket.io Client] Instant sub-50ms NEW_PENDING_CHECKIN:', newPending);
             if (newPending && newPending.id) {
+                playChimeSound();
+
+                const normalized = {
+                    id: newPending.id,
+                    functionId: newPending.function_id || newPending.functionId,
+                    functionName: newPending.function_name || newPending.functionName || 'VizhaBook Event',
+                    guestName: newPending.guest_name || newPending.guestName || 'Guest',
+                    phone: newPending.phone,
+                    relation: newPending.relation,
+                    giftType: newPending.gift_type || newPending.giftType || 'Cash',
+                    amount: parseFloat(newPending.amount || 0),
+                    paymentMode: newPending.payment_mode || newPending.paymentMode || 'Cash',
+                    utr: newPending.utr,
+                    description: newPending.description,
+                    submittedAt: newPending.created_at || newPending.submittedAt || new Date().toISOString()
+                };
+
                 setPendingEntries(prev => {
-                    if (prev.some(p => String(p.id) === String(newPending.id))) return prev;
-                    return [newPending, ...prev];
+                    if (prev.some(p => String(p.id) === String(normalized.id))) return prev;
+                    return [normalized, ...prev];
+                });
+                setToasts(prev => {
+                    if (prev.some(t => String(t.id) === String(normalized.id))) return prev;
+                    return [normalized, ...prev];
                 });
             }
         });
@@ -75,6 +120,7 @@ export const AppProvider = ({ children }) => {
             const pId = data?.pendingId || data;
             if (pId) {
                 setPendingEntries(prev => prev.filter(p => String(p.id) !== String(pId)));
+                setToasts(prev => prev.filter(t => String(t.id) !== String(pId)));
             }
         });
 
@@ -91,6 +137,27 @@ export const AppProvider = ({ children }) => {
             }
         } catch (e) {
             console.warn('refetchMoiEntries error:', e.message);
+        }
+    };
+
+    const dismissToast = (id) => {
+        setToasts(prev => prev.filter(t => String(t.id) !== String(id)));
+    };
+
+    const handleToastApprove = async (toast) => {
+        dismissToast(toast.id);
+        setPendingEntries(prev => prev.filter(p => String(p.id) !== String(toast.id)));
+
+        try {
+            await moiService.approvePendingCheckin(toast.id, {
+                amount: toast.amount,
+                guestName: toast.guestName || toast.guest_name,
+                phone: toast.phone,
+                relation: toast.relation
+            });
+            await refetchMoiEntries();
+        } catch (e) {
+            console.warn('Toast approve fallback:', e.message);
         }
     };
 
@@ -223,9 +290,6 @@ export const AppProvider = ({ children }) => {
         localStorage.setItem('moi_host_settings', JSON.stringify(hostSettings));
     }, [hostSettings]);
 
-    // -------- Cloud Sync Logic --------
-    const isFirstRun = useRef(true);
-
     // -------- CRUD Operations --------
     const addFunction = (func) => {
         setFunctions(prev => [...prev, { ...func, id: Date.now() }]);
@@ -252,17 +316,18 @@ export const AppProvider = ({ children }) => {
     };
 
     const approvePendingEntry = (id, editedData) => {
-        const pending = pendingEntries.find(p => p.id === id);
+        const pending = pendingEntries.find(p => String(p.id) === String(id));
         if (!pending) return;
         const finalEntry = { ...pending, ...editedData };
-        // Create guest and then entry
         const newGuest = addGuest({ name: finalEntry.guestName, phone: finalEntry.phone || '', relation: finalEntry.relation });
         addEntry({ ...finalEntry, guestId: newGuest.id });
-        setPendingEntries(prev => prev.filter(p => p.id !== id));
+        setPendingEntries(prev => prev.filter(p => String(p.id) !== String(id)));
+        dismissToast(id);
     };
 
     const rejectPendingEntry = (id) => {
-        setPendingEntries(prev => prev.filter(p => p.id !== id));
+        setPendingEntries(prev => prev.filter(p => String(p.id) !== String(id)));
+        dismissToast(id);
     };
 
     const removeFunction = (id) => setFunctions(prev => prev.filter(f => f.id !== id));
@@ -286,6 +351,11 @@ export const AppProvider = ({ children }) => {
             hostSettings, setHostSettings
         }}>
             {children}
+            <QRToastNotification 
+                toasts={toasts}
+                onApprove={handleToastApprove}
+                onDismiss={dismissToast}
+            />
         </AppContext.Provider>
     );
 };

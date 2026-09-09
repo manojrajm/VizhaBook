@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Moon, Sun, LayoutDashboard, Heart, ClipboardList, Gift, Menu, X, QrCode, BarChart2, CheckSquare, Wifi, IndianRupee, Cloud, LogOut } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Heart, ClipboardList, Gift, Menu, X, QrCode, BarChart2, CheckSquare, Wifi, IndianRupee, Cloud, LogOut, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -129,6 +129,38 @@ const Navbar = () => {
                         {currentUser.name}
                     </span>
                 )}
+
+                {/* Real-time Vibrating Notification Bell Button */}
+                <NavLink to="/approvals" title="Pending Approvals Notifications" style={{ textDecoration: 'none' }}>
+                    <button style={{
+                        position: 'relative', width: '2.25rem', height: '2.25rem', borderRadius: '50%',
+                        border: pendingCount > 0 ? '1px solid #F59E0B' : '1px solid var(--border-color)',
+                        background: pendingCount > 0 ? 'rgba(245, 158, 11, 0.12)' : 'var(--bg-card)',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: pendingCount > 0 ? '#D97706' : 'var(--text-secondary)',
+                        transition: 'all 0.2s ease'
+                    }}>
+                        <Bell size={17} style={{
+                            animation: pendingCount > 0 ? 'bellVibrate 1.2s ease infinite' : 'none'
+                        }} />
+                        {pendingCount > 0 && (
+                            <motion.span
+                                initial={{ scale: 0 }} animate={{ scale: 1 }}
+                                style={{
+                                    position: 'absolute', top: '-2px', right: '-2px',
+                                    background: '#EF4444', color: 'white',
+                                    borderRadius: '999px', fontSize: '0.6rem',
+                                    fontWeight: 800, minWidth: '16px', height: '16px',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    padding: '0 4px', boxShadow: '0 0 6px rgba(239, 68, 68, 0.6)'
+                                }}
+                            >
+                                {pendingCount}
+                            </motion.span>
+                        )}
+                    </button>
+                </NavLink>
+
                 <button onClick={toggleLang} style={{
                     padding: '0.4rem 0.875rem', fontWeight: 700, fontSize: '0.72rem',
                     borderRadius: '0.75rem', border: '1px solid var(--border-color)',
