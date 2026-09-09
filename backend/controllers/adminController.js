@@ -75,7 +75,7 @@ export const adminLogin = async (req, res) => {
     }
 };
 
-// @desc Get Executive Dashboard KPI Data & Plan Distribution
+// @desc Get Executive Dashboard Pro Analytics Data
 // @route GET /api/admin/dashboard
 export const getAdminDashboard = async (req, res) => {
     try {
@@ -97,7 +97,18 @@ export const getAdminDashboard = async (req, res) => {
         const moiRes = await pool.query(`SELECT COALESCE(SUM(amount), 0)::numeric AS total_moi FROM moi_entries;`);
         const totalMoiAmount = parseFloat(moiRes.rows[0]?.total_moi || 0);
 
-        // 4. Subscription Statistics (Distribution per Plan)
+        // 4. Monthly SaaS Revenue (Last 30 days payments sum)
+        const revRes = await pool.query(`
+            SELECT COALESCE(SUM(amount), 0)::numeric AS monthly_revenue 
+            FROM payments 
+            WHERE created_at >= NOW() - INTERVAL '30 days' OR payment_date >= NOW() - INTERVAL '30 days';
+        `);
+        const monthlyRevenue = parseFloat(revRes.rows[0]?.monthly_revenue || 0);
+
+        // 5. Average Moi Amount Per Event
+        const avgMoiPerEvent = totalFunctions > 0 ? Math.round(totalMoiAmount / totalFunctions) : 0;
+
+        // 6. Subscription Statistics (Distribution per Plan)
         const subStatsRes = await pool.query(`
             SELECT 
                 COALESCE(p.name, 'Free Plan') AS plan_name,
@@ -120,9 +131,11 @@ export const getAdminDashboard = async (req, res) => {
         // Ensure default plans are present if DB has custom rows
         const planDistribution = [
             { plan: 'Free Plan', id: 'PLAN_FREE', count: planCountsMap['Free Plan'] || planCountsMap['FREE'] || 0 },
-            { plan: 'Silver Plan', id: 'PLAN_SILVER', count: planCountsMap['Silver Plan'] || planCountsMap['SILVER'] || 0 },
-            { plan: 'Gold Plan', id: 'PLAN_GOLD', count: planCountsMap['Gold Plan'] || planCountsMap['GOLD'] || 0 },
-            { plan: 'Platinum Plan', id: 'PLAN_PLATINUM', count: planCountsMap['Platinum Plan'] || planCountsMap['PLATINUM'] || 0 }
+            { plan: 'Basic Plan', id: 'PLAN_BASIC', count: planCountsMap['Basic Plan'] || planCountsMap['BASIC'] || 0 },
+            { plan: 'Standard Plan', id: 'PLAN_STANDARD', count: planCountsMap['Standard Plan'] || planCountsMap['STANDARD'] || 0 },
+            { plan: 'Pro Plan', id: 'PLAN_PRO', count: planCountsMap['Pro Celebration Plan'] || planCountsMap['Pro Plan'] || 0 },
+            { plan: 'Premium Plan', id: 'PLAN_PREMIUM', count: planCountsMap['Premium Plan'] || planCountsMap['PREMIUM'] || 0 },
+            { plan: 'Grand Enterprise', id: 'PLAN_ENTERPRISE', count: planCountsMap['Grand Enterprise Plan'] || 0 }
         ];
 
         // Also merge any DB plans from subscription_plans table
@@ -151,15 +164,116 @@ export const getAdminDashboard = async (req, res) => {
             }
         });
 
+        // 7. Interactive Monthly Trends Query (Last 6 Months)
+        const trendsRes = await pool.query(`
+            SELECT 
+                to_char(series_month, 'Mon') AS month,
+                series_month AS month_date,
+                COALESCE((
+                    SELECT SUM(amount)::numeric 
+                    FROM moi_entries 
+                    WHERE date_trunc('month', created_at) = series_month
+                ), 0) AS moi_amount,
+                COALESCE((
+                    SELECT SUM(amount)::numeric 
+                    FROM payments 
+                    WHERE date_trunc('month', created_at) = series_month OR date_trunc('month', payment_date) = series_month
+                ), 0) AS revenue_amount
+            FROM generate_series(
+                date_trunc('month', NOW() - INTERVAL '5 months'),
+                date_trunc('month', NOW()),
+                '1 month'::interval
+            ) AS series_month
+            ORDER BY series_month ASC;
+        `);
+
+        const monthlyTrends = trendsRes.rows.map(row => ({
+            month: row.month,
+            moiAmount: parseFloat(row.moi_amount || 0),
+            revenueAmount: parseFloat(row.revenue_amount || 0)
+        }));
+
+        // 8. Event Type Breakdown Query
+        const eventBreakdownRes = await pool.query(`
+            SELECT 
+                CASE 
+                    WHEN LOWER(name) LIKE '%wedding%' OR LOWER(name) LIKE '%திருமணம்%' THEN 'Wedding (திருமணம்)'
+                    WHEN LOWER(name) LIKE '%engag%' OR LOWER(name) LIKE '%நிச்சய%' THEN 'Engagement (நிச்சயதார்த்தம்)'
+                    WHEN LOWER(name) LIKE '%recep%' OR LOWER(name) LIKE '%வரவேற்பு%' THEN 'Reception (வரவேற்பு)'
+                    WHEN LOWER(name) LIKE '%house%' OR LOWER(name) LIKE '%கிரகப்%' THEN 'Housewarming (கிரகப்பிரவேசம்)'
+                    WHEN LOWER(name) LIKE '%ear%' OR LOWER(name) LIKE '%காது%' THEN 'Ear Piercing (காதுகுத்து)'
+                    ELSE 'Other Celebrations'
+                END AS category,
+                COUNT(*)::int AS count
+            FROM functions
+            GROUP BY category
+            ORDER BY count DESC;
+        `);
+
+        const eventTypeDistribution = eventBreakdownRes.rows.map(r => ({
+            category: r.category,
+            count: r.count
+        }));
+
+        // 9. Top Regional / District Moi Hubs
+        const districtRes = await pool.query(`
+            SELECT 
+                COALESCE(NULLIF(TRIM(village_city), ''), 'Madurai / Chennai') AS city,
+                COALESCE(SUM(amount), 0)::numeric AS total_amount,
+                COUNT(*)::int AS count
+            FROM moi_entries
+            GROUP BY city
+            ORDER BY total_amount DESC
+            LIMIT 5;
+        `);
+
+        const topDistricts = districtRes.rows.map(r => ({
+            city: r.city,
+            totalAmount: parseFloat(r.total_amount || 0),
+            count: r.count
+        }));
+
+        // 10. Recent Real-Time Transactions Stream
+        const recentTxRes = await pool.query(`
+            SELECT 
+                m.id,
+                COALESCE(m.guest_name, m.name) AS guest_name,
+                m.amount,
+                COALESCE(m.village_city, 'Tamil Nadu') AS city,
+                m.gift_type,
+                m.created_at,
+                f.name AS function_name
+            FROM moi_entries m
+            LEFT JOIN functions f ON m.function_id = f.id
+            ORDER BY m.created_at DESC
+            LIMIT 6;
+        `);
+
+        const recentTransactions = recentTxRes.rows.map(r => ({
+            id: r.id,
+            guestName: r.guest_name,
+            amount: parseFloat(r.amount || 0),
+            city: r.city,
+            giftType: r.gift_type || 'CASH',
+            createdAt: r.created_at,
+            functionName: r.function_name || 'Event'
+        }));
+
         return res.json({
             success: true,
             totalUsers,
             usersThisMonth,
             totalFunctions,
             totalMoiAmount,
+            monthlyRevenue,
+            avgMoiPerEvent,
             mostPopularPlan: mostPopularPlan.name,
             mostPopularPlanCount: mostPopularPlan.count,
-            subscriptionStats: planDistribution
+            subscriptionStats: planDistribution,
+            monthlyTrends,
+            eventTypeDistribution,
+            topDistricts,
+            recentTransactions
         });
     } catch (error) {
         console.error("getAdminDashboard Error:", error);
