@@ -29,6 +29,12 @@ const SubscriptionPage = lazy(() => import('./pages/subscription/SubscriptionPag
 const TrialExpiredPage = lazy(() => import('./pages/subscription/TrialExpiredPage'));
 const SubscriptionSuccessPage = lazy(() => import('./pages/subscription/SubscriptionSuccessPage'));
 
+// Lazy Loaded Super Admin Pages & Protected Route
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
+const AdminProtectedRoute = lazy(() => import('./components/admin/AdminProtectedRoute'));
+
 const PageLoader = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px', color: '#D97706', fontWeight: 800 }}>
     ⚡ VizhaBook Loading…
@@ -87,18 +93,40 @@ export default function App() {
     <AuthProvider>
       <AppProvider>
         <HashRouter>
-          <Routes>
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/checkin" element={<GuestCheckin />} />
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/checkin" element={<GuestCheckin />} />
+              
+              {/* Super Admin Panel Routes */}
+              <Route path="/admin/login" element={<AdminLoginPage />} />
+              <Route 
+                path="/admin/dashboard" 
+                element={
+                  <AdminProtectedRoute>
+                    <AdminDashboardPage />
+                  </AdminProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users" 
+                element={
+                  <AdminProtectedRoute>
+                    <AdminUsersPage />
+                  </AdminProtectedRoute>
+                } 
+              />
+
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </Suspense>
         </HashRouter>
       </AppProvider>
     </AuthProvider>

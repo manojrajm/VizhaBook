@@ -12,6 +12,7 @@ import expenseRoutes from "./routes/expenseRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import paymentMethodRoutes from "./routes/paymentMethodRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use(express.json());
 // API ROUTES
 // ===============================
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api", paymentMethodRoutes);
 app.use("/api/functions", functionRoutes);
 app.use("/api/moi", moiRoutes);
