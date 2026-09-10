@@ -7,9 +7,20 @@ import { paymentMethodService } from '../services/paymentMethodService';
 
 const GuestCheckin = () => {
     const { hostSettings, addPendingEntry } = useApp();
-    const params = new URLSearchParams(window.location.search);
-    const fnId = params.get('fnId');
-    const fnName = decodeURIComponent(params.get('fnName') || 'VizhaBook Event');
+    // Parse query params safely for HashRouter (e.g. /#/checkin?fnId=fn_123)
+    const getQueryParam = (key) => {
+        const hash = window.location.hash || '';
+        const qIndex = hash.indexOf('?');
+        if (qIndex !== -1) {
+            const hashParams = new URLSearchParams(hash.substring(qIndex));
+            if (hashParams.get(key)) return hashParams.get(key);
+        }
+        return new URLSearchParams(window.location.search).get(key);
+    };
+
+    const fnId = getQueryParam('fnId');
+    const rawFnName = getQueryParam('fnName');
+    const fnName = rawFnName ? decodeURIComponent(rawFnName) : 'VizhaBook Event';
 
     const [activePaymentMethods, setActivePaymentMethods] = useState([]);
     const [selectedUpiId, setSelectedUpiId] = useState('');

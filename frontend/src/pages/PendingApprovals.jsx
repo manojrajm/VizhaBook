@@ -13,8 +13,8 @@ const PendingApprovals = () => {
     const [editDescription, setEditDescription] = useState('');
 
     // Fetch live pending check-ins from PostgreSQL database API
-    const fetchPendingCheckins = useCallback(async () => {
-        setLoading(true);
+    const fetchPendingCheckins = useCallback(async (showLoading = false) => {
+        if (showLoading) setLoading(true);
         try {
             const res = await moiService.getPendingCheckins();
             if (res.success && res.pendingEntries) {
@@ -22,14 +22,15 @@ const PendingApprovals = () => {
             }
         } catch (e) {
             console.warn('PendingApprovals fetch error:', e.message);
+        } finally {
+            if (showLoading) setLoading(false);
         }
-        setLoading(false);
     }, []);
 
-    // Auto-poll PostgreSQL database every 5 seconds for new mobile QR check-ins
+    // Fast 3-second auto-poll fallback for multi-device Render.com mobile QR check-ins
     useEffect(() => {
-        fetchPendingCheckins();
-        const interval = setInterval(fetchPendingCheckins, 5000);
+        fetchPendingCheckins(true);
+        const interval = setInterval(() => fetchPendingCheckins(false), 3000);
         return () => clearInterval(interval);
     }, [fetchPendingCheckins]);
 
